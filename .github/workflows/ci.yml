@@ -50,6 +50,10 @@ jobs:
           diff -u tests/expected/hierarchy.mmd "$out/hierarchy.mmd"
           uv run --no-project python -S topontology.py tests/fixtures/graph.json tests/fixtures/classes.json demo --compare tests/fixtures/graph-extended.json --format canonical > "$out/compare.json"
           diff -u tests/expected/compare.json "$out/compare.json"
+          uv run --no-project python -S topontology.py tests/fixtures/sigma-star.json tests/fixtures/sigma-classes.json demo --anomalies --format canonical > "$out/anomalies.json"
+          diff -u tests/expected/anomalies.json "$out/anomalies.json"
+          uv run --no-project python -S topontology.py tests/fixtures/graph.json tests/fixtures/classes.json demo --merge hierarchy --merge similarity --into linked --format canonical > "$out/boundary.json"
+          diff -u tests/expected/boundary.json "$out/boundary.json"
       - name: Pinned TaxOntOy table classifies the fixture
         run: |
           set -euo pipefail
@@ -69,4 +73,32 @@ jobs:
           assert row["independent_cycles"] == row["edges"] - row["incident_nodes"] + row["weakly_connected_components"]["count"]
           assert report["classes"]["similarity"]["independent_cycles"] == 1
           assert report["unclassified_edges"] == 1
+          PY
+      - name: Coverage includes CLI subprocesses
+        run: |
+          set -euo pipefail
+          printf '%s\n' '[run]' 'source = topontology,topology' 'parallel = true' 'relative_files = true' > "$RUNNER_TEMP/coveragerc.ini"
+          export COVERAGE_PROCESS_START="$RUNNER_TEMP/coveragerc.ini"
+          uv run --no-project --with coverage==7.13.1 python -m coverage run --rcfile "$COVERAGE_PROCESS_START" -m unittest discover -s tests -v
+          uv run --no-project --with coverage==7.13.1 python -m coverage combine --rcfile "$COVERAGE_PROCESS_START"
+          uv run --no-project --with coverage==7.13.1 python -m coverage json --rcfile "$COVERAGE_PROCESS_START" -o "$RUNNER_TEMP/coverage.json"
+          uv run --no-project --with coverage==7.13.1 python -S - "$RUNNER_TEMP/coverage.json" <<'PY'
+          import json
+          import sys
+          report = json.load(open(sys.argv[1], encoding="utf-8"))
+          executed = excluded = unexecuted = total = 0
+          for info in report["files"].values():
+              summary = info["summary"]
+              executed += summary["covered_lines"]
+              excluded += summary["excluded_lines"]
+              unexecuted += summary["missing_lines"]
+              total += summary["num_statements"] + summary["excluded_lines"]
+          print(f"executed={executed} excluded={excluded} unexecuted={unexecuted} total={total}")
+          if executed + excluded + unexecuted != total or unexecuted != 0:
+              missing = {
+                  name: info["missing_lines"]
+                  for name, info in report["files"].items()
+                  if info["summary"]["missing_lines"]
+              }
+              raise SystemExit(f"coverage gap: {missing}")
           PY

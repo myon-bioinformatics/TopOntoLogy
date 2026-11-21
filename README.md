@@ -41,6 +41,10 @@ JSON はキー順を固定した一つの文書です。`--format canonical` と
 
 `--compare 別のグラフ` は、同じ分類表と同じプロファイルで二つのグラフを比べ、差分は右から左を引いた値です。`--class 左 --compare-class 右` は、一つのグラフの二つの分類を比べます。
 
+`--anomalies` は、分類ごとと関係ごとに、ノードの入次数・出次数・合計次数・弱連結成分の大きさ・根からの最長路を集め、平均から 1σ、2σ、3σ を超えるものを帯として返します。ちょうど kσ の点はその帯には入れません。3 点未満、または分散が 0 のときは割らずに `not applicable` です。閉路のある範囲では深さの帯も `not applicable` です。同じ偏差の並びは `(型名, 文字列化した値)` で決めます。
+
+分類の境界を動かすときは、右の分類から左の分類を引きます。`--boundary 別の分類表` はもう一つの表と比べます。パスを省くと `TOPONTOLOGY_BOUNDARY` を使い、空白だけなら未設定です。`--merge 分類 --merge 分類 --into 新しい分類` は二つの分類を一つにまとめ、`--split 分類 --assign 関係=分類` は一つの関係を別の分類へ移します。どちらの出自にもグラフと分類表のパスと sha256 が入り、まとめ方や分割は `mapping` に残します。
+
 `tests/expected/` は、この決定的な出力を fixture から再生成したものです。CI が同じコマンドを実行し、差分があれば失敗します。
 
 ノード ID は JSON の型のまま集計します。数値の `1` と文字列の `"1"` は別の頂点です。弱連結成分の起点や並びは `(型名, 文字列化した値)` で決め、比較できない型が混ざっても落ちません。`--format text` と Mermaid では表示のために文字列化します。同じ表示になる ID が複数あるとき、Mermaid の枠ラベルでも文字列以外を `型名:値` と書いて区別します（名前が重複しない節は、そのまま出します）。JSON では元の型のまま出します。
@@ -57,4 +61,4 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 PYTHONPATH=../ONTO uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `78ed91aee522e9a7305e2bf964dab9be2bd3fff0` を checkout し、`PYTHONPATH` で ONTO を渡します。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` の行を測り、実行した行 + 除外した行 + 未実行の行が全体と一致し、未実行が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `78ed91aee522e9a7305e2bf964dab9be2bd3fff0` を checkout し、`PYTHONPATH` で ONTO を渡します。ツールの版は 0.2.0 です。

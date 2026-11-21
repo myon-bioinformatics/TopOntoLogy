@@ -1,0 +1,554 @@
+{
+  "anomalies": {
+    "across_classes": {
+      "component_count": {
+        "bands": {
+          "1": [
+            {
+              "id": "star",
+              "value": 1,
+              "z": 1.4142135623730951
+            }
+          ],
+          "2": [],
+          "3": []
+        },
+        "count": 3,
+        "mean": 0.3333333333333333,
+        "sigma": 0.4714045207910317,
+        "status": "ok"
+      },
+      "depth": {
+        "bands": {
+          "1": [
+            {
+              "id": "star",
+              "value": 1,
+              "z": 1.4142135623730951
+            }
+          ],
+          "2": [],
+          "3": []
+        },
+        "count": 3,
+        "mean": 0.3333333333333333,
+        "sigma": 0.4714045207910317,
+        "status": "ok"
+      },
+      "edges": {
+        "bands": {
+          "1": [
+            {
+              "id": "star",
+              "value": 10,
+              "z": 1.414213562373095
+            }
+          ],
+          "2": [],
+          "3": []
+        },
+        "count": 3,
+        "mean": 3.3333333333333335,
+        "sigma": 4.714045207910317,
+        "status": "ok"
+      },
+      "independent_cycles": {
+        "count": 3,
+        "mean": 0.0,
+        "reason": "zero variance",
+        "sigma": 0.0,
+        "status": "not applicable"
+      },
+      "max_component_size": {
+        "bands": {
+          "1": [
+            {
+              "id": "star",
+              "value": 11,
+              "z": 1.4142135623730951
+            }
+          ],
+          "2": [],
+          "3": []
+        },
+        "count": 3,
+        "mean": 3.6666666666666665,
+        "sigma": 5.185449728701348,
+        "status": "ok"
+      },
+      "max_total_degree": {
+        "bands": {
+          "1": [
+            {
+              "id": "star",
+              "value": 10,
+              "z": 1.414213562373095
+            }
+          ],
+          "2": [],
+          "3": []
+        },
+        "count": 3,
+        "mean": 3.3333333333333335,
+        "sigma": 4.714045207910317,
+        "status": "ok"
+      }
+    },
+    "classes": {
+      "side": {
+        "nodes": {
+          "component_size": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "depth": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "in_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "out_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "total_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          }
+        }
+      },
+      "star": {
+        "nodes": {
+          "component_size": {
+            "count": 11,
+            "mean": 11.0,
+            "reason": "zero variance",
+            "sigma": 0.0,
+            "status": "not applicable"
+          },
+          "depth": {
+            "bands": {
+              "1": [
+                {
+                  "id": "C",
+                  "value": 1,
+                  "z": 3.1622776601683795
+                }
+              ],
+              "2": [
+                {
+                  "id": "C",
+                  "value": 1,
+                  "z": 3.1622776601683795
+                }
+              ],
+              "3": [
+                {
+                  "id": "C",
+                  "value": 1,
+                  "z": 3.1622776601683795
+                }
+              ]
+            },
+            "count": 11,
+            "mean": 0.09090909090909091,
+            "sigma": 0.28747978728803447,
+            "status": "ok"
+          },
+          "in_degree": {
+            "bands": {
+              "1": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.1622776601683795
+                }
+              ],
+              "2": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.1622776601683795
+                }
+              ],
+              "3": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.1622776601683795
+                }
+              ]
+            },
+            "count": 11,
+            "mean": 0.9090909090909091,
+            "sigma": 2.874797872880345,
+            "status": "ok"
+          },
+          "out_degree": {
+            "bands": {
+              "1": [
+                {
+                  "id": "C",
+                  "value": 0,
+                  "z": -3.1622776601683795
+                }
+              ],
+              "2": [
+                {
+                  "id": "C",
+                  "value": 0,
+                  "z": -3.1622776601683795
+                }
+              ],
+              "3": [
+                {
+                  "id": "C",
+                  "value": 0,
+                  "z": -3.1622776601683795
+                }
+              ]
+            },
+            "count": 11,
+            "mean": 0.9090909090909091,
+            "sigma": 0.28747978728803447,
+            "status": "ok"
+          },
+          "total_degree": {
+            "bands": {
+              "1": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.162277660168379
+                }
+              ],
+              "2": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.162277660168379
+                }
+              ],
+              "3": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.162277660168379
+                }
+              ]
+            },
+            "count": 11,
+            "mean": 1.8181818181818181,
+            "sigma": 2.5873180855923104,
+            "status": "ok"
+          }
+        }
+      },
+      "tail": {
+        "nodes": {
+          "component_size": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "depth": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "in_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "out_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "total_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          }
+        }
+      }
+    },
+    "relations": {
+      "other": {
+        "nodes": {
+          "component_size": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "depth": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "in_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "out_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "total_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          }
+        }
+      },
+      "third": {
+        "nodes": {
+          "component_size": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "depth": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "in_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "out_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          },
+          "total_degree": {
+            "count": 0,
+            "reason": "fewer than 3 data points",
+            "status": "not applicable"
+          }
+        }
+      },
+      "to": {
+        "nodes": {
+          "component_size": {
+            "count": 11,
+            "mean": 11.0,
+            "reason": "zero variance",
+            "sigma": 0.0,
+            "status": "not applicable"
+          },
+          "depth": {
+            "bands": {
+              "1": [
+                {
+                  "id": "C",
+                  "value": 1,
+                  "z": 3.1622776601683795
+                }
+              ],
+              "2": [
+                {
+                  "id": "C",
+                  "value": 1,
+                  "z": 3.1622776601683795
+                }
+              ],
+              "3": [
+                {
+                  "id": "C",
+                  "value": 1,
+                  "z": 3.1622776601683795
+                }
+              ]
+            },
+            "count": 11,
+            "mean": 0.09090909090909091,
+            "sigma": 0.28747978728803447,
+            "status": "ok"
+          },
+          "in_degree": {
+            "bands": {
+              "1": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.1622776601683795
+                }
+              ],
+              "2": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.1622776601683795
+                }
+              ],
+              "3": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.1622776601683795
+                }
+              ]
+            },
+            "count": 11,
+            "mean": 0.9090909090909091,
+            "sigma": 2.874797872880345,
+            "status": "ok"
+          },
+          "out_degree": {
+            "bands": {
+              "1": [
+                {
+                  "id": "C",
+                  "value": 0,
+                  "z": -3.1622776601683795
+                }
+              ],
+              "2": [
+                {
+                  "id": "C",
+                  "value": 0,
+                  "z": -3.1622776601683795
+                }
+              ],
+              "3": [
+                {
+                  "id": "C",
+                  "value": 0,
+                  "z": -3.1622776601683795
+                }
+              ]
+            },
+            "count": 11,
+            "mean": 0.9090909090909091,
+            "sigma": 0.28747978728803447,
+            "status": "ok"
+          },
+          "total_degree": {
+            "bands": {
+              "1": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.162277660168379
+                }
+              ],
+              "2": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.162277660168379
+                }
+              ],
+              "3": [
+                {
+                  "id": "C",
+                  "value": 10,
+                  "z": 3.162277660168379
+                }
+              ]
+            },
+            "count": 11,
+            "mean": 1.8181818181818181,
+            "sigma": 2.5873180855923104,
+            "status": "ok"
+          }
+        }
+      }
+    }
+  },
+  "classes": {
+    "side": {
+      "degree": {
+        "max_in": 0,
+        "max_out": 0,
+        "max_total": 0,
+        "sinks": 0,
+        "sources": 0
+      },
+      "depth": 0,
+      "edges": 0,
+      "incident_nodes": 0,
+      "independent_cycles": 0,
+      "multiple_sources": [],
+      "order_cycle": null,
+      "sample_cycles": [],
+      "weakly_connected_components": {
+        "count": 0,
+        "sizes": []
+      }
+    },
+    "star": {
+      "degree": {
+        "max_in": 10,
+        "max_out": 1,
+        "max_total": 10,
+        "sinks": 1,
+        "sources": 10
+      },
+      "depth": 1,
+      "edges": 10,
+      "incident_nodes": 11,
+      "independent_cycles": 0,
+      "multiple_sources": [
+        "C"
+      ],
+      "order_cycle": null,
+      "sample_cycles": [],
+      "weakly_connected_components": {
+        "count": 1,
+        "sizes": [
+          11
+        ]
+      }
+    },
+    "tail": {
+      "degree": {
+        "max_in": 0,
+        "max_out": 0,
+        "max_total": 0,
+        "sinks": 0,
+        "sources": 0
+      },
+      "depth": 0,
+      "edges": 0,
+      "incident_nodes": 0,
+      "independent_cycles": 0,
+      "multiple_sources": [],
+      "order_cycle": null,
+      "sample_cycles": [],
+      "weakly_connected_components": {
+        "count": 0,
+        "sizes": []
+      }
+    }
+  },
+  "provenance": {
+    "classification": {
+      "path": "tests/fixtures/sigma-classes.json",
+      "sha256": "5e67c6f027f594a296fa36dda7a60abbd22898b8fd876fd6b1ee63530466aef0"
+    },
+    "graph": {
+      "path": "tests/fixtures/sigma-star.json",
+      "sha256": "cf6e8cb8712b330ec42cb6fa576f7953f2aedd1e485895bef3bd18173fc7214c"
+    },
+    "profile": "demo"
+  },
+  "tool": {
+    "name": "topontology",
+    "version": "0.2.0"
+  },
+  "unclassified_edges": 0
+}

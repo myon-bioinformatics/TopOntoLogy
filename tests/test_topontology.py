@@ -41,6 +41,27 @@ def run_main(argv):
     return code, buf.getvalue()
 
 
+def _traced_command(script, args, env):
+    """Run a script under python -S, and under coverage when a parent measurement is active.
+
+    ``python -S`` does not import site, so the coverage package is added to
+    PYTHONPATH for the child instead of being imported as a site customization.
+    """
+    if not env.get("COVERAGE_PROCESS_START"):
+        return [sys.executable, "-S", str(script), *args]
+    import coverage
+    package_root = str(Path(coverage.__file__).resolve().parent.parent)
+    env["PYTHONPATH"] = package_root + os.pathsep + env.get("PYTHONPATH", "")
+    bootstrap = (
+        "import runpy, sys\n"
+        "import coverage\n"
+        "coverage.process_startup()\n"
+        "sys.argv = sys.argv[1:]\n"
+        "runpy.run_path(sys.argv[0], run_name='__main__')\n"
+    )
+    return [sys.executable, "-S", "-c", bootstrap, str(script), *args]
+
+
 def run_cli(*args, env=None):
     merged = os.environ.copy()
     if env:
@@ -49,21 +70,8 @@ def run_cli(*args, env=None):
                 merged.pop(key, None)
             else:
                 merged[key] = value
-    # Tests use python -S, so sitecustomize is not imported in the child.
-    # When coverage is measuring this process, start it explicitly in the child.
-    if merged.get("COVERAGE_PROCESS_START"):
-        bootstrap = (
-            "import runpy, sys\n"
-            "import coverage\n"
-            "coverage.process_startup()\n"
-            "sys.argv = sys.argv[1:]\n"
-            "runpy.run_path(sys.argv[0], run_name='__main__')\n"
-        )
-        command = [sys.executable, "-S", "-c", bootstrap, str(SCRIPT), *args]
-    else:
-        command = [sys.executable, "-S", str(SCRIPT), *args]
     completed = subprocess.run(
-        command,
+        _traced_command(SCRIPT, args, merged),
         cwd=ROOT,
         env=merged,
         capture_output=True,
@@ -226,7 +234,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(code, 0, err)
         expected = (ROOT / "tests/expected/hierarchy.mmd").read_text(encoding="utf-8")
         self.assertEqual(out, expected)
-        self.assertIn("%% topontology 0.1.0", out)
+        self.assertIn(f"%% topontology {topontology.__version__}", out)
         self.assertIn("sha256:", out)
         self.assertIn('n0 -->|"narrower"| n1', out)
         self.assertEqual(run_cli(
@@ -328,10 +336,11 @@ class CliTests(unittest.TestCase):
             self.assertNotIn("sys.path", text)
 
     def test_topology_script_is_not_a_second_command(self):
+        traced_env = os.environ.copy()
         completed = subprocess.run(
-            [sys.executable, "-S", str(ROOT / "topology.py")],
+            _traced_command(ROOT / "topology.py", [], traced_env),
             cwd=ROOT,
-            env=os.environ.copy(),
+            env=traced_env,
             capture_output=True,
             text=True,
             check=False,
