@@ -13,6 +13,7 @@ jobs:
     env:
       ONTO_ROOT: ${{ github.workspace }}/ONTO
       TAXONTOY_ROOT: ${{ github.workspace }}/TaxOntOy
+      OTL_ROOT: ${{ github.workspace }}/OnTautoLogy
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -35,6 +36,15 @@ jobs:
           path: TaxOntOy
           persist-credentials: false
           fetch-depth: 1
+      # OnTautoLogy main, first-parent merge (Merge pull request #41).
+      # Parents: 1909829db345870361ad5c6368bdf2adc199459c 941ee6f7c9bcff32d4808f493497ae048b74a01d
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: myon-bioinformatics/OnTautoLogy
+          ref: 59edb8f13e4f0d2a12f89b9d912cbe4fdd1abd83
+          path: OnTautoLogy
+          persist-credentials: false
+          fetch-depth: 1
       - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           version: "0.13.9"
@@ -43,7 +53,7 @@ jobs:
       - name: Inference finds the checkouts with no env vars
         run: |
           set -euo pipefail
-          unset ONTO_ROOT TAXONTOY_ROOT PYTHONPATH
+          unset ONTO_ROOT TAXONTOY_ROOT OTL_ROOT PYTHONPATH
           uv run --no-project python -S topontology.py tests/fixtures/graph.json concepts --format canonical > "$RUNNER_TEMP/inferred.json"
           uv run --no-project python -S - "$RUNNER_TEMP/inferred.json" <<'PY'
           import hashlib
@@ -128,7 +138,9 @@ jobs:
           assert row["weakly_connected_components"]["count"] == 1
           assert row["independent_cycles"] == 1
           assert row["independent_cycles"] == row["edges"] - row["incident_nodes"] + row["weakly_connected_components"]["count"]
-          assert report["classes"]["similarity"]["independent_cycles"] == 1
+          assert report["classes"]["similarity"]["edges"] == 1
+          assert report["classes"]["similarity"]["independent_cycles"] == 0
+          assert len(report["collapsed_edges"]) == 1
           assert report["unclassified_edges"] == 1
           PY
           if uv run --no-project python -S topontology.py tests/fixtures/graph.json "$GITHUB_WORKSPACE/TaxOntOy/otl-relations.json" properties --format canonical > "$RUNNER_TEMP/properties.out" 2>"$RUNNER_TEMP/properties.err"; then

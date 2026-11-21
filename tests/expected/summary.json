@@ -1,6 +1,35 @@
 {
   "classes": {
     "hierarchy": {
+      "cycle_basis": {
+        "cycles": [
+          {
+            "edges": [
+              {
+                "relation": "narrower",
+                "source": "A",
+                "target": "B"
+              },
+              {
+                "relation": "narrower",
+                "source": "A",
+                "target": "C"
+              },
+              {
+                "relation": "narrower",
+                "source": "B",
+                "target": "C"
+              }
+            ],
+            "labels": [
+              "narrower",
+              "narrower",
+              "narrower"
+            ]
+          }
+        ],
+        "independent_cycles": 1
+      },
       "degree": {
         "max_in": 2,
         "max_out": 2,
@@ -25,6 +54,29 @@
       }
     },
     "similarity": {
+      "cycle_basis": {
+        "cycles": [
+          {
+            "edges": [
+              {
+                "relation": "similarTo",
+                "source": "B",
+                "target": "C"
+              },
+              {
+                "relation": "similarTo",
+                "source": "C",
+                "target": "B"
+              }
+            ],
+            "labels": [
+              "similarTo",
+              "similarTo"
+            ]
+          }
+        ],
+        "independent_cycles": 1
+      },
       "degree": {
         "max_in": 1,
         "max_out": 1,
@@ -57,6 +109,8 @@
       }
     }
   },
+  "collapsed_edges": [],
+  "pin_lag": [],
   "provenance": {
     "classification": {
       "path": "tests/fixtures/classes.json",
@@ -68,9 +122,70 @@
     },
     "profile": "demo"
   },
+  "spof": {
+    "articulation_points": [
+      "A"
+    ],
+    "dominators": [
+      {
+        "idom": "D",
+        "node": "A"
+      },
+      {
+        "idom": "A",
+        "node": "B"
+      },
+      {
+        "idom": "A",
+        "node": "C"
+      },
+      {
+        "idom": null,
+        "node": "D"
+      }
+    ],
+    "ranked": [
+      {
+        "lost": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "node": "D",
+        "unreachable": 4
+      },
+      {
+        "lost": [
+          "A",
+          "B",
+          "C"
+        ],
+        "node": "A",
+        "unreachable": 3
+      },
+      {
+        "lost": [
+          "B"
+        ],
+        "node": "B",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "C"
+        ],
+        "node": "C",
+        "unreachable": 1
+      }
+    ],
+    "roots": [
+      "D"
+    ]
+  },
   "tool": {
     "name": "topontology",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "unclassified_edges": 1
 }

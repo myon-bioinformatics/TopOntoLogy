@@ -18,6 +18,35 @@
         "weakly_connected_components": -1
       },
       "left": {
+        "cycle_basis": {
+          "cycles": [
+            {
+              "edges": [
+                {
+                  "relation": "narrower",
+                  "source": "A",
+                  "target": "B"
+                },
+                {
+                  "relation": "narrower",
+                  "source": "A",
+                  "target": "C"
+                },
+                {
+                  "relation": "narrower",
+                  "source": "B",
+                  "target": "C"
+                }
+              ],
+              "labels": [
+                "narrower",
+                "narrower",
+                "narrower"
+              ]
+            }
+          ],
+          "independent_cycles": 1
+        },
         "degree": {
           "max_in": 2,
           "max_out": 2,
@@ -42,6 +71,10 @@
         }
       },
       "right": {
+        "cycle_basis": {
+          "cycles": [],
+          "independent_cycles": 0
+        },
         "degree": {
           "max_in": 0,
           "max_out": 0,
@@ -80,6 +113,10 @@
         "weakly_connected_components": 1
       },
       "left": {
+        "cycle_basis": {
+          "cycles": [],
+          "independent_cycles": 0
+        },
         "degree": {
           "max_in": 0,
           "max_out": 0,
@@ -100,6 +137,71 @@
         }
       },
       "right": {
+        "cycle_basis": {
+          "cycles": [
+            {
+              "edges": [
+                {
+                  "relation": "narrower",
+                  "source": "A",
+                  "target": "B"
+                },
+                {
+                  "relation": "narrower",
+                  "source": "A",
+                  "target": "C"
+                },
+                {
+                  "relation": "narrower",
+                  "source": "B",
+                  "target": "C"
+                }
+              ],
+              "labels": [
+                "narrower",
+                "narrower",
+                "narrower"
+              ]
+            },
+            {
+              "edges": [
+                {
+                  "relation": "narrower",
+                  "source": "B",
+                  "target": "C"
+                },
+                {
+                  "relation": "similarTo",
+                  "source": "B",
+                  "target": "C"
+                }
+              ],
+              "labels": [
+                "narrower",
+                "similarTo"
+              ]
+            },
+            {
+              "edges": [
+                {
+                  "relation": "narrower",
+                  "source": "B",
+                  "target": "C"
+                },
+                {
+                  "relation": "similarTo",
+                  "source": "C",
+                  "target": "B"
+                }
+              ],
+              "labels": [
+                "narrower",
+                "similarTo"
+              ]
+            }
+          ],
+          "independent_cycles": 3
+        },
         "degree": {
           "max_in": 3,
           "max_out": 2,
@@ -153,6 +255,29 @@
         "weakly_connected_components": -1
       },
       "left": {
+        "cycle_basis": {
+          "cycles": [
+            {
+              "edges": [
+                {
+                  "relation": "similarTo",
+                  "source": "B",
+                  "target": "C"
+                },
+                {
+                  "relation": "similarTo",
+                  "source": "C",
+                  "target": "B"
+                }
+              ],
+              "labels": [
+                "similarTo",
+                "similarTo"
+              ]
+            }
+          ],
+          "independent_cycles": 1
+        },
         "degree": {
           "max_in": 1,
           "max_out": 1,
@@ -185,6 +310,10 @@
         }
       },
       "right": {
+        "cycle_basis": {
+          "cycles": [],
+          "independent_cycles": 0
+        },
         "degree": {
           "max_in": 0,
           "max_out": 0,
@@ -240,7 +369,7 @@
   },
   "tool": {
     "name": "topontology",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "unclassified_edges": {
     "delta": 0,

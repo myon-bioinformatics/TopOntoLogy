@@ -27,6 +27,7 @@ def _cleared_roots():
     with patch.dict(os.environ, {}, clear=False):
         os.environ.pop(onto_path.ONTO_ENV, None)
         os.environ.pop(onto_path.TAXONTOY_ENV, None)
+        os.environ.pop(onto_path.OTL_ENV, None)
         yield
 
 
@@ -41,6 +42,7 @@ def _real_root(name):
 
 REAL_ONTO = _real_root("ONTO")
 REAL_TAX = _real_root("TaxOntOy")
+REAL_OTL = _real_root("OnTautoLogy")
 
 
 def load_path_mutant(old, new):
@@ -272,49 +274,59 @@ class OriginTests(unittest.TestCase):
             root = Path(tmp)
             onto = root / "ONTO"
             tax = root / "TaxOntOy"
+            otl = root / "OnTautoLogy"
             _touch(onto / MARKER, "marker = True\n")
             _touch(tax / TABLE, "{}\n")
+            _touch(otl / onto_path.OTL_MARKER, "")
             anchor = _touch(root / "app" / "tool.py", "")
             saved_module = sys.modules.get("knowledgegraph")
+            saved_otl = sys.modules.get("ontautology_graphs")
             saved_path = list(sys.path)
             sys.modules.pop("knowledgegraph", None)
+            sys.modules.pop("ontautology_graphs", None)
             try:
                 with _cleared_roots():
                     found = onto_path.bind(anchor)
                     self.assertEqual(found["ONTO"], onto.resolve())
                     self.assertEqual(found["TaxOntOy"], tax.resolve())
+                    self.assertEqual(found["OnTautoLogy"], otl.resolve())
                     self.assertEqual(os.environ[onto_path.ONTO_ENV], str(onto.resolve()))
                     self.assertEqual(os.environ[onto_path.TAXONTOY_ENV], str(tax.resolve()))
+                    self.assertEqual(os.environ[onto_path.OTL_ENV], str(otl.resolve()))
             finally:
                 sys.path[:] = saved_path
                 if saved_module is None:
                     sys.modules.pop("knowledgegraph", None)
                 else:
                     sys.modules["knowledgegraph"] = saved_module
+                if saved_otl is None:
+                    sys.modules.pop("ontautology_graphs", None)
+                else:
+                    sys.modules["ontautology_graphs"] = saved_otl
 
 
 class ArgvTests(unittest.TestCase):
     def test_flags_forms_stop_and_missing_values(self):
-        blank = {"ONTO": None, "TaxOntOy": None}
+        blank = {"ONTO": None, "TaxOntOy": None, "OnTautoLogy": None}
         self.assertEqual(onto_path.explicit_from_argv([]), blank)
         self.assertEqual(
             onto_path.explicit_from_argv(["graph", "--onto-root", "/onto", "--taxontoy-root", "/tax"]),
-            {"ONTO": "/onto", "TaxOntOy": "/tax"},
+            {"ONTO": "/onto", "TaxOntOy": "/tax", "OnTautoLogy": None},
         )
         self.assertEqual(
             onto_path.explicit_from_argv(["--onto-root=/onto", "--taxontoy-root=/tax", "audit"]),
-            {"ONTO": "/onto", "TaxOntOy": "/tax"},
+            {"ONTO": "/onto", "TaxOntOy": "/tax", "OnTautoLogy": None},
         )
         self.assertEqual(
             onto_path.explicit_from_argv(["--onto-root", "/first", "--onto-root", "/second"]),
-            {"ONTO": "/second", "TaxOntOy": None},
+            {"ONTO": "/second", "TaxOntOy": None, "OnTautoLogy": None},
         )
         self.assertEqual(
             onto_path.explicit_from_argv(["--", "--onto-root", "/ignored"]),
             blank,
         )
         self.assertEqual(onto_path.explicit_from_argv(["--onto-root-extra", "/nope"]), blank)
-        self.assertEqual(onto_path.explicit_from_argv(["--onto-root="]), {"ONTO": "", "TaxOntOy": None})
+        self.assertEqual(onto_path.explicit_from_argv(["--onto-root="]), {"ONTO": "", "TaxOntOy": None, "OnTautoLogy": None})
         with self.assertRaises(onto_path.RootError) as raised:
             onto_path.explicit_from_argv(["--onto-root"])
         self.assertIn("ONTO_ROOT", str(raised.exception))
@@ -336,13 +348,16 @@ class CliResolutionTests(unittest.TestCase):
             shutil.copy(REAL_ONTO / MARKER, onto / MARKER)
             table = tax / TABLE
             shutil.copy(REAL_TAX / TABLE, table)
+            otl = root / "OnTautoLogy"
+            otl.mkdir()
+            shutil.copy(REAL_OTL / onto_path.OTL_MARKER, otl / onto_path.OTL_MARKER)
             shutil.copy(ROOT / "onto_path.py", project / "onto_path.py")
             shutil.copy(ROOT / "topontology.py", project / "topontology.py")
             graph = ROOT / "tests/fixtures/graph.json"
             code, out, err = _run_script(
                 project / "topontology.py",
                 [str(graph), "concepts"],
-                {"ONTO_ROOT": None, "TAXONTOY_ROOT": None, "PYTHONPATH": None},
+                {"ONTO_ROOT": None, "TAXONTOY_ROOT": None, "OTL_ROOT": None, "PYTHONPATH": None},
             )
             self.assertEqual(code, 0, err)
             body = json.loads(out)
@@ -514,7 +529,7 @@ class ConftestTests(unittest.TestCase):
                 for target in node.targets:
                     if isinstance(target, ast.Name) and target.id == "collect_ignore":
                         found = ast.literal_eval(node.value)
-        self.assertEqual(found, ["ONTO", "TaxOntOy", "otl", "build"])
+        self.assertEqual(found, ["ONTO", "TaxOntOy", "OnTautoLogy", "otl", "build"])
 
     def test_usage_error_names_the_env_var_and_checks_origin(self):
         stub = types.ModuleType("pytest")
@@ -525,6 +540,7 @@ class ConftestTests(unittest.TestCase):
         stub.UsageError = UsageError
         saved_pytest = sys.modules.get("pytest")
         saved_module = sys.modules.get("knowledgegraph")
+        saved_otl = sys.modules.get("ontautology_graphs")
         saved_path = list(sys.path)
         sys.modules["pytest"] = stub
         try:
@@ -541,13 +557,17 @@ class ConftestTests(unittest.TestCase):
                     self.assertIn("ONTO_ROOT", str(raised.exception))
                     onto = root / "ONTO"
                     tax = root / "TaxOntOy"
+                    otl = root / "OnTautoLogy"
                     _touch(onto / MARKER, "marker = True\n")
                     _touch(tax / TABLE, "{}\n")
+                    _touch(otl / onto_path.OTL_MARKER, "")
                     anchor = _touch(root / "app" / "tool.py", "")
                     sys.modules.pop("knowledgegraph", None)
+                    sys.modules.pop("ontautology_graphs", None)
                     found = module.activate(anchor)
                     self.assertEqual(found["ONTO"], onto.resolve())
                     self.assertEqual(found["TaxOntOy"], tax.resolve())
+                    self.assertEqual(found["OnTautoLogy"], otl.resolve())
                     fake = types.ModuleType("knowledgegraph")
                     fake.__file__ = str(root / "other" / MARKER)
                     sys.modules["knowledgegraph"] = fake
@@ -565,6 +585,10 @@ class ConftestTests(unittest.TestCase):
                 sys.modules.pop("knowledgegraph", None)
             else:
                 sys.modules["knowledgegraph"] = saved_module
+            if saved_otl is None:
+                sys.modules.pop("ontautology_graphs", None)
+            else:
+                sys.modules["ontautology_graphs"] = saved_otl
 
 
 def _run_script(script, args, env):
@@ -773,8 +797,8 @@ class ResolutionMutationTests(unittest.TestCase):
             "            if False and token.startswith(prefix):\n",
         )
         argv = ["--onto-root=/onto", "--taxontoy-root=/tax"]
-        self.assertEqual(onto_path.explicit_from_argv(argv), {"ONTO": "/onto", "TaxOntOy": "/tax"})
-        self.assertEqual(mutant.explicit_from_argv(argv), {"ONTO": None, "TaxOntOy": None})
+        self.assertEqual(onto_path.explicit_from_argv(argv), {"ONTO": "/onto", "TaxOntOy": "/tax", "OnTautoLogy": None})
+        self.assertEqual(mutant.explicit_from_argv(argv), {"ONTO": None, "TaxOntOy": None, "OnTautoLogy": None})
 
     def test_skipping_tilde_expansion_is_killed(self):
         mutant = load_path_mutant(

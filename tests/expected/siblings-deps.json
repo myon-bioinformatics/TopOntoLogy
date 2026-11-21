@@ -234,8 +234,34 @@
     "dragowing",
     "queryu"
   ],
+  "siblings_cover": {
+    "complete": true,
+    "cover": [
+      "blueprobe",
+      "dragowing",
+      "nagoyaction",
+      "pythdragoras"
+    ],
+    "method": "exact",
+    "size": 4,
+    "uncovered": [],
+    "unique": {
+      "blueprobe": [
+        "queryu/core"
+      ],
+      "dragowing": [],
+      "nagoyaction": [
+        "."
+      ],
+      "pythdragoras": [
+        "sakanalytics"
+      ],
+      "queryu": [],
+      "sakanalytics": []
+    }
+  },
   "tool": {
     "name": "topontology",
-    "version": "0.7.0"
+    "version": "0.8.0"
   }
 }

@@ -44,9 +44,9 @@ python -S topontology.py audit.json ../TaxOntOy/otl-relations.json audit
 - 最長の有向路の長さ。ONTO の `topological_order`（`graphlib.TopologicalSorter`）が閉路を見つけた分類では `depth` は null で、`order_cycle` にその閉路を残します
 - 独立閉路 `independent_cycles`。辺数を E、端点の数を V、弱連結成分の数を C として E − V + C。有向閉路がなくても、無向にしたときに近道があると 1 以上になります。同梱の hierarchy は A→B、B→C、A→C で、有向閉路はなく深さは 2、独立閉路は 1 です
 
-分類表にない辺の数も返します。類似関係の閉路は相互リンクでも生じます。階層の循環を調べるときは hierarchy 欄を使います。
+分類表にない辺の数も返します。`schema` の無い表では、類似関係の往復も閉路として数えます。`/1` と `/2` で `direction` が `mutual` または `undirected` の往復は、数える前に畳みます。階層の循環を調べるときは hierarchy 欄を使います。
 
-分類表の `schema` が `taxontoy-relations/1` または `taxontoy-relations/2` のとき、プロファイルは `audit`、`concepts`、`cases` です。`schema`、`direction`、`excluded`、`properties` はどちらの版でもプロファイルではありません。`properties` が関係名からクラス名への対応に見えても、プロファイルとしては読みません。`taxontoy-relations/` の知らない版（`/3` など）は、終了コード 1 で版が未知だと知らせます。`schema` の無い表は、これまでどおり各キーがプロファイルです。`/1` と `/2` の `audit`、`concepts`、`cases` は今までどおり読めます。
+分類表の `schema` が `taxontoy-relations/1` または `taxontoy-relations/2` のとき、プロファイルは `audit`、`concepts`、`cases` です。`schema`、`direction`、`excluded` はどちらの版でもプロファイルではありません。`properties` は、値がすべて文字列の関係名からクラス名への対応なら、利用者のプロファイルとして読みます。予約された宣言（`classes` と `relations` だけを持ち、それぞれの値がオブジェクト）はプロファイルではありません。`properties.classes.<分類>.acyclic` がオブジェクトのときだけ、その分類は非循環を宣言します。文字列などオブジェクト以外は利用者のデータで、宣言には数えません。宣言と利用者の対応が同じオブジェクトに混ざっているときは、終了コード 1 でその旨を知らせます。`taxontoy-relations/` の知らない版（`/3` など）は、終了コード 1 で版が未知だと知らせます。`schema` の無い表は、これまでどおり各キーがプロファイルで、`properties` もプロファイル名にできます。`/1` と `/2` の `audit`、`concepts`、`cases` は今までどおり読めます。
 
 ## 出力
 
@@ -68,6 +68,22 @@ JSON はキー順を固定した一つの文書です。`--format canonical` と
 
 辺に `kind` も `relation` もないときは、トレースバックではなく `ValueError` を標準エラーに出して終了コード 1 で終わります。
 
+## OnTautoLogy のグラフ手続き
+
+閉路の基底、往復の畳み込み、単一故障点、集合被覆、ピンの遅れは OnTautoLogy の `ontautology_graphs.py` を呼びます。アルゴリズムはこちらでは書きません。端点や関係名が空でない文字列でない辺が一つでもあるときは、その呼び出しをせず、数値の `1` と文字列の `"1"` を同じ頂点にしません。
+
+`direction` が `mutual` または `undirected` の往復は `collapse_reciprocal` で畳みます。落とされた辺と、残った逆向きを `collapsed_edges` に残します。`forward` と `directed`、表に無い関係、`schema` の無い表は畳みません。分類の指標と `cycle_basis` と `spof` は畳んだあとの辺で計算します。
+
+分類ごとの `cycle_basis` は `cycle_basis` の無向な基本閉路です。各閉路は元の辺と関係ラベルを持ちます。`independent_cycles` は E − V + C で、基底の本数と一致します。
+
+`spof` は `single_points_of_failure` です。根は入る辺の無い端点です。閉路だけで根が無いとき、または端点が文字列でないときは `not applicable` です。関節点と、根から届かなくなるノード数の順位を返します。
+
+`siblings_cover` は、`SIBLINGS` のパスをすべて覆う子の最小集合です。`set_cover_min` の結果で、`deps` の文書にも入ります。同点のときは OnTautoLogy が選んだ並びです。
+
+グラフに `first_parent`（先端から根への `{sha, parents}` の配列）があり、辺に `pinned` があるとき、`first_parent_lag` の `commits` と `merges` をその辺の `lag` にします。出力の `pin_lag` はそれを並べたものです。vendor-lock では、文書に `first_parent` があるときだけ各ファイルの `commit` をピンとして読みます。鎖に無い SHA はエラーです。git には問い合わせません。
+
+`--format text` と `--format json`（`--json`）のどちらにも、これらの欄が出ます。
+
 ## 互換
 
 OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize` を使います。その関数だけ残してあります。コマンドとしては `topology.py` は動きません。
@@ -78,7 +94,7 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `onto_path.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.7.0 です。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `onto_path.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99`、OnTautoLogy は main の first-parent マージ `59edb8f13e4f0d2a12f89b9d912cbe4fdd1abd83` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` と `OTL_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.8.0 です。
 
 ## 時点の並び
 

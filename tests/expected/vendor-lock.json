@@ -1,6 +1,10 @@
 {
   "classes": {
     "dependency": {
+      "cycle_basis": {
+        "cycles": [],
+        "independent_cycles": 0
+      },
       "degree": {
         "max_in": 1,
         "max_out": 1,
@@ -24,6 +28,8 @@
       }
     }
   },
+  "collapsed_edges": [],
+  "pin_lag": [],
   "provenance": {
     "classification": {
       "path": "tests/fixtures/vendor-classes.json",
@@ -35,9 +41,66 @@
     },
     "profile": "demo"
   },
+  "spof": {
+    "articulation_points": [],
+    "dominators": [
+      {
+        "idom": "vendor/lib.py",
+        "node": "example/upstream:lib.py"
+      },
+      {
+        "idom": "vendor/other.py",
+        "node": "example/upstream:other.py"
+      },
+      {
+        "idom": null,
+        "node": "vendor/lib.py"
+      },
+      {
+        "idom": null,
+        "node": "vendor/other.py"
+      }
+    ],
+    "ranked": [
+      {
+        "lost": [
+          "example/upstream:lib.py",
+          "vendor/lib.py"
+        ],
+        "node": "vendor/lib.py",
+        "unreachable": 2
+      },
+      {
+        "lost": [
+          "example/upstream:other.py",
+          "vendor/other.py"
+        ],
+        "node": "vendor/other.py",
+        "unreachable": 2
+      },
+      {
+        "lost": [
+          "example/upstream:lib.py"
+        ],
+        "node": "example/upstream:lib.py",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "example/upstream:other.py"
+        ],
+        "node": "example/upstream:other.py",
+        "unreachable": 1
+      }
+    ],
+    "roots": [
+      "vendor/lib.py",
+      "vendor/other.py"
+    ]
+  },
   "tool": {
     "name": "topontology",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "unclassified_edges": 0
 }

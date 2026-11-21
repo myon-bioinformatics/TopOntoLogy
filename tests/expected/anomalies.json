@@ -471,6 +471,10 @@
   },
   "classes": {
     "side": {
+      "cycle_basis": {
+        "cycles": [],
+        "independent_cycles": 0
+      },
       "degree": {
         "max_in": 0,
         "max_out": 0,
@@ -491,6 +495,10 @@
       }
     },
     "star": {
+      "cycle_basis": {
+        "cycles": [],
+        "independent_cycles": 0
+      },
       "degree": {
         "max_in": 10,
         "max_out": 1,
@@ -515,6 +523,10 @@
       }
     },
     "tail": {
+      "cycle_basis": {
+        "cycles": [],
+        "independent_cycles": 0
+      },
       "degree": {
         "max_in": 0,
         "max_out": 0,
@@ -535,6 +547,8 @@
       }
     }
   },
+  "collapsed_edges": [],
+  "pin_lag": [],
   "provenance": {
     "classification": {
       "path": "tests/fixtures/sigma-classes.json",
@@ -546,9 +560,151 @@
     },
     "profile": "demo"
   },
+  "spof": {
+    "articulation_points": [
+      "C"
+    ],
+    "dominators": [
+      {
+        "idom": null,
+        "node": "C"
+      },
+      {
+        "idom": null,
+        "node": "L0"
+      },
+      {
+        "idom": null,
+        "node": "L1"
+      },
+      {
+        "idom": null,
+        "node": "L2"
+      },
+      {
+        "idom": null,
+        "node": "L3"
+      },
+      {
+        "idom": null,
+        "node": "L4"
+      },
+      {
+        "idom": null,
+        "node": "L5"
+      },
+      {
+        "idom": null,
+        "node": "L6"
+      },
+      {
+        "idom": null,
+        "node": "L7"
+      },
+      {
+        "idom": null,
+        "node": "L8"
+      },
+      {
+        "idom": null,
+        "node": "L9"
+      }
+    ],
+    "ranked": [
+      {
+        "lost": [
+          "C"
+        ],
+        "node": "C",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "L0"
+        ],
+        "node": "L0",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "L1"
+        ],
+        "node": "L1",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "L2"
+        ],
+        "node": "L2",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "L3"
+        ],
+        "node": "L3",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "L4"
+        ],
+        "node": "L4",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "L5"
+        ],
+        "node": "L5",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "L6"
+        ],
+        "node": "L6",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "L7"
+        ],
+        "node": "L7",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "L8"
+        ],
+        "node": "L8",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "L9"
+        ],
+        "node": "L9",
+        "unreachable": 1
+      }
+    ],
+    "roots": [
+      "L0",
+      "L1",
+      "L2",
+      "L3",
+      "L4",
+      "L5",
+      "L6",
+      "L7",
+      "L8",
+      "L9"
+    ]
+  },
   "tool": {
     "name": "topontology",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "unclassified_edges": 0
 }

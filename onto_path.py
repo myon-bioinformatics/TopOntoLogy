@@ -22,6 +22,12 @@ TAXONTOY_MARKER = "otl-relations.json"
 TAXONTOY_MODULES = ()
 TAXONTOY_FLAG = "--taxontoy-root"
 
+OTL_ENV = "OTL_ROOT"
+OTL_DIRNAME = "OnTautoLogy"
+OTL_MARKER = "ontautology_graphs.py"
+OTL_MODULES = ("ontautology_graphs",)
+OTL_FLAG = "--otl-root"
+
 ROOTS = {
     "ONTO": {
         "env": ONTO_ENV,
@@ -35,11 +41,18 @@ ROOTS = {
         "marker": TAXONTOY_MARKER,
         "modules": TAXONTOY_MODULES,
     },
+    "OnTautoLogy": {
+        "env": OTL_ENV,
+        "dirname": OTL_DIRNAME,
+        "marker": OTL_MARKER,
+        "modules": OTL_MODULES,
+    },
 }
 
 FLAGS = (
     (ONTO_FLAG, "ONTO"),
     (TAXONTOY_FLAG, "TaxOntOy"),
+    (OTL_FLAG, "OnTautoLogy"),
 )
 
 RESOLVED = {}

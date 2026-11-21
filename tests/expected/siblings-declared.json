@@ -1,6 +1,10 @@
 {
   "classes": {
     "actual": {
+      "cycle_basis": {
+        "cycles": [],
+        "independent_cycles": 0
+      },
       "degree": {
         "max_in": 0,
         "max_out": 0,
@@ -21,6 +25,239 @@
       }
     },
     "declared": {
+      "cycle_basis": {
+        "cycles": [
+          {
+            "edges": [
+              {
+                "relation": "declares",
+                "source": "blueprobe",
+                "target": "blueprobe/npb"
+              },
+              {
+                "relation": "declares",
+                "source": "blueprobe",
+                "target": "queryu"
+              },
+              {
+                "relation": "declares",
+                "source": "queryu",
+                "target": "blueprobe/npb"
+              }
+            ],
+            "labels": [
+              "declares",
+              "declares",
+              "declares"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "declares",
+                "source": "blueprobe",
+                "target": "blueprobe/npb"
+              },
+              {
+                "relation": "declares",
+                "source": "nagoyaction",
+                "target": "blueprobe"
+              },
+              {
+                "relation": "declares",
+                "source": "nagoyaction",
+                "target": "blueprobe/npb"
+              }
+            ],
+            "labels": [
+              "declares",
+              "declares",
+              "declares"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "declares",
+                "source": "blueprobe",
+                "target": "blueprobe/npb"
+              },
+              {
+                "relation": "declares",
+                "source": "nagoyaction",
+                "target": "blueprobe"
+              },
+              {
+                "relation": "declares",
+                "source": "nagoyaction",
+                "target": "queryu"
+              },
+              {
+                "relation": "declares",
+                "source": "queryu",
+                "target": "blueprobe/npb"
+              }
+            ],
+            "labels": [
+              "declares",
+              "declares",
+              "declares",
+              "declares"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "declares",
+                "source": "blueprobe",
+                "target": "blueprobe/npb"
+              },
+              {
+                "relation": "declares",
+                "source": "queryu",
+                "target": "blueprobe"
+              },
+              {
+                "relation": "declares",
+                "source": "queryu",
+                "target": "blueprobe/npb"
+              }
+            ],
+            "labels": [
+              "declares",
+              "declares",
+              "declares"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "declares",
+                "source": "dragowing",
+                "target": "pythdragoras"
+              },
+              {
+                "relation": "declares",
+                "source": "dragowing",
+                "target": "pythdragoras/core"
+              },
+              {
+                "relation": "declares",
+                "source": "sakanalytics",
+                "target": "pythdragoras/core"
+              },
+              {
+                "relation": "declares",
+                "source": "pythdragoras",
+                "target": "sakanalytics"
+              }
+            ],
+            "labels": [
+              "declares",
+              "declares",
+              "declares",
+              "declares"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "declares",
+                "source": "dragowing",
+                "target": "pythdragoras"
+              },
+              {
+                "relation": "declares",
+                "source": "dragowing",
+                "target": "queryu/ask"
+              },
+              {
+                "relation": "declares",
+                "source": "nagoyaction",
+                "target": "queryu/ask"
+              },
+              {
+                "relation": "declares",
+                "source": "nagoyaction",
+                "target": "sakanalytics/npb"
+              },
+              {
+                "relation": "declares",
+                "source": "sakanalytics",
+                "target": "sakanalytics/npb"
+              },
+              {
+                "relation": "declares",
+                "source": "pythdragoras",
+                "target": "sakanalytics"
+              }
+            ],
+            "labels": [
+              "declares",
+              "declares",
+              "declares",
+              "declares",
+              "declares",
+              "declares"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "declares",
+                "source": "pythdragoras",
+                "target": "pythdragoras"
+              }
+            ],
+            "labels": [
+              "declares"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "declares",
+                "source": "pythdragoras",
+                "target": "sakanalytics"
+              },
+              {
+                "relation": "declares",
+                "source": "pythdragoras",
+                "target": "sakanalytics/npb"
+              },
+              {
+                "relation": "declares",
+                "source": "sakanalytics",
+                "target": "sakanalytics/npb"
+              }
+            ],
+            "labels": [
+              "declares",
+              "declares",
+              "declares"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "declares",
+                "source": "pythdragoras",
+                "target": "sakanalytics"
+              },
+              {
+                "relation": "declares",
+                "source": "sakanalytics",
+                "target": "pythdragoras"
+              }
+            ],
+            "labels": [
+              "declares",
+              "declares"
+            ]
+          }
+        ],
+        "independent_cycles": 9
+      },
       "degree": {
         "max_in": 3,
         "max_out": 6,
@@ -70,6 +307,10 @@
       }
     },
     "unmapped": {
+      "cycle_basis": {
+        "cycles": [],
+        "independent_cycles": 0
+      },
       "degree": {
         "max_in": 0,
         "max_out": 0,
@@ -90,6 +331,8 @@
       }
     }
   },
+  "collapsed_edges": [],
+  "pin_lag": [],
   "provenance": {
     "classification": {
       "path": "tests/fixtures/sibling-classes.json",
@@ -101,9 +344,191 @@
     },
     "profile": "siblings"
   },
+  "siblings_cover": {
+    "complete": true,
+    "cover": [
+      "blueprobe",
+      "dragowing",
+      "nagoyaction",
+      "pythdragoras"
+    ],
+    "method": "exact",
+    "size": 4,
+    "uncovered": [],
+    "unique": {
+      "blueprobe": [
+        "queryu/core"
+      ],
+      "dragowing": [],
+      "nagoyaction": [
+        "."
+      ],
+      "pythdragoras": [
+        "sakanalytics"
+      ],
+      "queryu": [],
+      "sakanalytics": []
+    }
+  },
+  "spof": {
+    "articulation_points": [
+      "blueprobe",
+      "nagoyaction"
+    ],
+    "dominators": [
+      {
+        "idom": "nagoyaction",
+        "node": "."
+      },
+      {
+        "idom": "nagoyaction",
+        "node": "blueprobe"
+      },
+      {
+        "idom": "nagoyaction",
+        "node": "blueprobe/npb"
+      },
+      {
+        "idom": null,
+        "node": "dragowing"
+      },
+      {
+        "idom": null,
+        "node": "nagoyaction"
+      },
+      {
+        "idom": "dragowing",
+        "node": "pythdragoras"
+      },
+      {
+        "idom": "dragowing",
+        "node": "pythdragoras/core"
+      },
+      {
+        "idom": "nagoyaction",
+        "node": "queryu"
+      },
+      {
+        "idom": null,
+        "node": "queryu/ask"
+      },
+      {
+        "idom": "blueprobe",
+        "node": "queryu/core"
+      },
+      {
+        "idom": "pythdragoras",
+        "node": "sakanalytics"
+      },
+      {
+        "idom": null,
+        "node": "sakanalytics/npb"
+      }
+    ],
+    "ranked": [
+      {
+        "lost": [
+          ".",
+          "blueprobe",
+          "blueprobe/npb",
+          "nagoyaction",
+          "queryu",
+          "queryu/core"
+        ],
+        "node": "nagoyaction",
+        "unreachable": 6
+      },
+      {
+        "lost": [
+          "dragowing",
+          "pythdragoras",
+          "pythdragoras/core",
+          "sakanalytics"
+        ],
+        "node": "dragowing",
+        "unreachable": 4
+      },
+      {
+        "lost": [
+          "blueprobe",
+          "queryu/core"
+        ],
+        "node": "blueprobe",
+        "unreachable": 2
+      },
+      {
+        "lost": [
+          "pythdragoras",
+          "sakanalytics"
+        ],
+        "node": "pythdragoras",
+        "unreachable": 2
+      },
+      {
+        "lost": [
+          "."
+        ],
+        "node": ".",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "blueprobe/npb"
+        ],
+        "node": "blueprobe/npb",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "pythdragoras/core"
+        ],
+        "node": "pythdragoras/core",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "queryu"
+        ],
+        "node": "queryu",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "queryu/ask"
+        ],
+        "node": "queryu/ask",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "queryu/core"
+        ],
+        "node": "queryu/core",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "sakanalytics"
+        ],
+        "node": "sakanalytics",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "sakanalytics/npb"
+        ],
+        "node": "sakanalytics/npb",
+        "unreachable": 1
+      }
+    ],
+    "roots": [
+      "dragowing",
+      "nagoyaction"
+    ]
+  },
   "tool": {
     "name": "topontology",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "unclassified_edges": 0
 }
