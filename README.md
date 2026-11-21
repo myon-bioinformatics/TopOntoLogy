@@ -61,7 +61,7 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 PYTHONPATH=../ONTO uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `30c5ed689cb931bce3787e37056082ce8cb52b3d` を checkout し、`PYTHONPATH` で ONTO を渡します。ツールの版は 0.3.0 です。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99` を checkout し、`PYTHONPATH` で ONTO を渡します。ツールの版は 0.3.0 です。
 
 ## 時点の並び
 
