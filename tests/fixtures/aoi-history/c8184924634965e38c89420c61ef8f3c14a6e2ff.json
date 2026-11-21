@@ -1,0 +1,15 @@
+{
+  "schema": "vendor-lock/1",
+  "files": [
+    {
+      "repository": "myon-bioinformatics/markdown",
+      "source": "markdown.py",
+      "destination": "vendor/markdown.py"
+    },
+    {
+      "repository": "myon-bioinformatics/markdown",
+      "source": "LICENSE",
+      "destination": "vendor/markdown-LICENSE"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "nodes": [
+    {"id": "A"},
+    {"id": "B"},
+    {"id": "C"},
+    {"id": "P"},
+    {"id": "Q"},
+    {"id": "R"},
+    {"id": "S"}
+  ],
+  "edges": [
+    {"source": "A", "kind": "dependsOn", "target": "B"},
+    {"source": "B", "kind": "dependsOn", "target": "C"},
+    {"source": "A", "kind": "depends_on", "target": "B"},
+    {"source": "B", "kind": "depends_on", "target": "C"},
+    {"source": "C", "kind": "blocks", "target": "B"},
+    {"source": "B", "kind": "blocks", "target": "A"},
+    {"source": "P", "kind": "duplicates", "target": "Q"},
+    {"source": "R", "kind": "duplicates", "target": "S"},
+    {"source": "Q", "kind": "belongsTo", "target": "R"},
+    {"source": "P", "kind": "overlapsWith", "target": "Q"}
+  ]
+}

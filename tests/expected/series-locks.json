@@ -1,0 +1,1604 @@
+{
+  "nodes": [
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "mindeps/httpx_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "enters": 1,
+      "first_seen": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "id": "myon-bioinformatics/PySaiyanWeBoo:LICENSE",
+      "last_seen": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "leaves": 1
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "enters": 1,
+      "first_seen": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "id": "myon-bioinformatics/PySaiyanWeBoo:web_ui.py",
+      "last_seen": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "leaves": 1
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "c8184924634965e38c89420c61ef8f3c14a6e2ff",
+      "id": "myon-bioinformatics/markdown:LICENSE",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "c8184924634965e38c89420c61ef8f3c14a6e2ff",
+      "id": "myon-bioinformatics/markdown:markdown.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+      "id": "myon-bioinformatics/myon-bioinformatics:py_launch.cjs",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/biopython_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/httpx_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/numpy_linalg_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/numpy_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/polars_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/requests_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/tqdm_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/uv_tool_build.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "enters": 1,
+      "first_seen": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "id": "myon-bioinformatics/web-ui:LICENSE",
+      "last_seen": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+      "leaves": 1
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "enters": 1,
+      "first_seen": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "id": "myon-bioinformatics/web-ui:web_ui.py",
+      "last_seen": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+      "leaves": 1
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "pkgmin/biopython_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "pkgmin/requests_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "pkgmin/tqdm_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "shrink/numpy_linalg_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "shrink/numpy_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "id": "shrink/polars_min.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "c8184924634965e38c89420c61ef8f3c14a6e2ff",
+      "id": "vendor/markdown-LICENSE",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "c8184924634965e38c89420c61ef8f3c14a6e2ff",
+      "id": "vendor/markdown.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+      "id": "vendor/py_launch.cjs",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "id": "vendor/uv_tool_build.py",
+      "last_seen": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "leaves": 0
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "enters": 1,
+      "first_seen": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "id": "vendor/web-ui-LICENSE",
+      "last_seen": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "leaves": 1
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "enters": 1,
+      "first_seen": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "id": "vendor/web_ui.py",
+      "last_seen": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "leaves": 1
+    }
+  ],
+  "pairs": [
+    {
+      "classes": {
+        "dependency": {
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 0,
+              "sinks": 2,
+              "sources": 2
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": 2,
+            "incident_nodes": 4,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": 2
+          },
+          "edges_changed": {
+            "added": [
+              {
+                "relation": "vendorsFrom",
+                "source": "vendor/web-ui-LICENSE",
+                "target": "myon-bioinformatics/web-ui:LICENSE"
+              },
+              {
+                "relation": "vendorsFrom",
+                "source": "vendor/web_ui.py",
+                "target": "myon-bioinformatics/web-ui:web_ui.py"
+              }
+            ],
+            "removed": []
+          },
+          "left": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 2,
+              "sources": 2
+            },
+            "depth": 1,
+            "edges": 2,
+            "incident_nodes": 4,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 2,
+              "sizes": [
+                2,
+                2
+              ]
+            }
+          },
+          "right": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 4,
+              "sources": 4
+            },
+            "depth": 1,
+            "edges": 4,
+            "incident_nodes": 8,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 4,
+              "sizes": [
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          }
+        }
+      },
+      "graph": {
+        "delta": {
+          "degree": {
+            "max_in": 0,
+            "max_out": 0,
+            "max_total": 0,
+            "sinks": 2,
+            "sources": 2
+          },
+          "depth": 0,
+          "directed_cycle": 0,
+          "edges": 2,
+          "incident_nodes": 4,
+          "independent_cycles": 0,
+          "sample_cycles": 0,
+          "weakly_connected_components": 2
+        },
+        "edges_changed": {
+          "added": [
+            {
+              "relation": "vendorsFrom",
+              "source": "vendor/web-ui-LICENSE",
+              "target": "myon-bioinformatics/web-ui:LICENSE"
+            },
+            {
+              "relation": "vendorsFrom",
+              "source": "vendor/web_ui.py",
+              "target": "myon-bioinformatics/web-ui:web_ui.py"
+            }
+          ],
+          "removed": []
+        },
+        "left": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 2,
+            "sources": 2
+          },
+          "depth": 1,
+          "edges": 2,
+          "incident_nodes": 4,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 2,
+            "sizes": [
+              2,
+              2
+            ]
+          }
+        },
+        "right": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 4,
+            "sources": 4
+          },
+          "depth": 1,
+          "edges": 4,
+          "incident_nodes": 8,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 4,
+            "sizes": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        }
+      },
+      "left": "c8184924634965e38c89420c61ef8f3c14a6e2ff",
+      "right": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "unclassified_edges": {
+        "delta": 0,
+        "left": 0,
+        "right": 0
+      }
+    },
+    {
+      "classes": {
+        "dependency": {
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 0,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": 1,
+            "incident_nodes": 2,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": 1
+          },
+          "edges_changed": {
+            "added": [
+              {
+                "relation": "vendorsFrom",
+                "source": "vendor/py_launch.cjs",
+                "target": "myon-bioinformatics/myon-bioinformatics:py_launch.cjs"
+              }
+            ],
+            "removed": []
+          },
+          "left": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 4,
+              "sources": 4
+            },
+            "depth": 1,
+            "edges": 4,
+            "incident_nodes": 8,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 4,
+              "sizes": [
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          },
+          "right": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 5,
+              "sources": 5
+            },
+            "depth": 1,
+            "edges": 5,
+            "incident_nodes": 10,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 5,
+              "sizes": [
+                2,
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          }
+        }
+      },
+      "graph": {
+        "delta": {
+          "degree": {
+            "max_in": 0,
+            "max_out": 0,
+            "max_total": 0,
+            "sinks": 1,
+            "sources": 1
+          },
+          "depth": 0,
+          "directed_cycle": 0,
+          "edges": 1,
+          "incident_nodes": 2,
+          "independent_cycles": 0,
+          "sample_cycles": 0,
+          "weakly_connected_components": 1
+        },
+        "edges_changed": {
+          "added": [
+            {
+              "relation": "vendorsFrom",
+              "source": "vendor/py_launch.cjs",
+              "target": "myon-bioinformatics/myon-bioinformatics:py_launch.cjs"
+            }
+          ],
+          "removed": []
+        },
+        "left": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 4,
+            "sources": 4
+          },
+          "depth": 1,
+          "edges": 4,
+          "incident_nodes": 8,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 4,
+            "sizes": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        "right": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 5,
+            "sources": 5
+          },
+          "depth": 1,
+          "edges": 5,
+          "incident_nodes": 10,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 5,
+            "sizes": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        }
+      },
+      "left": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "right": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+      "unclassified_edges": {
+        "delta": 0,
+        "left": 0,
+        "right": 0
+      }
+    },
+    {
+      "classes": {
+        "dependency": {
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 0,
+              "sinks": 0,
+              "sources": 0
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": 0,
+            "incident_nodes": 0,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": 0
+          },
+          "edges_changed": {
+            "added": [
+              {
+                "relation": "vendorsFrom",
+                "source": "vendor/web-ui-LICENSE",
+                "target": "myon-bioinformatics/PySaiyanWeBoo:LICENSE"
+              },
+              {
+                "relation": "vendorsFrom",
+                "source": "vendor/web_ui.py",
+                "target": "myon-bioinformatics/PySaiyanWeBoo:web_ui.py"
+              }
+            ],
+            "removed": [
+              {
+                "relation": "vendorsFrom",
+                "source": "vendor/web-ui-LICENSE",
+                "target": "myon-bioinformatics/web-ui:LICENSE"
+              },
+              {
+                "relation": "vendorsFrom",
+                "source": "vendor/web_ui.py",
+                "target": "myon-bioinformatics/web-ui:web_ui.py"
+              }
+            ]
+          },
+          "left": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 5,
+              "sources": 5
+            },
+            "depth": 1,
+            "edges": 5,
+            "incident_nodes": 10,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 5,
+              "sizes": [
+                2,
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          },
+          "right": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 5,
+              "sources": 5
+            },
+            "depth": 1,
+            "edges": 5,
+            "incident_nodes": 10,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 5,
+              "sizes": [
+                2,
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          }
+        }
+      },
+      "graph": {
+        "delta": {
+          "degree": {
+            "max_in": 0,
+            "max_out": 0,
+            "max_total": 0,
+            "sinks": 0,
+            "sources": 0
+          },
+          "depth": 0,
+          "directed_cycle": 0,
+          "edges": 0,
+          "incident_nodes": 0,
+          "independent_cycles": 0,
+          "sample_cycles": 0,
+          "weakly_connected_components": 0
+        },
+        "edges_changed": {
+          "added": [
+            {
+              "relation": "vendorsFrom",
+              "source": "vendor/web-ui-LICENSE",
+              "target": "myon-bioinformatics/PySaiyanWeBoo:LICENSE"
+            },
+            {
+              "relation": "vendorsFrom",
+              "source": "vendor/web_ui.py",
+              "target": "myon-bioinformatics/PySaiyanWeBoo:web_ui.py"
+            }
+          ],
+          "removed": [
+            {
+              "relation": "vendorsFrom",
+              "source": "vendor/web-ui-LICENSE",
+              "target": "myon-bioinformatics/web-ui:LICENSE"
+            },
+            {
+              "relation": "vendorsFrom",
+              "source": "vendor/web_ui.py",
+              "target": "myon-bioinformatics/web-ui:web_ui.py"
+            }
+          ]
+        },
+        "left": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 5,
+            "sources": 5
+          },
+          "depth": 1,
+          "edges": 5,
+          "incident_nodes": 10,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 5,
+            "sizes": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        "right": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 5,
+            "sources": 5
+          },
+          "depth": 1,
+          "edges": 5,
+          "incident_nodes": 10,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 5,
+            "sizes": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        }
+      },
+      "left": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+      "right": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "unclassified_edges": {
+        "delta": 0,
+        "left": 0,
+        "right": 0
+      }
+    },
+    {
+      "classes": {
+        "dependency": {
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 0,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": 1,
+            "incident_nodes": 2,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": 1
+          },
+          "edges_changed": {
+            "added": [
+              {
+                "relation": "vendorsFrom",
+                "source": "vendor/uv_tool_build.py",
+                "target": "myon-bioinformatics/myon-bioinformatics:tools/uv_tool_build.py"
+              }
+            ],
+            "removed": []
+          },
+          "left": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 5,
+              "sources": 5
+            },
+            "depth": 1,
+            "edges": 5,
+            "incident_nodes": 10,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 5,
+              "sizes": [
+                2,
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          },
+          "right": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 6,
+              "sources": 6
+            },
+            "depth": 1,
+            "edges": 6,
+            "incident_nodes": 12,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 6,
+              "sizes": [
+                2,
+                2,
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          }
+        }
+      },
+      "graph": {
+        "delta": {
+          "degree": {
+            "max_in": 0,
+            "max_out": 0,
+            "max_total": 0,
+            "sinks": 1,
+            "sources": 1
+          },
+          "depth": 0,
+          "directed_cycle": 0,
+          "edges": 1,
+          "incident_nodes": 2,
+          "independent_cycles": 0,
+          "sample_cycles": 0,
+          "weakly_connected_components": 1
+        },
+        "edges_changed": {
+          "added": [
+            {
+              "relation": "vendorsFrom",
+              "source": "vendor/uv_tool_build.py",
+              "target": "myon-bioinformatics/myon-bioinformatics:tools/uv_tool_build.py"
+            }
+          ],
+          "removed": []
+        },
+        "left": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 5,
+            "sources": 5
+          },
+          "depth": 1,
+          "edges": 5,
+          "incident_nodes": 10,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 5,
+            "sizes": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        "right": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 6,
+            "sources": 6
+          },
+          "depth": 1,
+          "edges": 6,
+          "incident_nodes": 12,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 6,
+            "sizes": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        }
+      },
+      "left": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "right": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "unclassified_edges": {
+        "delta": 0,
+        "left": 0,
+        "right": 0
+      }
+    },
+    {
+      "classes": {
+        "dependency": {
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 0,
+              "sinks": -2,
+              "sources": -2
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": -2,
+            "incident_nodes": -4,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": -2
+          },
+          "edges_changed": {
+            "added": [],
+            "removed": [
+              {
+                "relation": "vendorsFrom",
+                "source": "vendor/web-ui-LICENSE",
+                "target": "myon-bioinformatics/PySaiyanWeBoo:LICENSE"
+              },
+              {
+                "relation": "vendorsFrom",
+                "source": "vendor/web_ui.py",
+                "target": "myon-bioinformatics/PySaiyanWeBoo:web_ui.py"
+              }
+            ]
+          },
+          "left": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 6,
+              "sources": 6
+            },
+            "depth": 1,
+            "edges": 6,
+            "incident_nodes": 12,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 6,
+              "sizes": [
+                2,
+                2,
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          },
+          "right": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 4,
+              "sources": 4
+            },
+            "depth": 1,
+            "edges": 4,
+            "incident_nodes": 8,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 4,
+              "sizes": [
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          }
+        }
+      },
+      "graph": {
+        "delta": {
+          "degree": {
+            "max_in": 0,
+            "max_out": 0,
+            "max_total": 0,
+            "sinks": -2,
+            "sources": -2
+          },
+          "depth": 0,
+          "directed_cycle": 0,
+          "edges": -2,
+          "incident_nodes": -4,
+          "independent_cycles": 0,
+          "sample_cycles": 0,
+          "weakly_connected_components": -2
+        },
+        "edges_changed": {
+          "added": [],
+          "removed": [
+            {
+              "relation": "vendorsFrom",
+              "source": "vendor/web-ui-LICENSE",
+              "target": "myon-bioinformatics/PySaiyanWeBoo:LICENSE"
+            },
+            {
+              "relation": "vendorsFrom",
+              "source": "vendor/web_ui.py",
+              "target": "myon-bioinformatics/PySaiyanWeBoo:web_ui.py"
+            }
+          ]
+        },
+        "left": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 6,
+            "sources": 6
+          },
+          "depth": 1,
+          "edges": 6,
+          "incident_nodes": 12,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 6,
+            "sizes": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        "right": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 4,
+            "sources": 4
+          },
+          "depth": 1,
+          "edges": 4,
+          "incident_nodes": 8,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 4,
+            "sizes": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        }
+      },
+      "left": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "right": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "unclassified_edges": {
+        "delta": 0,
+        "left": 0,
+        "right": 0
+      }
+    },
+    {
+      "classes": {
+        "dependency": {
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 0,
+              "sinks": 7,
+              "sources": 7
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": 7,
+            "incident_nodes": 14,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": 7
+          },
+          "edges_changed": {
+            "added": [
+              {
+                "relation": "vendorsFrom",
+                "source": "mindeps/httpx_min.py",
+                "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/httpx_min.py"
+              },
+              {
+                "relation": "vendorsFrom",
+                "source": "pkgmin/biopython_min.py",
+                "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/biopython_min.py"
+              },
+              {
+                "relation": "vendorsFrom",
+                "source": "pkgmin/requests_min.py",
+                "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/requests_min.py"
+              },
+              {
+                "relation": "vendorsFrom",
+                "source": "pkgmin/tqdm_min.py",
+                "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/tqdm_min.py"
+              },
+              {
+                "relation": "vendorsFrom",
+                "source": "shrink/numpy_linalg_min.py",
+                "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/numpy_linalg_min.py"
+              },
+              {
+                "relation": "vendorsFrom",
+                "source": "shrink/numpy_min.py",
+                "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/numpy_min.py"
+              },
+              {
+                "relation": "vendorsFrom",
+                "source": "shrink/polars_min.py",
+                "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/polars_min.py"
+              }
+            ],
+            "removed": []
+          },
+          "left": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 4,
+              "sources": 4
+            },
+            "depth": 1,
+            "edges": 4,
+            "incident_nodes": 8,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 4,
+              "sizes": [
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          },
+          "right": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 11,
+              "sources": 11
+            },
+            "depth": 1,
+            "edges": 11,
+            "incident_nodes": 22,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 11,
+              "sizes": [
+                2,
+                2,
+                2,
+                2,
+                2,
+                2,
+                2,
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          }
+        }
+      },
+      "graph": {
+        "delta": {
+          "degree": {
+            "max_in": 0,
+            "max_out": 0,
+            "max_total": 0,
+            "sinks": 7,
+            "sources": 7
+          },
+          "depth": 0,
+          "directed_cycle": 0,
+          "edges": 7,
+          "incident_nodes": 14,
+          "independent_cycles": 0,
+          "sample_cycles": 0,
+          "weakly_connected_components": 7
+        },
+        "edges_changed": {
+          "added": [
+            {
+              "relation": "vendorsFrom",
+              "source": "mindeps/httpx_min.py",
+              "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/httpx_min.py"
+            },
+            {
+              "relation": "vendorsFrom",
+              "source": "pkgmin/biopython_min.py",
+              "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/biopython_min.py"
+            },
+            {
+              "relation": "vendorsFrom",
+              "source": "pkgmin/requests_min.py",
+              "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/requests_min.py"
+            },
+            {
+              "relation": "vendorsFrom",
+              "source": "pkgmin/tqdm_min.py",
+              "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/tqdm_min.py"
+            },
+            {
+              "relation": "vendorsFrom",
+              "source": "shrink/numpy_linalg_min.py",
+              "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/numpy_linalg_min.py"
+            },
+            {
+              "relation": "vendorsFrom",
+              "source": "shrink/numpy_min.py",
+              "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/numpy_min.py"
+            },
+            {
+              "relation": "vendorsFrom",
+              "source": "shrink/polars_min.py",
+              "target": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/polars_min.py"
+            }
+          ],
+          "removed": []
+        },
+        "left": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 4,
+            "sources": 4
+          },
+          "depth": 1,
+          "edges": 4,
+          "incident_nodes": 8,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 4,
+            "sizes": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        "right": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 11,
+            "sources": 11
+          },
+          "depth": 1,
+          "edges": 11,
+          "incident_nodes": 22,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 11,
+            "sizes": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        }
+      },
+      "left": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "right": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "unclassified_edges": {
+        "delta": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  ],
+  "provenance": {
+    "classification": {
+      "path": "tests/fixtures/vendor-classes.json",
+      "sha256": "a765a93c69bcc9f3f68c7b087ebedbbdf4622080c12e5bffc4183af8b60669de"
+    },
+    "profile": "demo",
+    "snapshots": [
+      {
+        "label": "c8184924634965e38c89420c61ef8f3c14a6e2ff",
+        "path": "tests/fixtures/aoi-history/c8184924634965e38c89420c61ef8f3c14a6e2ff.json",
+        "sha256": "486784a907927d50add349a43596829efbcde97dbb2a06274be600749eed5e85"
+      },
+      {
+        "label": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+        "path": "tests/fixtures/aoi-history/37950ed9ecc10ee0d65dea57fa8223cbb711367c.json",
+        "sha256": "591c0e72fb4034339e53ab4b56708fd9d1d3138bdb078a963ba6a583c724eb06"
+      },
+      {
+        "label": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+        "path": "tests/fixtures/aoi-history/bf753d89f797c534292b09bad631ed24d1a9af5a.json",
+        "sha256": "0eab1f1ea70f8fae87e68ba7453e6cf46ce81b6cd8ac053b4aad7ee0aa2cada0"
+      },
+      {
+        "label": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+        "path": "tests/fixtures/aoi-history/b4d91f117729396c9443a7f86f587ec46f6347f7.json",
+        "sha256": "0304ea61346dabf173d76ca54a4ab71ef5bd7058320121d0ed73d0c2f078e773"
+      },
+      {
+        "label": "673fc7b11d94ccad16740c0998683618f2e86254",
+        "path": "tests/fixtures/aoi-history/673fc7b11d94ccad16740c0998683618f2e86254.json",
+        "sha256": "352f19ef74d0bc06c10d9c4045339f74cc07ec5ed2638b8cf317412469bda1ac"
+      },
+      {
+        "label": "014afdc6063b8db17135731b24c624e19d3c410f",
+        "path": "tests/fixtures/aoi-history/014afdc6063b8db17135731b24c624e19d3c410f.json",
+        "sha256": "c25c2fcd1c1279c5ffba2555a03679c2c5c5061cb8957b0ea5890e3d615f2484"
+      },
+      {
+        "label": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+        "path": "tests/fixtures/aoi-history/44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143.json",
+        "sha256": "db7b3287d096b021642e1f2ac7f757c480343f222bda0d631fe8c652857cc776"
+      }
+    ]
+  },
+  "repeated_churn": [
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "enters": 1,
+      "first_seen": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "id": "myon-bioinformatics/PySaiyanWeBoo:LICENSE",
+      "last_seen": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "leaves": 1
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "enters": 1,
+      "first_seen": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "id": "myon-bioinformatics/PySaiyanWeBoo:web_ui.py",
+      "last_seen": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "leaves": 1
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "enters": 1,
+      "first_seen": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "id": "myon-bioinformatics/web-ui:LICENSE",
+      "last_seen": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+      "leaves": 1
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "enters": 1,
+      "first_seen": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "id": "myon-bioinformatics/web-ui:web_ui.py",
+      "last_seen": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+      "leaves": 1
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "enters": 1,
+      "first_seen": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "id": "vendor/web-ui-LICENSE",
+      "last_seen": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "leaves": 1
+    },
+    {
+      "churn": 2,
+      "classes": [
+        "dependency"
+      ],
+      "disappeared": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "enters": 1,
+      "first_seen": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "id": "vendor/web_ui.py",
+      "last_seen": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "leaves": 1
+    }
+  ],
+  "tool": {
+    "name": "topontology",
+    "version": "0.6.0"
+  }
+}

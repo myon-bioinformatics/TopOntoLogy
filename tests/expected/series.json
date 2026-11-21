@@ -1,4 +1,66 @@
 {
+  "nodes": [
+    {
+      "churn": 2,
+      "classes": [
+        "hierarchy"
+      ],
+      "disappeared": "three",
+      "enters": 1,
+      "first_seen": "one",
+      "id": "A",
+      "last_seen": "two",
+      "leaves": 1
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "hierarchy"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "one",
+      "id": "B",
+      "last_seen": "three",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "hierarchy"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "two",
+      "id": "C",
+      "last_seen": "three",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "similarity"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "two",
+      "id": "D",
+      "last_seen": "three",
+      "leaves": 0
+    },
+    {
+      "churn": 1,
+      "classes": [
+        "similarity"
+      ],
+      "disappeared": null,
+      "enters": 1,
+      "first_seen": "two",
+      "id": "E",
+      "last_seen": "three",
+      "leaves": 0
+    }
+  ],
   "pairs": [
     {
       "classes": {
@@ -479,8 +541,22 @@
       }
     ]
   },
+  "repeated_churn": [
+    {
+      "churn": 2,
+      "classes": [
+        "hierarchy"
+      ],
+      "disappeared": "three",
+      "enters": 1,
+      "first_seen": "one",
+      "id": "A",
+      "last_seen": "two",
+      "leaves": 1
+    }
+  ],
   "tool": {
     "name": "topontology",
-    "version": "0.5.0"
+    "version": "0.6.0"
   }
 }

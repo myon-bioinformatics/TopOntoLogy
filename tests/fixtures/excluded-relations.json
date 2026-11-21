@@ -1,0 +1,43 @@
+{
+  "schema": "taxontoy-relations/2",
+  "audit": {
+    "dependsOn": "dependency",
+    "duplicates": "overlap"
+  },
+  "concepts": {
+    "narrower": "hierarchy",
+    "similarTo": "similarity"
+  },
+  "cases": {
+    "candidate": "hypothesis"
+  },
+  "direction": {
+    "candidate": "forward",
+    "dependsOn": "forward",
+    "duplicates": "undirected",
+    "narrower": "forward",
+    "similarTo": "mutual"
+  },
+  "excluded": {
+    "audit": ["belongsTo", "blocks", "depends_on", "overlapsWith"],
+    "concepts": ["hasName"],
+    "cases": []
+  },
+  "properties": {
+    "classes": {
+      "dependency": {
+        "acyclic": {
+          "since": "2026-11-14",
+          "reason": "dependsOn の閉路は監査の完了順を止める"
+        }
+      },
+      "hierarchy": {
+        "acyclic": {
+          "since": "2026-11-15",
+          "reason": "階層の循環は分類の誤りとして扱う"
+        }
+      }
+    },
+    "relations": {}
+  }
+}
