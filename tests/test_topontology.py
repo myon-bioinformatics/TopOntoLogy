@@ -10,7 +10,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-import tol_paths
+import onto_path
 import topontology
 import topology
 

@@ -1,7 +1,7 @@
-"""TopOntoLogy の配置（標準ライブラリだけ）。ONTO と TaxOntOy の場所を知る唯一のモジュール。
+"""ONTO の onto_path.py を vendors した複製（標準ライブラリだけ）。
 
-解決の順は、明示の引数、環境変数、推定。推定は TopOntoLogy の隣の checkout を先に見て、
-なければアンカーから上へ辿り、マーカーのあるディレクトリを探す。
+正本は ONTO の onto_path.py。このファイルはその複製で、TopOntoLogy は新しい版を
+自分では追わない。リポジトリごとの値は下の定数だけで、関数の本体はどの複製でも同じ。
 """
 from __future__ import annotations
 
@@ -9,17 +9,40 @@ import os
 import sys
 from pathlib import Path
 
-# レイアウトの定数はここだけ。スキーマ名やプロファイルは topontology.py の先頭に置く。
+# この checkout が解決する根。本体は ROOTS と FLAGS だけを読む。
 ONTO_ENV = "ONTO_ROOT"
-TAXONTOY_ENV = "TAXONTOY_ROOT"
 ONTO_DIRNAME = "ONTO"
-TAXONTOY_DIRNAME = "TaxOntOy"
 ONTO_MARKER = "knowledgegraph.py"
-TAXONTOY_MARKER = "otl-relations.json"
 ONTO_MODULES = ("knowledgegraph",)
+ONTO_FLAG = "--onto-root"
 
-BOOTED_ONTO = None
-BOOTED_TAXONTOY = None
+TAXONTOY_ENV = "TAXONTOY_ROOT"
+TAXONTOY_DIRNAME = "TaxOntOy"
+TAXONTOY_MARKER = "otl-relations.json"
+TAXONTOY_MODULES = ()
+TAXONTOY_FLAG = "--taxontoy-root"
+
+ROOTS = {
+    "ONTO": {
+        "env": ONTO_ENV,
+        "dirname": ONTO_DIRNAME,
+        "marker": ONTO_MARKER,
+        "modules": ONTO_MODULES,
+    },
+    "TaxOntOy": {
+        "env": TAXONTOY_ENV,
+        "dirname": TAXONTOY_DIRNAME,
+        "marker": TAXONTOY_MARKER,
+        "modules": TAXONTOY_MODULES,
+    },
+}
+
+FLAGS = (
+    (ONTO_FLAG, "ONTO"),
+    (TAXONTOY_FLAG, "TaxOntOy"),
+)
+
+RESOLVED = {}
 
 
 class RootError(FileNotFoundError):
@@ -34,12 +57,20 @@ def _unmarked(label, env_name, marker, root):
     return f"{label} が見つからない（{root} に {marker} がない）。{env_name}= を渡す"
 
 
-def _wrong_origin(problems):
-    return "ONTO のモジュールの出どころが不正（" + ", ".join(problems) + f"）。{ONTO_ENV}= を渡す"
+def _wrong_origin(problems, env_name):
+    return "モジュールの出どころが不正（" + ", ".join(problems) + f"）。{env_name}= を渡す"
 
 
 def _flag_needs_value(flag, env_name):
     return f"{flag} の値が無い。{env_name}= を渡す"
+
+
+def _spec(name):
+    try:
+        return ROOTS[name]
+    except KeyError:
+        known = ", ".join(ROOTS)
+        raise RootError(f"未知の checkout 名: {name}（{known}）") from None
 
 
 def _anchor_dir(anchor):
@@ -104,7 +135,7 @@ def _require_marker(root, marker, env_name, label):
     return path
 
 
-def resolve_root(explicit, *, env_name, dirname, marker, label, anchor=None):
+def _resolve(explicit, *, env_name, dirname, marker, label, anchor=None):
     """明示の引数、環境変数、推定。空の明示は環境変数へ落とさない。"""
     chosen = _explicit_text(explicit)
     if chosen is not None:
@@ -120,34 +151,26 @@ def resolve_root(explicit, *, env_name, dirname, marker, label, anchor=None):
     return _require_marker(found, marker, env_name, label)
 
 
-def resolve_onto(explicit=None, *, anchor=None):
-    return resolve_root(
+def resolve_root(name, explicit=None, *, anchor=None):
+    """``name`` は ROOTS のキー。明示、環境変数、隣、上への探索の順。"""
+    spec = _spec(name)
+    return _resolve(
         explicit,
-        env_name=ONTO_ENV,
-        dirname=ONTO_DIRNAME,
-        marker=ONTO_MARKER,
-        label="ONTO",
+        env_name=spec["env"],
+        dirname=spec["dirname"],
+        marker=spec["marker"],
+        label=name,
         anchor=anchor,
     )
 
 
-def resolve_taxontoy(explicit=None, *, anchor=None):
-    return resolve_root(
-        explicit,
-        env_name=TAXONTOY_ENV,
-        dirname=TAXONTOY_DIRNAME,
-        marker=TAXONTOY_MARKER,
-        label="TaxOntOy",
-        anchor=anchor,
-    )
+def marker_file(name, explicit=None, *, anchor=None):
+    """解決した根にあるマーカーファイル。"""
+    return resolve_root(name, explicit, anchor=anchor) / _spec(name)["marker"]
 
 
-def default_classification(explicit=None, *, anchor=None):
-    return resolve_taxontoy(explicit, anchor=anchor) / TAXONTOY_MARKER
-
-
-def install_onto(root):
-    """ONTO を sys.path の先頭に置く。PYTHONPATH より先に読む。"""
+def install_root(root):
+    """根を sys.path の先頭に置く。"""
     entry = str(Path(root).resolve())
     if entry in sys.path:
         sys.path.remove(entry)
@@ -155,11 +178,11 @@ def install_onto(root):
     return entry
 
 
-def verify_onto_modules(root):
-    """import 済みの ONTO モジュールが、解決した checkout のものか確かめる。"""
+def verify_origin(root, modules, env_name):
+    """import 済みモジュールが ``root`` のものか確かめる。"""
     root = Path(root).resolve()
     problems = []
-    for name in ONTO_MODULES:
+    for name in modules:
         module = sys.modules.get(name)
         if module is None:
             module = __import__(name)
@@ -168,28 +191,29 @@ def verify_onto_modules(root):
             shown = origin if origin is not None else "(なし)"
             problems.append(f"{name}={shown}")
     if problems:
-        raise RootError(_wrong_origin(problems))
+        raise RootError(_wrong_origin(problems, env_name))
     return root
 
 
-def configure(anchor, *, explicit_onto=None, explicit_taxontoy=None):
-    """二つの根を決め、ONTO を読み込めるようにし、出どころを確かめる。"""
-    global BOOTED_ONTO, BOOTED_TAXONTOY
-    onto = resolve_onto(explicit_onto, anchor=anchor)
-    tax = resolve_taxontoy(explicit_taxontoy, anchor=anchor)
-    os.environ.setdefault(ONTO_ENV, str(onto))
-    os.environ.setdefault(TAXONTOY_ENV, str(tax))
-    install_onto(onto)
-    verify_onto_modules(onto)
-    BOOTED_ONTO = onto
-    BOOTED_TAXONTOY = tax
-    return onto, tax
+def bind(anchor, explicit=None):
+    """ROOTS の各根を決め、環境変数を足し、モジュールのある根は出どころを確かめる。"""
+    chosen = explicit or {}
+    found = {}
+    for name, spec in ROOTS.items():
+        root = resolve_root(name, chosen.get(name), anchor=anchor)
+        os.environ.setdefault(spec["env"], str(root))
+        if spec["modules"]:
+            install_root(root)
+            verify_origin(root, spec["modules"], spec["env"])
+        found[name] = root
+    RESOLVED.clear()
+    RESOLVED.update(found)
+    return dict(found)
 
 
 def explicit_from_argv(argv):
-    """``--onto-root`` と ``--taxontoy-root``。同じ旗が複数なら最後を使う。"""
-    onto = None
-    tax = None
+    """FLAGS の旗。同じ旗が複数なら最後を使う。値は根の名前から引く。"""
+    found = {name: None for _flag, name in FLAGS}
     index = 0
     args = list(argv)
     while index < len(args):
@@ -197,31 +221,21 @@ def explicit_from_argv(argv):
         if token == "--":
             break
         handled = False
-        for flag, env_name, slot in (
-            ("--onto-root", ONTO_ENV, "onto"),
-            ("--taxontoy-root", TAXONTOY_ENV, "tax"),
-        ):
+        for flag, name in FLAGS:
+            env_name = ROOTS[name]["env"]
             if token == flag:
                 if index + 1 >= len(args):
                     raise RootError(_flag_needs_value(flag, env_name))
-                value = args[index + 1]
-                if slot == "onto":
-                    onto = value
-                else:
-                    tax = value
+                found[name] = args[index + 1]
                 index += 2
                 handled = True
                 break
             prefix = flag + "="
             if token.startswith(prefix):
-                value = token[len(prefix):]
-                if slot == "onto":
-                    onto = value
-                else:
-                    tax = value
+                found[name] = token[len(prefix):]
                 index += 1
                 handled = True
                 break
         if not handled:
             index += 1
-    return onto, tax
+    return found

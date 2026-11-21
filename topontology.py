@@ -11,7 +11,7 @@ from collections import defaultdict, deque
 from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 
-import tol_paths
+import onto_path
 
 
 def _boot():
@@ -20,21 +20,16 @@ def _boot():
     As a script, ``--onto-root`` and ``--taxontoy-root`` win. Importing the
     module uses the environment or a sibling checkout.
     """
-    explicit_onto = None
-    explicit_tax = None
+    explicit = None
     if __name__ == "__main__":
         try:
-            explicit_onto, explicit_tax = tol_paths.explicit_from_argv(sys.argv[1:])
-        except tol_paths.RootError as error:
+            explicit = onto_path.explicit_from_argv(sys.argv[1:])
+        except onto_path.RootError as error:
             print(error, file=sys.stderr)
             raise SystemExit(1) from None
     try:
-        tol_paths.configure(
-            Path(__file__),
-            explicit_onto=explicit_onto,
-            explicit_taxontoy=explicit_tax,
-        )
-    except tol_paths.RootError as error:
+        onto_path.bind(Path(__file__), explicit)
+    except onto_path.RootError as error:
         if __name__ == "__main__":
             print(error, file=sys.stderr)
             raise SystemExit(1) from None
@@ -1502,7 +1497,7 @@ def _resolve_classification(positional, option, tax_explicit):
         return Path(option)
     if positional is not None:
         return Path(positional)
-    return tol_paths.default_classification(tax_explicit, anchor=Path(__file__))
+    return onto_path.marker_file("TaxOntOy", tax_explicit, anchor=Path(__file__))
 
 
 def _add_root_options(parser):

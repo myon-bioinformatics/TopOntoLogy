@@ -14,4 +14,4 @@ readme = "README.md"
 topontology = "topontology:main"
 
 [tool.setuptools]
-py-modules = ["topontology", "topology", "tol_paths"]
+py-modules = ["topontology", "topology", "onto_path"]

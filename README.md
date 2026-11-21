@@ -15,7 +15,7 @@
 
 グラフとプロファイルを引数で渡します。分類表を省くと TaxOntOy の `otl-relations.json` を使います。ONTO はプログラムが `sys.path` の先頭に足すので、`PYTHONPATH` は要りません。Python 3.11 以降の標準ライブラリだけを使います。
 
-ONTO と TaxOntOy の場所は `tol_paths.py` だけが知っています。解決の順は次です。
+ONTO と TaxOntOy の場所は `onto_path.py` だけが知っています。これは ONTO の `onto_path.py` を vendors した複製で、リポジトリごとの値はファイル先頭の定数だけです。解決の順は次です。
 
 1. 明示の `--onto-root` / `--taxontoy-root`
 2. 環境変数 `ONTO_ROOT` / `TAXONTOY_ROOT`
@@ -78,7 +78,7 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `tol_paths.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.7.0 です。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `onto_path.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.7.0 です。
 
 ## 時点の並び
 

@@ -139,7 +139,7 @@ jobs:
       - name: Coverage includes CLI subprocesses
         run: |
           set -euo pipefail
-          printf '%s\n' '[run]' 'branch = true' 'source = topontology,topology,tol_paths' 'parallel = true' 'relative_files = true' > "$RUNNER_TEMP/coveragerc.ini"
+          printf '%s\n' '[run]' 'branch = true' 'source = topontology,topology,onto_path' 'parallel = true' 'relative_files = true' > "$RUNNER_TEMP/coveragerc.ini"
           export COVERAGE_PROCESS_START="$RUNNER_TEMP/coveragerc.ini"
           uv run --no-project --with coverage==7.13.1 python -m coverage run --rcfile "$COVERAGE_PROCESS_START" -m unittest discover -s tests -v
           uv run --no-project --with coverage==7.13.1 python -m coverage combine --rcfile "$COVERAGE_PROCESS_START"
