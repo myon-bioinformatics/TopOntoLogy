@@ -1,11 +1,17 @@
 # TopOntoLogy
 
+<img src="docs/assets/topontology-icon.png" alt="TopOntoLogy アイコン" width="160" height="160">
+
 **TopOntoLogy** は、Topology（トポロジー）と Ontology（オントロジー）を組み合わせた造語。
 
 トポロジーが扱う「構造とつながり」と、オントロジーが扱う「意味と概念の体系」。
 その対応関係を探るためのプロジェクトです。
 
+<img src="docs/assets/favicon.png" alt="" width="32" height="32"> [ファビコン（32 × 32）](docs/assets/favicon.png)
+
 ## 関係の意味ごとに構造を調べる
+
+![TaxOntOy の関係分類表と OnTautoLogy のグラフを組み合わせ、分類ごとに閉路・連結成分・到達可能性などを調べ、JSON・テキスト・Mermaid 図に出力する流れ](docs/assets/topontology-overview.jpg)
 
 OTL の nodes/edges JSON と TOO の分類表は引数で渡します。引数を省略したときは環境変数 `TOPONTOLOGY_GRAPH`、`TOPONTOLOGY_CLASSIFICATION`、`TOPONTOLOGY_PROFILE` を使います。引数が優先です。ONTO の `knowledgegraph.py` は `PYTHONPATH` で渡します。プログラムは隣の checkout を探しません。Python 3.11 以降の標準ライブラリだけを使います。
 
