@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import topontology
 from test_series import load_mutant
@@ -30,6 +31,18 @@ def _blob(path):
 
 
 class RealSiblingTests(unittest.TestCase):
+    def test_import_edges_and_digest_use_one_source_read(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "sample.py"
+            data = "# 日本語\r\nimport math\r\n".encode()
+            source.write_bytes(data)
+            with patch.object(Path, "open", autospec=True, side_effect=Path.open) as opened:
+                graph = topontology.scan_imports([{"repo": "child", "path": root}], {}, {"modules": {}})
+            self.assertEqual([c.args[0] for c in opened.call_args_list], [source])
+            self.assertEqual(graph["files"][0]["sha256"], hashlib.sha256(data).hexdigest())
+            self.assertEqual([(e["target"], e["line"]) for e in graph["edges"]], [("math", 2)])
+
     def test_fixture_bytes_match_the_recorded_commits(self):
         recorded = json.loads((FIXTURE / "provenance.json").read_text(encoding="utf-8"))
         for item in recorded["files"]:

@@ -1255,13 +1255,14 @@ def scan_imports(sources, table, import_map):
     for source in sources:
         repo = source["repo"]
         for rel, path in python_sources(source["path"]):
+            data = path.read_bytes()
             files.append({
                 "repo": repo,
                 "path": rel,
-                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "sha256": hashlib.sha256(data).hexdigest(),
             })
             try:
-                tree = ast.parse(path.read_text(encoding="utf-8"), filename=rel)
+                tree = ast.parse(data.decode("utf-8"), filename=rel)
             except SyntaxError as error:
                 raise ValueError(f"{repo}:{rel}: {error.msg}") from error
             for line, module in _import_names(tree):
