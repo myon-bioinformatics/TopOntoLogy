@@ -1,0 +1,7 @@
+{
+  "siblings": {
+    "declares": "declared",
+    "imports": "actual",
+    "unmapped": "unmapped"
+  }
+}

@@ -1,0 +1,241 @@
+{
+  "not_scanned": [
+    "blueprobe",
+    "nagoyaction",
+    "pythdragoras",
+    "sakanalytics"
+  ],
+  "provenance": {
+    "declared": {
+      "path": "tests/fixtures/siblings/aoi.py",
+      "sha256": "57e55f6fc10ff782706877eef72f19c363ca6e694eabc5b668d1409f67f26cbc"
+    },
+    "import_map": {
+      "path": "tests/fixtures/siblings/import-map.json",
+      "sha256": "8c73e103d877bea581df254632c12436e592d4bab525ed718a2237336bfbff97"
+    },
+    "sources": [
+      {
+        "files": [
+          {
+            "path": "conftest.py",
+            "sha256": "85eb5d167df67cbfba9af725680eab42fc1c8651ffa8799fa72a06810768c712"
+          },
+          {
+            "path": "tests/test_forms.py",
+            "sha256": "f056f762bbbb9aef14343b70473c332e895afb2cb5cfccec7a2f1d813d1798d4"
+          }
+        ],
+        "path": "tests/fixtures/siblings/dragowing",
+        "repo": "dragowing"
+      },
+      {
+        "files": [
+          {
+            "path": "conftest.py",
+            "sha256": "5eedcc2ad0a88c460925d4a75c76c3a93e90d2759d828e16ae6cce70e0b8e5b8"
+          }
+        ],
+        "path": "tests/fixtures/siblings/queryu",
+        "repo": "queryu"
+      }
+    ]
+  },
+  "repos": {
+    "dragowing": {
+      "declared_but_unused": [
+        {
+          "repo": "pythdragoras",
+          "source": "dragowing",
+          "target": "pythdragoras"
+        }
+      ],
+      "matching": [
+        {
+          "files": [
+            "tests/test_forms.py"
+          ],
+          "modules": [
+            "propositions"
+          ],
+          "repo": "pythdragoras",
+          "source": "dragowing",
+          "target": "pythdragoras/core"
+        },
+        {
+          "files": [
+            "tests/test_forms.py"
+          ],
+          "modules": [
+            "ask"
+          ],
+          "repo": "queryu",
+          "source": "dragowing",
+          "target": "queryu/ask"
+        }
+      ],
+      "unmapped": [
+        {
+          "line": 6,
+          "module": "importlib.machinery",
+          "path": "conftest.py"
+        },
+        {
+          "line": 6,
+          "module": "importlib.util",
+          "path": "conftest.py"
+        },
+        {
+          "line": 6,
+          "module": "os",
+          "path": "conftest.py"
+        },
+        {
+          "line": 6,
+          "module": "sys",
+          "path": "conftest.py"
+        },
+        {
+          "line": 6,
+          "module": "types",
+          "path": "conftest.py"
+        },
+        {
+          "line": 7,
+          "module": "pathlib",
+          "path": "conftest.py"
+        },
+        {
+          "line": 9,
+          "module": "pytest",
+          "path": "conftest.py"
+        },
+        {
+          "line": 2,
+          "module": "itertools",
+          "path": "tests/test_forms.py"
+        },
+        {
+          "line": 2,
+          "module": "json",
+          "path": "tests/test_forms.py"
+        },
+        {
+          "line": 2,
+          "module": "sys",
+          "path": "tests/test_forms.py"
+        },
+        {
+          "line": 3,
+          "module": "pathlib",
+          "path": "tests/test_forms.py"
+        },
+        {
+          "line": 5,
+          "module": "polars",
+          "path": "tests/test_forms.py"
+        },
+        {
+          "line": 6,
+          "module": "pytest",
+          "path": "tests/test_forms.py"
+        },
+        {
+          "line": 10,
+          "module": "dragowing.dragowing",
+          "path": "tests/test_forms.py"
+        },
+        {
+          "line": 130,
+          "module": "dragowing.dragowing",
+          "path": "tests/test_forms.py"
+        }
+      ],
+      "used_but_undeclared": [
+        {
+          "files": [
+            "conftest.py",
+            "tests/test_forms.py"
+          ],
+          "modules": [
+            "aoi",
+            "aoi_paths"
+          ],
+          "repo": "aoi",
+          "source": "dragowing",
+          "target": "."
+        }
+      ]
+    },
+    "queryu": {
+      "declared_but_unused": [
+        {
+          "repo": "blueprobe",
+          "source": "queryu",
+          "target": "blueprobe/npb"
+        }
+      ],
+      "matching": [
+        {
+          "files": [
+            "conftest.py"
+          ],
+          "modules": [
+            "blueprobe"
+          ],
+          "repo": "blueprobe",
+          "source": "queryu",
+          "target": "blueprobe"
+        }
+      ],
+      "unmapped": [
+        {
+          "line": 6,
+          "module": "json",
+          "path": "conftest.py"
+        },
+        {
+          "line": 6,
+          "module": "os",
+          "path": "conftest.py"
+        },
+        {
+          "line": 6,
+          "module": "sys",
+          "path": "conftest.py"
+        },
+        {
+          "line": 7,
+          "module": "pathlib",
+          "path": "conftest.py"
+        },
+        {
+          "line": 9,
+          "module": "pytest",
+          "path": "conftest.py"
+        }
+      ],
+      "used_but_undeclared": [
+        {
+          "files": [
+            "conftest.py"
+          ],
+          "modules": [
+            "ask"
+          ],
+          "repo": "queryu",
+          "source": "queryu",
+          "target": "queryu/ask"
+        }
+      ]
+    }
+  },
+  "scanned": [
+    "dragowing",
+    "queryu"
+  ],
+  "tool": {
+    "name": "topontology",
+    "version": "0.5.0"
+  }
+}

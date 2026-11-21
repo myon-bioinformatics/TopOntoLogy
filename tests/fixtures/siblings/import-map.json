@@ -1,0 +1,16 @@
+{
+  "schema": "import-map/1",
+  "root": "aoi",
+  "modules": {
+    "annual_scope": ".",
+    "aoi": ".",
+    "aoi_npb": ".",
+    "aoi_paths": ".",
+    "ask": "queryu/ask",
+    "bank": "queryu/ask",
+    "cache_core": "queryu/core",
+    "propositions": "pythdragoras/core",
+    "rule_search": "pythdragoras/core",
+    "suggest": "queryu/ask"
+  }
+}

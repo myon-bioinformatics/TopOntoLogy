@@ -1,0 +1,109 @@
+{
+  "classes": {
+    "actual": {
+      "degree": {
+        "max_in": 0,
+        "max_out": 0,
+        "max_total": 0,
+        "sinks": 0,
+        "sources": 0
+      },
+      "depth": 0,
+      "edges": 0,
+      "incident_nodes": 0,
+      "independent_cycles": 0,
+      "multiple_sources": [],
+      "order_cycle": null,
+      "sample_cycles": [],
+      "weakly_connected_components": {
+        "count": 0,
+        "sizes": []
+      }
+    },
+    "declared": {
+      "degree": {
+        "max_in": 3,
+        "max_out": 6,
+        "max_total": 6,
+        "sinks": 6,
+        "sources": 2
+      },
+      "depth": null,
+      "edges": 20,
+      "incident_nodes": 12,
+      "independent_cycles": 9,
+      "multiple_sources": [
+        "blueprobe",
+        "blueprobe/npb",
+        "pythdragoras",
+        "pythdragoras/core",
+        "queryu",
+        "queryu/ask",
+        "sakanalytics/npb"
+      ],
+      "order_cycle": [
+        "blueprobe",
+        "queryu",
+        "blueprobe"
+      ],
+      "sample_cycles": [
+        [
+          "blueprobe",
+          "queryu",
+          "blueprobe"
+        ],
+        [
+          "pythdragoras",
+          "pythdragoras"
+        ],
+        [
+          "pythdragoras",
+          "sakanalytics",
+          "pythdragoras"
+        ]
+      ],
+      "weakly_connected_components": {
+        "count": 1,
+        "sizes": [
+          12
+        ]
+      }
+    },
+    "unmapped": {
+      "degree": {
+        "max_in": 0,
+        "max_out": 0,
+        "max_total": 0,
+        "sinks": 0,
+        "sources": 0
+      },
+      "depth": 0,
+      "edges": 0,
+      "incident_nodes": 0,
+      "independent_cycles": 0,
+      "multiple_sources": [],
+      "order_cycle": null,
+      "sample_cycles": [],
+      "weakly_connected_components": {
+        "count": 0,
+        "sizes": []
+      }
+    }
+  },
+  "provenance": {
+    "classification": {
+      "path": "tests/fixtures/sibling-classes.json",
+      "sha256": "51c5def52275795e2662a6211daf8e6358285fb9ce7061b4b18eb4d17408071e"
+    },
+    "graph": {
+      "path": "tests/fixtures/siblings/aoi.py",
+      "sha256": "57e55f6fc10ff782706877eef72f19c363ca6e694eabc5b668d1409f67f26cbc"
+    },
+    "profile": "siblings"
+  },
+  "tool": {
+    "name": "topontology",
+    "version": "0.5.0"
+  },
+  "unclassified_edges": 0
+}

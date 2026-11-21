@@ -1,0 +1,9 @@
+{
+  "schema": "py-imports/1",
+  "declared": "aoi.py",
+  "import_map": "import-map.json",
+  "sources": [
+    {"repo": "dragowing", "path": "dragowing"},
+    {"repo": "queryu", "path": "queryu"}
+  ]
+}

@@ -69,7 +69,7 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 PYTHONPATH=../ONTO uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99` を checkout し、`PYTHONPATH` で ONTO を渡します。ツールの版は 0.4.0 です。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99` を checkout し、`PYTHONPATH` で ONTO を渡します。ツールの版は 0.5.0 です。
 
 ## 時点の並び
 
@@ -112,3 +112,45 @@ PYTHONPATH=../ONTO python -S topontology.py impact \
 出力は `--format text` または json です。`--json` は `--format json` の省略で、`--format canonical` は json と同じバイト列です。出自には各ロックのパスと sha256、ツールの版が入ります。
 
 `tests/fixtures/aoi-locks/` は、Aoi の `320126983a992e30730350c5e9b0e4051c0d33d4` にある vendor.lock.json から、グラフが使う `repository`、`source`、`destination` だけを写したものです。子リポジトリの名前は同じコミットの `child-heads.json` です。出自は `provenance.json` にあります。この写しでは `fleet_check.py` が 6 リポジトリへ届き、いちばん広く届きます。
+
+## 宣言した依存と、実際の import
+
+`deps` は、Aoi の `aoi.py` が持つ `SIBLINGS`（宣言）と、渡したローカルのソースディレクトリにある Python の import（実際）を比べます。ファイルは `ast` で読むだけで、実行しません。パスは引数か環境変数だけで、ネットワークにも clone にも行きません。
+
+```sh
+PYTHONPATH=../ONTO python -S topontology.py deps \
+  --declared aoi.py \
+  --import-map import-map.json \
+  --source dragowing=./dragowing \
+  --source queryu=./queryu
+```
+
+`--declared` を省くと `TOPONTOLOGY_DECLARED`、`--import-map` を省くと `TOPONTOLOGY_IMPORT_MAP`、`--source` が無いときは `TOPONTOLOGY_SOURCES` を、改行またはカンマで区切った `リポジトリ=パス` として読みます。前後の空白は除き、空なら未設定です。引数があるときは、その項目の環境変数を使いません。
+
+宣言の辺は、子の名前から `SIBLINGS` のパス文字列へ向きます。`queryu` と `queryu/core` は別の辺です。`.` はランチャーのルートで、リポジトリ名の既定は `aoi` です。対応表の `root` で変えられます。
+
+import のモジュール名は、次の順でパスへ対応します。
+
+- 相対 import（`.` で始まるもの）は対応させません
+- `import-map/1` の `modules`。キーはモジュール名か、そのドット区切りの接頭辞で、いちばん長いものが先です。値は `SIBLINGS` のパスです
+- 宣言表のうち、スラッシュが無く `.` でもないパス。`pythdragoras` は `import pythdragoras` に対応します。`pythdragoras/core` や `queryu/ask` のように中のファイル名がパスと違うものは、対応表に書きます
+
+対応しなかった import は `unmapped` に、モジュール名とファイルと行を残します。捨てません。標準ライブラリも、自分のパッケージも、ここに残ります。
+
+走査したリポジトリごとに、パスの集合で三つに分けます。両方にあるものが `matching`、宣言だけで import が無いものが `declared_but_unused`、import だけで宣言が無いものが `used_but_undeclared` です。ソースを渡していない子は `not_scanned` で、未使用とは呼びません。並びはリポジトリ名、パス、ファイル、行で固定です。
+
+出自には、宣言ファイルと対応表と、各ソースディレクトリのパス、読んだ `.py` の相対パスと sha256、ツールの版が入ります。`--format text` と json で、`--json` は `--format json` の省略、`--format canonical` は json と同じバイト列です。
+
+読める代入は、ファイルの直下の `SIBLINGS = {...}` と `SIBLINGS["名前"] = (...)` だけです。`+=`、`|=`、`update`、`append`、`del`、および `if` や関数の中の代入は、実行せず `ValueError` にします。読み取りはそのまま見送ります。
+
+同じ読み取りはグラフの形式でも使えます。`--graph-format aoi-siblings` は Python ファイルの `SIBLINGS` を `declares` の辺にします。`--graph-format py-imports` は `py-imports/1` のマニフェスト（`declared`、任意の `import_map`、`sources`）を読み、パスはそのファイルの場所から相対です。解決したパスがマニフェストのディレクトリの外に出るときはエラーです。ソースディレクトリ内のシンボリックリンクが、そのディレクトリの外のファイルを指すときもエラーで、中身は読みません。辺の relation は `imports` と `unmapped` です。分類表にその relation があれば、いつもの指標で測れます。
+
+`tests/fixtures/siblings/` は、次のコミットからバイトを写したものです。出自は `provenance.json` です。
+
+- Aoi `320126983a992e30730350c5e9b0e4051c0d33d4` の `aoi.py`
+- DRAgoWing `4dbfb902e07c83555346497762c77f5c6e656a2b` の `conftest.py` と `tests/test_forms.py`
+- QueRyu `2cba00797e0a564489c4dcc98859051cad678519` の `conftest.py`
+
+この範囲では、DRAgoWing は `pythdragoras/core`（`propositions`）と `queryu/ask`（`ask`）が宣言と一致し、`pythdragoras` 自体の import は無く、`aoi` と `aoi_paths` は宣言に無い `.` です。QueRyu は `blueprobe` が一致し、`blueprobe/npb` はこのファイルには無く、`ask` は QueRyu 自身の `queryu/ask` で宣言には入っていません。`blueprobe`・`nagoyaction`・`pythdragoras`・`sakanalytics` はソースを渡していないので `not_scanned` です。
+
+ONTO `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b` の `knowledgegraph.py` は、閉路とトポロジカル順と Mermaid だけで、辺集合の差は返しません。そのあとの main も文書の更新なので、ピンはこのコミットのままです。差の計算はこのツールの中に置いてあります。

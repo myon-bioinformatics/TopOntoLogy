@@ -68,6 +68,17 @@ jobs:
             --lock myon-bioinformatics/SakAnalytics=tests/fixtures/aoi-locks/sakanalytics.json \
             --format canonical > "$out/impact.json"
           diff -u tests/expected/impact.json "$out/impact.json"
+          uv run --no-project python -S topontology.py tests/fixtures/siblings/aoi.py tests/fixtures/sibling-classes.json siblings --graph-format aoi-siblings --format canonical > "$out/siblings-declared.json"
+          diff -u tests/expected/siblings-declared.json "$out/siblings-declared.json"
+          uv run --no-project python -S topontology.py tests/fixtures/siblings/py-imports.json tests/fixtures/sibling-classes.json siblings --graph-format py-imports --format canonical > "$out/siblings-imports.json"
+          diff -u tests/expected/siblings-imports.json "$out/siblings-imports.json"
+          uv run --no-project python -S topontology.py deps \
+            --declared tests/fixtures/siblings/aoi.py \
+            --import-map tests/fixtures/siblings/import-map.json \
+            --source dragowing=tests/fixtures/siblings/dragowing \
+            --source queryu=tests/fixtures/siblings/queryu \
+            --format canonical > "$out/siblings-deps.json"
+          diff -u tests/expected/siblings-deps.json "$out/siblings-deps.json"
       - name: Pinned TaxOntOy table classifies the fixture
         run: |
           set -euo pipefail
