@@ -733,8 +733,10 @@ class CliErrorAndCoverageTests(unittest.TestCase):
                 "independent_cycles": 0,
                 "depth": None,
                 "order_cycle": None,
+                "cycle_basis": {"cycles": [], "independent_cycles": 0},
             })
             self.assertIn("multiple_sources: (none)", "\n".join(empty_text))
+            self.assertIn("cycle_basis: 0 (none)", "\n".join(empty_text))
             self.assertIn("sample_cycles: (none)", "\n".join(empty_text))
             self.assertIn("weakly_connected_components: 0 ((none))", "\n".join(empty_text))
             self.assertIn("depth: (undefined, cycle)", "\n".join(empty_text))

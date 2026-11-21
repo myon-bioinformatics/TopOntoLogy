@@ -7,7 +7,7 @@ import hashlib
 import json
 import statistics
 import sys
-from collections import defaultdict, deque
+from collections import Counter, defaultdict, deque
 from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 
@@ -29,8 +29,8 @@ def _load_graph_api():
 def _boot():
     """Import the roots that ship modules. Other roots wait until they are used.
 
-    As a script, ``--onto-root`` and ``--taxontoy-root`` win over the environment.
-    Importing the module uses the environment or a sibling checkout.
+    As a script, ``--onto-root``, ``--taxontoy-root``, and ``--otl-root`` win over
+    the environment. Importing the module uses the environment or a sibling checkout.
     """
     explicit = None
     if __name__ == "__main__":
@@ -51,7 +51,40 @@ def _boot():
 
 graph_mermaid, relation_cycles, topological_order = _boot()
 
-__version__ = "0.7.0"
+
+def _load_otl_api():
+    """Import OnTautoLogy's graph procedures. A missing name is one line on the CLI."""
+    try:
+        from ontautology_graphs import (
+            collapse_reciprocal,
+            cycle_basis,
+            first_parent_lag,
+            set_cover_min,
+            single_points_of_failure,
+        )
+    except ImportError as error:
+        if __name__ == "__main__":
+            print(error, file=sys.stderr)
+            raise SystemExit(1) from None
+        raise
+    return (
+        collapse_reciprocal,
+        cycle_basis,
+        first_parent_lag,
+        set_cover_min,
+        single_points_of_failure,
+    )
+
+
+(
+    collapse_reciprocal,
+    cycle_basis,
+    first_parent_lag,
+    set_cover_min,
+    single_points_of_failure,
+) = _load_otl_api()
+
+__version__ = "0.8.0"
 TOOL_NAME = "topontology"
 
 _GRAPH_FORMATS = ("nodes-edges", "vendor-lock", "aoi-siblings", "py-imports")
@@ -68,9 +101,9 @@ _MUTATING_ATTRS = frozenset({
     "setdefault", "add", "discard", "reverse", "sort",
 })
 
-# Profiles are audit, concepts, and cases. schema, direction, excluded, and
-# properties are reserved on /1 and /2, so a later object under properties
-# cannot be read as a relation-to-class map.
+# Profiles are audit, concepts, and cases. schema, direction, and excluded are
+# reserved on /1 and /2. properties is reserved when it holds class or relation
+# declarations, and is a profile when it is a relation-to-class map.
 VENDOR_LOCK_SCHEMA = "vendor-lock/1"
 _VENDOR_RELATION = "vendorsFrom"
 _RELATION_SCHEMA_PREFIX = "taxontoy-relations/"
@@ -287,6 +320,163 @@ def _component_size_by_node(edges):
     return sizes
 
 
+def _otl_edge(edge):
+    """A string edge OnTautoLogy can read, or None when an endpoint is not a string.
+
+    JSON keeps ``1`` and ``"1"`` distinct. OnTautoLogy only accepts non-empty
+    strings, so a mixed-type edge is left out of those calls instead of being
+    rewritten into a string that would merge the two vertices.
+    """
+    source, target = _ends(edge)
+    relation = edge_relation(edge)
+    if not isinstance(source, str) or not source:
+        return None
+    if not isinstance(target, str) or not target:
+        return None
+    if not isinstance(relation, str) or not relation:
+        return None
+    return {"source": source, "target": target, "kind": relation, "relation": relation}
+
+
+def _collapse_edges(edges, directions):
+    """Fold reciprocal pairs with ``collapse_reciprocal`` and list the pairs.
+
+    The kept edges are the original objects that remain, in input order.
+    ``collapsed_edges`` records each dropped edge beside the opposite edge that
+    was kept. Edges OnTautoLogy cannot read are returned unchanged.
+    """
+    prepared = []
+    for edge in edges:
+        otl = _otl_edge(edge)
+        if otl is None:
+            return list(edges), []
+        prepared.append(otl)
+    folded = collapse_reciprocal(prepared, directions)
+    kept_counts = Counter(
+        (edge["source"], edge["target"], edge["kind"]) for edge in folded["edges"]
+    )
+    survived = []
+    dropped = []
+    for edge, otl in zip(edges, prepared):
+        key = (otl["source"], otl["target"], otl["kind"])
+        if kept_counts[key]:
+            kept_counts[key] -= 1
+            survived.append(edge)
+        else:
+            dropped.append(otl)
+    pairs = []
+    for otl in dropped:
+        pairs.append({
+            "relation": otl["kind"],
+            "dropped": {"source": otl["source"], "target": otl["target"]},
+            "kept": {"source": otl["target"], "target": otl["source"]},
+        })
+    pairs.sort(key=lambda row: (
+        row["relation"],
+        row["dropped"]["source"],
+        row["dropped"]["target"],
+        row["kept"]["source"],
+        row["kept"]["target"],
+    ))
+    return survived, pairs
+
+
+def _cycle_basis_report(edges):
+    """Per-class undirected basis from ``cycle_basis``, projected to edge triples."""
+    prepared = []
+    for edge in edges:
+        otl = _otl_edge(edge)
+        if otl is None:
+            return {
+                "status": "not applicable",
+                "reason": "endpoints and relations must be non-empty strings",
+            }
+        prepared.append(otl)
+    found = cycle_basis({"edges": prepared})
+    cycles = []
+    for cycle in found["cycles"]:
+        cycles.append({
+            "edges": [
+                {
+                    "source": edge["source"],
+                    "relation": edge.get("kind") or edge.get("relation"),
+                    "target": edge["target"],
+                }
+                for edge in cycle["edges"]
+            ],
+            "labels": list(cycle["labels"]),
+        })
+    return {"cycles": cycles, "independent_cycles": found["independent_cycles"]}
+
+
+def _spof_report(edges):
+    """Single points of failure from ``single_points_of_failure``.
+
+    Roots are the sources: endpoints with no inbound edge. A pure cycle has
+    none, and mixed-type endpoints are not rewritten into strings.
+    """
+    prepared = []
+    for edge in edges:
+        otl = _otl_edge(edge)
+        if otl is None:
+            return {
+                "status": "not applicable",
+                "reason": "endpoints and relations must be non-empty strings",
+            }
+        prepared.append(otl)
+    if not prepared:
+        return {"status": "not applicable", "reason": "no edges"}
+    nodes = sorted({edge["source"] for edge in prepared} | {edge["target"] for edge in prepared})
+    inbound = {edge["target"] for edge in prepared}
+    roots = [node for node in nodes if node not in inbound]
+    if not roots:
+        return {"status": "not applicable", "reason": "no source root"}
+    return single_points_of_failure({"edges": prepared}, roots)
+
+
+def _attach_pin_lag(edges, chain):
+    """Set ``lag`` on edges whose pin lies on ``chain``, via ``first_parent_lag``."""
+    if chain is None:
+        return edges
+    if not isinstance(chain, list):
+        raise ValueError("first_parent must be a list")
+    updated = []
+    for edge in edges:
+        pinned = edge.get("pinned")
+        if not isinstance(pinned, str) or not pinned.strip():
+            updated.append(edge)
+            continue
+        lag = first_parent_lag(chain, pinned.strip())
+        copied = dict(edge)
+        copied["lag"] = {"commits": lag["commits"], "merges": lag["merges"]}
+        updated.append(copied)
+    return updated
+
+
+def _pin_lag_rows(edges):
+    rows = []
+    for edge in edges:
+        lag = edge.get("lag")
+        if not isinstance(lag, dict):
+            continue
+        source, target = _ends(edge)
+        rows.append({
+            "source": source,
+            "relation": edge_relation(edge),
+            "target": target,
+            "commits": lag["commits"],
+            "merges": lag["merges"],
+        })
+    rows.sort(key=lambda row: (
+        node_sort_key(row["source"]),
+        str(row["relation"]),
+        node_sort_key(row["target"]),
+        row["commits"],
+        row["merges"],
+    ))
+    return rows
+
+
 def _class_metrics(edges, cycle_limit):
     incoming = defaultdict(set)
     nodes = set()
@@ -313,20 +503,28 @@ def _class_metrics(edges, cycle_limit):
         "independent_cycles": edge_count - node_count + components["count"],
         "depth": depth["depth"],
         "order_cycle": depth["cycle"],
+        "cycle_basis": _cycle_basis_report(edges),
     }
 
 
-def summarize(graph, classes, *, cycle_limit=DEFAULT_CYCLE_LIMIT):
+def summarize(graph, classes, *, cycle_limit=DEFAULT_CYCLE_LIMIT, directions=None):
+    kept, pairs = _collapse_edges(graph["edges"], directions or {})
     groups = {category: [] for category in sorted(set(classes.values()))}
     unclassified = 0
-    for edge in graph["edges"]:
+    for edge in kept:
         relation = edge_relation(edge)
         if relation in classes:
             groups[classes[relation]].append(edge)
         else:
             unclassified += 1
     results = {category: _class_metrics(edges, cycle_limit) for category, edges in groups.items()}
-    return {"classes": results, "unclassified_edges": unclassified}
+    return {
+        "classes": results,
+        "unclassified_edges": unclassified,
+        "collapsed_edges": pairs,
+        "pin_lag": _pin_lag_rows(graph["edges"]),
+        "spof": _spof_report(kept),
+    }
 
 
 def _delta_number(left, right):
@@ -394,6 +592,7 @@ def _empty_metrics():
         "independent_cycles": 0,
         "depth": 0,
         "order_cycle": None,
+        "cycle_basis": _cycle_basis_report([]),
     }
 
 
@@ -570,8 +769,10 @@ def graph_from_vendor_lock(document):
     """Read a vendor-lock/1 document as a directed graph.
 
     Fields read: ``schema``, ``files``, and on each file ``destination`` or
-    ``path``, plus ``repository`` and ``source``. ``commit``, ``ref``,
-    ``sha256``, and ``blob_sha`` are ignored. Each file is a node identified by
+    ``path``, plus ``repository`` and ``source``. ``ref``, ``sha256``, and
+    ``blob_sha`` are ignored. ``commit`` is the pin only when the document
+    also has ``first_parent``; that chain is passed to ``first_parent_lag``
+    and the result is stored on the edge as ``lag``. Each file is a node identified by
     ``destination`` when that is a non-empty string, otherwise by ``path``.
     The edge runs from that local node to the upstream it vendors from, with
     relation ``vendorsFrom``. The upstream id is ``repository:source`` when
@@ -586,6 +787,7 @@ def graph_from_vendor_lock(document):
     files = document.get("files")
     if not isinstance(files, list):
         raise ValueError("vendor-lock/1 requires a files array")
+    chain = document.get("first_parent")
     nodes = {}
     edges = []
 
@@ -613,8 +815,14 @@ def graph_from_vendor_lock(document):
             raise ValueError(f"vendor-lock files[{index}] needs repository or source")
         add_node(local)
         add_node(upstream)
-        edges.append({"source": local, "relation": _VENDOR_RELATION, "target": upstream})
+        edge = {"source": local, "relation": _VENDOR_RELATION, "target": upstream}
+        commit = entry.get("commit")
+        if chain is not None and isinstance(commit, str) and commit.strip():
+            edge["pinned"] = commit.strip()
+        edges.append(edge)
     edges.sort(key=lambda edge: (edge["source"], edge["target"]))
+    if chain is not None:
+        edges = _attach_pin_lag(edges, chain)
     return {"nodes": [nodes[key] for key in sorted(nodes)], "edges": edges}
 
 
@@ -736,7 +944,7 @@ def node_churn(snapshots, classes):
     return {"nodes": rows, "repeated_churn": repeated}
 
 
-def series_report(snapshots, classes, *, cycle_limit=DEFAULT_CYCLE_LIMIT):
+def series_report(snapshots, classes, *, cycle_limit=DEFAULT_CYCLE_LIMIT, directions=None):
     """Compare each consecutive snapshot pair and record node churn.
 
     ``snapshots`` is an ordered list of ``{"label", "path", "graph"}``. The
@@ -754,20 +962,23 @@ def series_report(snapshots, classes, *, cycle_limit=DEFAULT_CYCLE_LIMIT):
             raise ValueError(f"duplicate snapshot label: {label}")
         seen.add(label)
     pairs = []
+    directions = directions or {}
     for left, right in zip(snapshots, snapshots[1:]):
-        left_report = summarize(left["graph"], classes, cycle_limit=cycle_limit)
-        right_report = summarize(right["graph"], classes, cycle_limit=cycle_limit)
+        left_kept, _left_pairs = _collapse_edges(left["graph"]["edges"], directions)
+        right_kept, _right_pairs = _collapse_edges(right["graph"]["edges"], directions)
+        left_report = summarize(left["graph"], classes, cycle_limit=cycle_limit, directions=directions)
+        right_report = summarize(right["graph"], classes, cycle_limit=cycle_limit, directions=directions)
         compared = compare_graphs(left_report, right_report)
         classes_out = {}
         for name in sorted(compared["classes"]):
             row = dict(compared["classes"][name])
             row["edges_changed"] = attribute_edges(
-                _edges_in_class(left["graph"], classes, name),
-                _edges_in_class(right["graph"], classes, name),
+                _edges_in_class({"edges": left_kept}, classes, name),
+                _edges_in_class({"edges": right_kept}, classes, name),
             )
             classes_out[name] = row
-        graph_left = _class_metrics(left["graph"]["edges"], cycle_limit)
-        graph_right = _class_metrics(right["graph"]["edges"], cycle_limit)
+        graph_left = _class_metrics(left_kept, cycle_limit)
+        graph_right = _class_metrics(right_kept, cycle_limit)
         pairs.append({
             "left": left["label"],
             "right": right["label"],
@@ -896,6 +1107,14 @@ def _class_lines(title, row):
     sizes = ", ".join(str(size) for size in components["sizes"]) if components["sizes"] else "(none)"
     lines.append(f"  weakly_connected_components: {components['count']} ({sizes})")
     lines.append(f"  independent_cycles: {row['independent_cycles']}")
+    basis = row["cycle_basis"]
+    if basis.get("status") == "not applicable":
+        lines.append(f"  cycle_basis: not applicable ({basis['reason']})")
+    elif basis["cycles"]:
+        rendered = "; ".join(" ".join(cycle["labels"]) for cycle in basis["cycles"])
+        lines.append(f"  cycle_basis: {basis['independent_cycles']} {rendered}")
+    else:
+        lines.append(f"  cycle_basis: {basis['independent_cycles']} (none)")
     if row["depth"] is None:
         cycle = " → ".join(node_text(node) for node in row["order_cycle"]) if row["order_cycle"] else "cycle"
         lines.append(f"  depth: (undefined, {cycle})")
@@ -969,6 +1188,48 @@ def _anomaly_lines(anomalies):
     return lines
 
 
+def _collapsed_line(pairs):
+    if not pairs:
+        return "collapsed_edges: (none)"
+    rendered = "; ".join(
+        f"{row['relation']} {row['dropped']['source']}→{row['dropped']['target']}"
+        f"/{row['kept']['source']}→{row['kept']['target']}"
+        for row in pairs
+    )
+    return f"collapsed_edges: {rendered}"
+
+
+def _pin_lag_line(rows):
+    if not rows:
+        return "pin_lag: (none)"
+    rendered = "; ".join(
+        f"{node_text(row['source'])} {row['relation']} {node_text(row['target'])} "
+        f"commits={row['commits']} merges={row['merges']}"
+        for row in rows
+    )
+    return f"pin_lag: {rendered}"
+
+
+def _spof_lines(report):
+    if report.get("status") == "not applicable":
+        return [f"spof: not applicable ({report['reason']})"]
+    points = ", ".join(report["articulation_points"]) if report["articulation_points"] else "(none)"
+    roots = ", ".join(report["roots"])
+    return [f"spof: roots={roots} articulation={points}"]
+
+
+def _cover_lines(cover):
+    names = ", ".join(cover["cover"]) if cover["cover"] else "(none)"
+    lines = [f"siblings_cover: {cover['method']} size={cover['size']} {names}"]
+    for name in sorted(cover["unique"]):
+        items = cover["unique"][name]
+        if items:
+            lines.append(f"  unique {name}: {', '.join(items)}")
+        else:
+            lines.append(f"  unique {name}: (none)")
+    return lines
+
+
 def render_text(body):
     lines = [f"tool: {body['tool']['name']} {body['tool']['version']}"]
     provenance = body["provenance"]
@@ -992,6 +1253,11 @@ def render_text(body):
         lines.append(f"unclassified_edges: {body['unclassified_edges']}")
         for name in sorted(body["classes"]):
             lines.extend(_class_lines(name, body["classes"][name]))
+        lines.append(_collapsed_line(body["collapsed_edges"]))
+        lines.append(_pin_lag_line(body["pin_lag"]))
+        lines.extend(_spof_lines(body["spof"]))
+        if "siblings_cover" in body:
+            lines.extend(_cover_lines(body["siblings_cover"]))
     if "anomalies" in body:
         lines.extend(_anomaly_lines(body["anomalies"]))
     return "\n".join(lines) + "\n"
@@ -1145,7 +1411,23 @@ def graph_from_siblings(table, *, root=_DEFAULT_ROOT_REPO):
                 "target": path,
                 "basis": sibling_repo(path, root),
             })
-    return _graph_from_edges(edges)
+    graph = _graph_from_edges(edges)
+    graph["siblings_cover"] = siblings_cover(table)
+    return graph
+
+
+def siblings_cover(table):
+    """Smallest set of SIBLINGS children whose paths cover every declared path.
+
+    The universe is the declared path strings. Each child is the candidate set
+    of paths it lists. The choice is ``set_cover_min``: exact while the number
+    of children is within OnTautoLogy's limit, then greedy.
+    """
+    universe = sorted({path for paths in table.values() for path in paths})
+    candidates = {}
+    for child, paths in table.items():
+        candidates[child] = list(dict.fromkeys(paths))
+    return set_cover_min(universe, candidates)
 
 
 def declared_module_paths(table):
@@ -1427,6 +1709,7 @@ def dependency_report(declared_path, sources, import_map_path=None):
         [item["repo"] for item in sources],
         root=import_map["root"],
     )
+    body["siblings_cover"] = siblings_cover(table)
     return body, scanned["files"]
 
 
@@ -1442,7 +1725,46 @@ def _load_graph(path, graph_format="nodes-edges"):
         raise ValueError(f"unknown graph format: {graph_format}")
     if not isinstance(document, dict) or not isinstance(document.get("edges"), list):
         raise ValueError("graph JSON must be an object with an edges array")
+    if "first_parent" in document:
+        document = dict(document)
+        document["edges"] = _attach_pin_lag(document["edges"], document.get("first_parent"))
     return document
+
+
+def _properties_role(value):
+    """How a reserved ``properties`` value relates to user-defined data.
+
+    ``profile`` means every entry is a relation name mapped to a class name.
+    That map is user data and can be loaded as a profile. ``metadata`` means
+    the reserved declaration object (only ``classes`` and ``relations``, each
+    an object), an empty object, or a non-object. ``mixed`` means user-defined
+    entries sit beside those declarations, or the object matches neither shape.
+    """
+    if not isinstance(value, dict) or not value:
+        return "metadata"
+    if all(isinstance(key, str) and key and isinstance(item, str) for key, item in value.items()):
+        return "profile"
+    reserved_names = {"classes", "relations"}
+    if set(value).issubset(reserved_names) and all(isinstance(item, dict) for item in value.values()):
+        return "metadata"
+    return "mixed"
+
+
+def _direction_map(table):
+    """Relation directions from a ``/1`` or ``/2`` table, else an empty map."""
+    if not isinstance(table, dict) or table.get("schema") not in _KNOWN_RELATION_SCHEMAS:
+        return {}
+    raw = table.get("direction")
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        raise ValueError("direction must be an object")
+    found = {}
+    for key, value in raw.items():
+        if not isinstance(key, str) or not key or not isinstance(value, str) or not value:
+            raise ValueError("direction entries must be non-empty strings")
+        found[key] = value
+    return found
 
 
 def _load_classes(path, profile):
@@ -1450,9 +1772,10 @@ def _load_classes(path, profile):
 
     A table without ``schema`` is a map of profile name to that map. ``/1`` and
     ``/2`` keep ``audit``, ``concepts``, and ``cases`` in that shape, and put
-    ``direction``, ``excluded``, and ``properties`` beside them. Those metadata
-    keys are not profiles, even when ``properties`` is itself a map of strings.
-    Any other ``taxontoy-relations/N`` schema is rejected.
+    ``direction`` and ``excluded`` beside them. ``properties`` is metadata when
+    it declares classes or relations, and a profile when it is itself a
+    relation-to-class map. Mixing the two is an error. Any other
+    ``taxontoy-relations/N`` schema is rejected.
     """
     table = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(table, dict):
@@ -1465,6 +1788,12 @@ def _load_classes(path, profile):
     else:
         reserved = ()
     found = table.get(profile)
+    if profile == "properties" and profile in reserved:
+        role = _properties_role(found)
+        if role == "mixed":
+            raise ValueError("properties mixes reserved metadata with user-defined data")
+        if role == "profile":
+            return found
     if profile in reserved or not isinstance(found, dict):
         raise ValueError(f"unknown profile: {profile}")
     return found
@@ -1519,6 +1848,10 @@ def _add_root_options(parser):
     parser.add_argument(
         "--taxontoy-root", type=Path,
         help="TaxOntOy checkout (default: TAXONTOY_ROOT, then a sibling or ancestor checkout)",
+    )
+    parser.add_argument(
+        "--otl-root", type=Path,
+        help="OnTautoLogy checkout (default: OTL_ROOT, then a sibling or ancestor checkout)",
     )
 
 
@@ -1921,7 +2254,13 @@ def _excluded_names(table, profile, classes):
 
 
 def _class_declares_acyclic(table, category):
-    """True when ``properties.classes.<category>`` declares ``acyclic``."""
+    """True when ``properties.classes.<category>.acyclic`` is an object.
+
+    A string or other non-object under ``acyclic`` is user-defined data and
+    does not count as the reserved declaration. A relation-to-class map stored
+    under ``properties`` has no declaration object, so it does not declare
+    ``acyclic`` either.
+    """
     props = table.get("properties")
     if not isinstance(props, dict):
         return False
@@ -1931,7 +2270,7 @@ def _class_declares_acyclic(table, category):
     body = bodies.get(category)
     if not isinstance(body, dict):
         return False
-    return "acyclic" in body
+    return isinstance(body.get("acyclic"), dict)
 
 
 def _exclusion_view(with_metrics, without_metrics, delta, *, acyclic_declared):
@@ -1962,15 +2301,15 @@ def _exclusion_view(with_metrics, without_metrics, delta, *, acyclic_declared):
     }
 
 
-def _folded_metrics(graph, classes, assignments, category, cycle_limit, acyclic_declared):
+def _folded_metrics(graph, classes, assignments, category, cycle_limit, acyclic_declared, directions):
     """Compare one class with ``assignments`` folded in, against the published classes.
 
     ``compare_graphs`` supplies the delta (without minus with).
     """
     folded = dict(classes)
     folded.update(assignments)
-    with_report = summarize(graph, folded, cycle_limit=cycle_limit)
-    without_report = summarize(graph, classes, cycle_limit=cycle_limit)
+    with_report = summarize(graph, folded, cycle_limit=cycle_limit, directions=directions)
+    without_report = summarize(graph, classes, cycle_limit=cycle_limit, directions=directions)
     compared = compare_graphs(with_report, without_report)
     row = compared["classes"][category]
     return _exclusion_view(row["left"], row["right"], row["delta"], acyclic_declared=acyclic_declared)
@@ -2001,6 +2340,7 @@ def excluded_impact(graph, classes, table, profile, *, cycle_limit=DEFAULT_CYCLE
     """
     if not isinstance(table, dict):
         raise ValueError("classification JSON must be an object")
+    directions = _direction_map(table)
     names = _excluded_names(table, profile, classes)
     categories = sorted(set(classes.values()))
     declared = {category: _class_declares_acyclic(table, category) for category in categories}
@@ -2008,14 +2348,14 @@ def excluded_impact(graph, classes, table, profile, *, cycle_limit=DEFAULT_CYCLE
     for category in categories:
         assignments = {name: category for name in names}
         class_rows[category] = _folded_metrics(
-            graph, classes, assignments, category, cycle_limit, declared[category])
+            graph, classes, assignments, category, cycle_limit, declared[category], directions)
     relations = []
     flags = []
     for name in names:
         impacts = []
         for category in categories:
             view = _folded_metrics(
-                graph, classes, {name: category}, category, cycle_limit, declared[category])
+                graph, classes, {name: category}, category, cycle_limit, declared[category], directions)
             impacts.append({"class": category, **view})
             if view["exclusion_passes_acyclicity"]:
                 flags.append({"class": category, "relation": name})
@@ -2056,6 +2396,7 @@ def series_main(argv):
     profile = _require_profile(profile)
     classification = _resolve_classification(positional, args.classification_option, args.taxontoy_root)
     classes = _load_classes(classification, profile)
+    directions = _direction_map(json.loads(classification.read_text(encoding="utf-8")))
     snapshots = []
     for label, path in _resolve_snapshots(args.snapshot):
         snapshots.append({
@@ -2063,7 +2404,7 @@ def series_main(argv):
             "path": path,
             "graph": _load_graph(path, args.graph_format),
         })
-    body = series_report(snapshots, classes, cycle_limit=args.cycle_limit)
+    body = series_report(snapshots, classes, cycle_limit=args.cycle_limit, directions=directions)
     provenance = {
         "snapshots": [
             {"label": item["label"], "path": item["path"].as_posix(), "sha256": file_record(item["path"])["sha256"]}
@@ -2228,6 +2569,7 @@ def _deps_text(body):
     missing = ", ".join(body["not_scanned"]) if body["not_scanned"] else "(none)"
     lines.append(f"scanned: {scanned}")
     lines.append(f"not_scanned: {missing}")
+    lines.extend(_cover_lines(body["siblings_cover"]))
     if not body["repos"]:
         lines.append("repos: (none)")
     for repo in body["repos"]:
@@ -2472,17 +2814,19 @@ def main(argv=None):
         if args.compare_class and not args.class_name:
             raise ValueError("--compare-class requires --class")
         classes = _load_classes(args.classification, args.profile)
+        directions = _direction_map(json.loads(args.classification.read_text(encoding="utf-8")))
         graph = _load_graph(args.graph, args.graph_format)
-        report = summarize(graph, classes, cycle_limit=args.cycle_limit)
+        report = summarize(graph, classes, cycle_limit=args.cycle_limit, directions=directions)
         provenance = input_provenance(args.graph, args.classification, args.profile)
         if fmt == "mermaid":
             _require_class(report, args.class_name, "--class")
-            chosen = [edge for edge in graph["edges"] if edge_relation(edge) in classes
+            kept, _pairs = _collapse_edges(graph["edges"], directions)
+            chosen = [edge for edge in kept if edge_relation(edge) in classes
                       and classes[edge_relation(edge)] == args.class_name]
             text = render_mermaid(graph, chosen, provenance, args.class_name)
         elif args.compare:
             other = _load_graph(args.compare, args.graph_format)
-            other_report = summarize(other, classes, cycle_limit=args.cycle_limit)
+            other_report = summarize(other, classes, cycle_limit=args.cycle_limit, directions=directions)
             body = compare_graphs(report, other_report)
             both = {
                 "left": provenance,
@@ -2520,7 +2864,7 @@ def main(argv=None):
                     "class": args.split,
                     "assign": dict(_parse_assignment(item) for item in args.assign),
                 }
-            other_report = summarize(graph, other_classes, cycle_limit=args.cycle_limit)
+            other_report = summarize(graph, other_classes, cycle_limit=args.cycle_limit, directions=directions)
             body = compare_boundaries(report, other_report)
             both = {"left": provenance, "right": right_provenance}
             text = dump_json(document(body, both)) if fmt in ("json", "canonical") else render_text(document(body, both))
@@ -2529,9 +2873,11 @@ def main(argv=None):
             if args.class_name:
                 _require_class(report, args.class_name, "--class")
                 report = {
+                    **report,
                     "classes": {args.class_name: report["classes"][args.class_name]},
-                    "unclassified_edges": report["unclassified_edges"],
                 }
+            if "siblings_cover" in graph:
+                report = {**report, "siblings_cover": graph["siblings_cover"]}
                 scoped = {
                     relation: category for relation, category in classes.items()
                     if category == args.class_name

@@ -1,6 +1,47 @@
 {
   "classes": {
     "actual": {
+      "cycle_basis": {
+        "cycles": [
+          {
+            "edges": [
+              {
+                "relation": "imports",
+                "source": "dragowing",
+                "target": "."
+              },
+              {
+                "relation": "imports",
+                "source": "dragowing",
+                "target": "."
+              }
+            ],
+            "labels": [
+              "imports",
+              "imports"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "imports",
+                "source": "queryu",
+                "target": "blueprobe"
+              },
+              {
+                "relation": "imports",
+                "source": "queryu",
+                "target": "blueprobe"
+              }
+            ],
+            "labels": [
+              "imports",
+              "imports"
+            ]
+          }
+        ],
+        "independent_cycles": 2
+      },
       "degree": {
         "max_in": 2,
         "max_out": 4,
@@ -25,6 +66,10 @@
       }
     },
     "declared": {
+      "cycle_basis": {
+        "cycles": [],
+        "independent_cycles": 0
+      },
       "degree": {
         "max_in": 0,
         "max_out": 0,
@@ -45,6 +90,239 @@
       }
     },
     "unmapped": {
+      "cycle_basis": {
+        "cycles": [
+          {
+            "edges": [
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "dragowing.dragowing"
+              },
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "dragowing.dragowing"
+              }
+            ],
+            "labels": [
+              "unmapped",
+              "unmapped"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "json"
+              },
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "os"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "os"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "json"
+              }
+            ],
+            "labels": [
+              "unmapped",
+              "unmapped",
+              "unmapped",
+              "unmapped"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "json"
+              },
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "pathlib"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "pathlib"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "json"
+              }
+            ],
+            "labels": [
+              "unmapped",
+              "unmapped",
+              "unmapped",
+              "unmapped"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "json"
+              },
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "pathlib"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "pathlib"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "json"
+              }
+            ],
+            "labels": [
+              "unmapped",
+              "unmapped",
+              "unmapped",
+              "unmapped"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "json"
+              },
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "pytest"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "pytest"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "json"
+              }
+            ],
+            "labels": [
+              "unmapped",
+              "unmapped",
+              "unmapped",
+              "unmapped"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "json"
+              },
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "pytest"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "pytest"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "json"
+              }
+            ],
+            "labels": [
+              "unmapped",
+              "unmapped",
+              "unmapped",
+              "unmapped"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "json"
+              },
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "sys"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "sys"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "json"
+              }
+            ],
+            "labels": [
+              "unmapped",
+              "unmapped",
+              "unmapped",
+              "unmapped"
+            ]
+          },
+          {
+            "edges": [
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "json"
+              },
+              {
+                "relation": "unmapped",
+                "source": "dragowing",
+                "target": "sys"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "sys"
+              },
+              {
+                "relation": "unmapped",
+                "source": "queryu",
+                "target": "json"
+              }
+            ],
+            "labels": [
+              "unmapped",
+              "unmapped",
+              "unmapped",
+              "unmapped"
+            ]
+          }
+        ],
+        "independent_cycles": 8
+      },
       "degree": {
         "max_in": 3,
         "max_out": 15,
@@ -73,6 +351,8 @@
       }
     }
   },
+  "collapsed_edges": [],
+  "pin_lag": [],
   "provenance": {
     "classification": {
       "path": "tests/fixtures/sibling-classes.json",
@@ -84,9 +364,219 @@
     },
     "profile": "siblings"
   },
+  "spof": {
+    "articulation_points": [
+      "dragowing",
+      "queryu"
+    ],
+    "dominators": [
+      {
+        "idom": "dragowing",
+        "node": "."
+      },
+      {
+        "idom": "queryu",
+        "node": "blueprobe"
+      },
+      {
+        "idom": null,
+        "node": "dragowing"
+      },
+      {
+        "idom": "dragowing",
+        "node": "dragowing.dragowing"
+      },
+      {
+        "idom": "dragowing",
+        "node": "importlib.machinery"
+      },
+      {
+        "idom": "dragowing",
+        "node": "importlib.util"
+      },
+      {
+        "idom": "dragowing",
+        "node": "itertools"
+      },
+      {
+        "idom": null,
+        "node": "json"
+      },
+      {
+        "idom": null,
+        "node": "os"
+      },
+      {
+        "idom": null,
+        "node": "pathlib"
+      },
+      {
+        "idom": "dragowing",
+        "node": "polars"
+      },
+      {
+        "idom": null,
+        "node": "pytest"
+      },
+      {
+        "idom": "dragowing",
+        "node": "pythdragoras/core"
+      },
+      {
+        "idom": null,
+        "node": "queryu"
+      },
+      {
+        "idom": null,
+        "node": "queryu/ask"
+      },
+      {
+        "idom": null,
+        "node": "sys"
+      },
+      {
+        "idom": "dragowing",
+        "node": "types"
+      }
+    ],
+    "ranked": [
+      {
+        "lost": [
+          ".",
+          "dragowing",
+          "dragowing.dragowing",
+          "importlib.machinery",
+          "importlib.util",
+          "itertools",
+          "polars",
+          "pythdragoras/core",
+          "types"
+        ],
+        "node": "dragowing",
+        "unreachable": 9
+      },
+      {
+        "lost": [
+          "blueprobe",
+          "queryu"
+        ],
+        "node": "queryu",
+        "unreachable": 2
+      },
+      {
+        "lost": [
+          "."
+        ],
+        "node": ".",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "blueprobe"
+        ],
+        "node": "blueprobe",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "dragowing.dragowing"
+        ],
+        "node": "dragowing.dragowing",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "importlib.machinery"
+        ],
+        "node": "importlib.machinery",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "importlib.util"
+        ],
+        "node": "importlib.util",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "itertools"
+        ],
+        "node": "itertools",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "json"
+        ],
+        "node": "json",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "os"
+        ],
+        "node": "os",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "pathlib"
+        ],
+        "node": "pathlib",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "polars"
+        ],
+        "node": "polars",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "pytest"
+        ],
+        "node": "pytest",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "pythdragoras/core"
+        ],
+        "node": "pythdragoras/core",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "queryu/ask"
+        ],
+        "node": "queryu/ask",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "sys"
+        ],
+        "node": "sys",
+        "unreachable": 1
+      },
+      {
+        "lost": [
+          "types"
+        ],
+        "node": "types",
+        "unreachable": 1
+      }
+    ],
+    "roots": [
+      "dragowing",
+      "queryu"
+    ]
+  },
   "tool": {
     "name": "topontology",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "unclassified_edges": 0
 }

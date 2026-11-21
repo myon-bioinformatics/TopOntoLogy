@@ -556,9 +556,18 @@ class DepsCliTests(unittest.TestCase):
             "scanned": [],
             "not_scanned": [],
             "repos": {},
+            "siblings_cover": {
+                "complete": True,
+                "cover": [],
+                "method": "exact",
+                "size": 0,
+                "uncovered": [],
+                "unique": {},
+            },
         }
         text = topontology._deps_text(body)
         self.assertIn("scanned: (none)", text)
+        self.assertIn("siblings_cover: exact size=0 (none)", text)
         self.assertIn("not_scanned: (none)", text)
         self.assertIn("repos: (none)", text)
         self.assertNotIn("import_map:", text)

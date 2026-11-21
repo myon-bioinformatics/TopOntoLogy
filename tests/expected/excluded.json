@@ -29,6 +29,83 @@
       "removed_directed_cycle": true,
       "split_components": false,
       "with": {
+        "cycle_basis": {
+          "cycles": [
+            {
+              "edges": [
+                {
+                  "relation": "blocks",
+                  "source": "B",
+                  "target": "A"
+                },
+                {
+                  "relation": "dependsOn",
+                  "source": "A",
+                  "target": "B"
+                }
+              ],
+              "labels": [
+                "blocks",
+                "dependsOn"
+              ]
+            },
+            {
+              "edges": [
+                {
+                  "relation": "blocks",
+                  "source": "B",
+                  "target": "A"
+                },
+                {
+                  "relation": "depends_on",
+                  "source": "A",
+                  "target": "B"
+                }
+              ],
+              "labels": [
+                "blocks",
+                "depends_on"
+              ]
+            },
+            {
+              "edges": [
+                {
+                  "relation": "blocks",
+                  "source": "C",
+                  "target": "B"
+                },
+                {
+                  "relation": "dependsOn",
+                  "source": "B",
+                  "target": "C"
+                }
+              ],
+              "labels": [
+                "blocks",
+                "dependsOn"
+              ]
+            },
+            {
+              "edges": [
+                {
+                  "relation": "blocks",
+                  "source": "C",
+                  "target": "B"
+                },
+                {
+                  "relation": "depends_on",
+                  "source": "B",
+                  "target": "C"
+                }
+              ],
+              "labels": [
+                "blocks",
+                "depends_on"
+              ]
+            }
+          ],
+          "independent_cycles": 4
+        },
         "degree": {
           "max_in": 3,
           "max_out": 3,
@@ -69,6 +146,10 @@
         }
       },
       "without": {
+        "cycle_basis": {
+          "cycles": [],
+          "independent_cycles": 0
+        },
         "degree": {
           "max_in": 1,
           "max_out": 1,
@@ -114,6 +195,65 @@
       "removed_directed_cycle": true,
       "split_components": false,
       "with": {
+        "cycle_basis": {
+          "cycles": [
+            {
+              "edges": [
+                {
+                  "relation": "blocks",
+                  "source": "B",
+                  "target": "A"
+                },
+                {
+                  "relation": "depends_on",
+                  "source": "A",
+                  "target": "B"
+                }
+              ],
+              "labels": [
+                "blocks",
+                "depends_on"
+              ]
+            },
+            {
+              "edges": [
+                {
+                  "relation": "blocks",
+                  "source": "C",
+                  "target": "B"
+                },
+                {
+                  "relation": "depends_on",
+                  "source": "B",
+                  "target": "C"
+                }
+              ],
+              "labels": [
+                "blocks",
+                "depends_on"
+              ]
+            },
+            {
+              "edges": [
+                {
+                  "relation": "duplicates",
+                  "source": "P",
+                  "target": "Q"
+                },
+                {
+                  "relation": "overlapsWith",
+                  "source": "P",
+                  "target": "Q"
+                }
+              ],
+              "labels": [
+                "duplicates",
+                "overlapsWith"
+              ]
+            }
+          ],
+          "independent_cycles": 3
+        },
         "degree": {
           "max_in": 2,
           "max_out": 2,
@@ -154,6 +294,10 @@
         }
       },
       "without": {
+        "cycle_basis": {
+          "cycles": [],
+          "independent_cycles": 0
+        },
         "degree": {
           "max_in": 1,
           "max_out": 1,
@@ -224,6 +368,10 @@
           "removed_directed_cycle": false,
           "split_components": false,
           "with": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -247,6 +395,10 @@
             }
           },
           "without": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -293,6 +445,10 @@
           "removed_directed_cycle": false,
           "split_components": true,
           "with": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -315,6 +471,10 @@
             }
           },
           "without": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -369,6 +529,47 @@
           "removed_directed_cycle": true,
           "split_components": false,
           "with": {
+            "cycle_basis": {
+              "cycles": [
+                {
+                  "edges": [
+                    {
+                      "relation": "blocks",
+                      "source": "B",
+                      "target": "A"
+                    },
+                    {
+                      "relation": "dependsOn",
+                      "source": "A",
+                      "target": "B"
+                    }
+                  ],
+                  "labels": [
+                    "blocks",
+                    "dependsOn"
+                  ]
+                },
+                {
+                  "edges": [
+                    {
+                      "relation": "blocks",
+                      "source": "C",
+                      "target": "B"
+                    },
+                    {
+                      "relation": "dependsOn",
+                      "source": "B",
+                      "target": "C"
+                    }
+                  ],
+                  "labels": [
+                    "blocks",
+                    "dependsOn"
+                  ]
+                }
+              ],
+              "independent_cycles": 2
+            },
             "degree": {
               "max_in": 2,
               "max_out": 2,
@@ -408,6 +609,10 @@
             }
           },
           "without": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -454,6 +659,10 @@
           "removed_directed_cycle": false,
           "split_components": false,
           "with": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -478,6 +687,10 @@
             }
           },
           "without": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -534,6 +747,47 @@
           "removed_directed_cycle": false,
           "split_components": false,
           "with": {
+            "cycle_basis": {
+              "cycles": [
+                {
+                  "edges": [
+                    {
+                      "relation": "dependsOn",
+                      "source": "A",
+                      "target": "B"
+                    },
+                    {
+                      "relation": "depends_on",
+                      "source": "A",
+                      "target": "B"
+                    }
+                  ],
+                  "labels": [
+                    "dependsOn",
+                    "depends_on"
+                  ]
+                },
+                {
+                  "edges": [
+                    {
+                      "relation": "dependsOn",
+                      "source": "B",
+                      "target": "C"
+                    },
+                    {
+                      "relation": "depends_on",
+                      "source": "B",
+                      "target": "C"
+                    }
+                  ],
+                  "labels": [
+                    "dependsOn",
+                    "depends_on"
+                  ]
+                }
+              ],
+              "independent_cycles": 2
+            },
             "degree": {
               "max_in": 2,
               "max_out": 2,
@@ -556,6 +810,10 @@
             }
           },
           "without": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -602,6 +860,10 @@
           "removed_directed_cycle": false,
           "split_components": false,
           "with": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -626,6 +888,10 @@
             }
           },
           "without": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -680,6 +946,10 @@
           "removed_directed_cycle": false,
           "split_components": false,
           "with": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -703,6 +973,10 @@
             }
           },
           "without": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -749,6 +1023,29 @@
           "removed_directed_cycle": false,
           "split_components": false,
           "with": {
+            "cycle_basis": {
+              "cycles": [
+                {
+                  "edges": [
+                    {
+                      "relation": "duplicates",
+                      "source": "P",
+                      "target": "Q"
+                    },
+                    {
+                      "relation": "overlapsWith",
+                      "source": "P",
+                      "target": "Q"
+                    }
+                  ],
+                  "labels": [
+                    "duplicates",
+                    "overlapsWith"
+                  ]
+                }
+              ],
+              "independent_cycles": 1
+            },
             "degree": {
               "max_in": 2,
               "max_out": 2,
@@ -772,6 +1069,10 @@
             }
           },
           "without": {
+            "cycle_basis": {
+              "cycles": [],
+              "independent_cycles": 0
+            },
             "degree": {
               "max_in": 1,
               "max_out": 1,
@@ -801,7 +1102,7 @@
   ],
   "tool": {
     "name": "topontology",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "unclassified_edges": {
     "delta": 6,
