@@ -1,0 +1,42 @@
+{
+  "schema": "taxontoy-relations/2",
+  "audit": {
+    "dependsOn": "dependency"
+  },
+  "concepts": {
+    "narrower": "hierarchy",
+    "similarTo": "similarity"
+  },
+  "cases": {
+    "candidate": "hypothesis"
+  },
+  "direction": {
+    "candidate": "forward",
+    "dependsOn": "forward",
+    "narrower": "forward",
+    "similarTo": "mutual"
+  },
+  "excluded": {
+    "audit": ["hasName"],
+    "concepts": ["hasName"],
+    "cases": []
+  },
+  "properties": {
+    "classes": {
+      "hierarchy": {
+        "acyclic": {
+          "since": "2026-11-15",
+          "reason": "階層の循環は分類の誤りとして扱う"
+        }
+      }
+    },
+    "relations": {
+      "narrower": {
+        "transitive": {
+          "since": "2026-11-15",
+          "reason": "上位から下位への narrower は推移する"
+        }
+      }
+    }
+  }
+}

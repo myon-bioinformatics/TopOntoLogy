@@ -1,0 +1,25 @@
+{
+  "schema": "vendor-lock/1",
+  "files": [
+    {
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "fleet_check.py",
+      "destination": "vendor/fleet_check.py"
+    },
+    {
+      "repository": "myon-bioinformatics/markdown",
+      "source": "markdown.py",
+      "destination": "vendor/markdown/markdown.py"
+    },
+    {
+      "repository": "myon-bioinformatics/Aoi",
+      "source": "shrink/numpy_min.py",
+      "destination": "vendor/aoi/shrink/numpy_min.py"
+    },
+    {
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/stdlib_min/plotly_min.py",
+      "destination": "vendor/tools/stdlib_min/plotly_min.py"
+    }
+  ]
+}

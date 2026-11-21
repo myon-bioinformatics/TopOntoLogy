@@ -1,0 +1,56 @@
+{
+  "copied_from": {
+    "repository": "myon-bioinformatics/Aoi",
+    "commit": "320126983a992e30730350c5e9b0e4051c0d33d4",
+    "kept": [
+      "schema",
+      "files[].repository",
+      "files[].source",
+      "files[].destination"
+    ],
+    "omitted": [
+      "ref",
+      "commit",
+      "blob_sha",
+      "sha256"
+    ],
+    "note": "グラフが読む項目だけを残した。commit と sha256 は vendorsFrom の向きに使わない。"
+  },
+  "locks": [
+    {
+      "repository": "myon-bioinformatics/Aoi",
+      "source_path": "vendor.lock.json",
+      "fixture": "aoi.json"
+    },
+    {
+      "repository": "myon-bioinformatics/BlueProbe",
+      "source_path": "blueprobe/vendor.lock.json",
+      "fixture": "blueprobe.json"
+    },
+    {
+      "repository": "myon-bioinformatics/DRAgoWing",
+      "source_path": "dragowing/vendor.lock.json",
+      "fixture": "dragowing.json"
+    },
+    {
+      "repository": "myon-bioinformatics/NagoyAction",
+      "source_path": "nagoyaction/vendor.lock.json",
+      "fixture": "nagoyaction.json"
+    },
+    {
+      "repository": "myon-bioinformatics/PythDRagoras",
+      "source_path": "pythdragoras/vendor.lock.json",
+      "fixture": "pythdragoras.json"
+    },
+    {
+      "repository": "myon-bioinformatics/QueRyu",
+      "source_path": "queryu/vendor.lock.json",
+      "fixture": "queryu.json"
+    },
+    {
+      "repository": "myon-bioinformatics/SakAnalytics",
+      "source_path": "sakanalytics/vendor.lock.json",
+      "fixture": "sakanalytics.json"
+    }
+  ]
+}

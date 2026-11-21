@@ -58,6 +58,16 @@ jobs:
           diff -u tests/expected/series.json "$out/series.json"
           uv run --no-project python -S topontology.py tests/fixtures/vendor-lock.json tests/fixtures/vendor-classes.json demo --graph-format vendor-lock --format canonical > "$out/vendor-lock.json"
           diff -u tests/expected/vendor-lock.json "$out/vendor-lock.json"
+          uv run --no-project python -S topontology.py impact \
+            --lock myon-bioinformatics/Aoi=tests/fixtures/aoi-locks/aoi.json \
+            --lock myon-bioinformatics/BlueProbe=tests/fixtures/aoi-locks/blueprobe.json \
+            --lock myon-bioinformatics/DRAgoWing=tests/fixtures/aoi-locks/dragowing.json \
+            --lock myon-bioinformatics/NagoyAction=tests/fixtures/aoi-locks/nagoyaction.json \
+            --lock myon-bioinformatics/PythDRagoras=tests/fixtures/aoi-locks/pythdragoras.json \
+            --lock myon-bioinformatics/QueRyu=tests/fixtures/aoi-locks/queryu.json \
+            --lock myon-bioinformatics/SakAnalytics=tests/fixtures/aoi-locks/sakanalytics.json \
+            --format canonical > "$out/impact.json"
+          diff -u tests/expected/impact.json "$out/impact.json"
       - name: Pinned TaxOntOy table classifies the fixture
         run: |
           set -euo pipefail
@@ -78,6 +88,11 @@ jobs:
           assert report["classes"]["similarity"]["independent_cycles"] == 1
           assert report["unclassified_edges"] == 1
           PY
+          if uv run --no-project python -S topontology.py tests/fixtures/graph.json "$GITHUB_WORKSPACE/TOO/otl-relations.json" properties --format canonical > "$RUNNER_TEMP/properties.out" 2>"$RUNNER_TEMP/properties.err"; then
+            echo "properties was accepted as a profile" >&2
+            exit 1
+          fi
+          grep -q "unknown profile: properties" "$RUNNER_TEMP/properties.err"
       - name: Coverage includes CLI subprocesses
         run: |
           set -euo pipefail
