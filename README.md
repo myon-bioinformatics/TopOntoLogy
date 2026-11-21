@@ -21,7 +21,7 @@ ONTO と TaxOntOy の場所は `onto_path.py` だけが知っています。こ�
 2. 環境変数 `ONTO_ROOT` / `TAXONTOY_ROOT`
 3. 推定。TopOntoLogy の隣の `../ONTO` と `../TaxOntOy` を先に見ます。親リポジトリの子や孫として入っているときは、アンカーから上へ辿り、マーカー（`knowledgegraph.py`、`otl-relations.json`）のある checkout を探します
 
-空の明示引数は環境変数へ落としません。マーカーが無いディレクトリは使いません。見つからないときは、設定する環境変数の名前を書いた日本語のエラーで止まります。`knowledgegraph` の出どころが解決した ONTO でなければ、黙って別のコピーは使いません。
+空の明示引数は環境変数へ落としません。マーカーが無いディレクトリは使いません。見つからないときは、設定する環境変数の名前を書いた日本語のエラーで止まります。`knowledgegraph` の出どころが解決した ONTO でなければ、黙って別のコピーは使いません。TaxOntOy を探すのは、分類表を省略して既定の `otl-relations.json` を使うときだけです。分類表を位置引数か `--classification` で渡したとき、および `impact`、`deps`、`--help` では探しません。
 
 ```sh
 python -S topontology.py audit.json audit

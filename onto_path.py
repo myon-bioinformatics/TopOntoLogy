@@ -195,11 +195,25 @@ def verify_origin(root, modules, env_name):
     return root
 
 
-def bind(anchor, explicit=None):
-    """ROOTS の各根を決め、環境変数を足し、モジュールのある根は出どころを確かめる。"""
+def import_roots():
+    """Roots whose modules have to be imported before the program runs."""
+    return tuple(name for name, spec in ROOTS.items() if spec["modules"])
+
+
+def bind(anchor, explicit=None, *, names=None):
+    """Resolve the named roots (every root when ``names`` is omitted).
+
+    Environment variables are filled in only for roots this call resolves.
+    A root with modules is put on ``sys.path`` and its origin is checked.
+    """
     chosen = explicit or {}
+    if names is None:
+        selected = tuple(ROOTS)
+    else:
+        selected = tuple(names)
     found = {}
-    for name, spec in ROOTS.items():
+    for name in selected:
+        spec = _spec(name)
         root = resolve_root(name, chosen.get(name), anchor=anchor)
         os.environ.setdefault(spec["env"], str(root))
         if spec["modules"]:

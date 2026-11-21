@@ -14,11 +14,23 @@ from pathlib import Path
 import onto_path
 
 
-def _boot():
-    """Resolve ONTO and TaxOntOy before importing knowledgegraph.
+def _load_graph_api():
+    """Import ONTO's graph helpers. A missing name is one line on the CLI."""
+    try:
+        from knowledgegraph import graph_mermaid, relation_cycles, topological_order
+    except ImportError as error:
+        if __name__ == "__main__":
+            print(error, file=sys.stderr)
+            raise SystemExit(1) from None
+        raise
+    return graph_mermaid, relation_cycles, topological_order
 
-    As a script, ``--onto-root`` and ``--taxontoy-root`` win. Importing the
-    module uses the environment or a sibling checkout.
+
+def _boot():
+    """Import the roots that ship modules. Other roots wait until they are used.
+
+    As a script, ``--onto-root`` and ``--taxontoy-root`` win over the environment.
+    Importing the module uses the environment or a sibling checkout.
     """
     explicit = None
     if __name__ == "__main__":
@@ -28,17 +40,16 @@ def _boot():
             print(error, file=sys.stderr)
             raise SystemExit(1) from None
     try:
-        onto_path.bind(Path(__file__), explicit)
+        onto_path.bind(Path(__file__), explicit, names=onto_path.import_roots())
     except onto_path.RootError as error:
         if __name__ == "__main__":
             print(error, file=sys.stderr)
             raise SystemExit(1) from None
         raise
+    return _load_graph_api()
 
 
-_boot()
-
-from knowledgegraph import graph_mermaid, relation_cycles, topological_order
+graph_mermaid, relation_cycles, topological_order = _boot()
 
 __version__ = "0.7.0"
 TOOL_NAME = "topontology"

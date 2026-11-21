@@ -3,6 +3,8 @@ import hashlib
 import importlib.util
 import json
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 import types
@@ -13,7 +15,7 @@ from unittest.mock import patch
 
 import onto_path
 import topontology
-from test_topontology import ROOT, run_cli
+from test_topontology import ROOT, _traced_command, run_cli
 
 REAL_ONTO = onto_path.resolve_root("ONTO", anchor=ROOT)
 REAL_TAX = onto_path.resolve_root("TaxOntOy", anchor=ROOT)
@@ -239,19 +241,29 @@ class OriginTests(unittest.TestCase):
             self.assertEqual(os.environ[onto_path.TAXONTOY_ENV], "keep-tax")
             self.assertEqual(onto_path.RESOLVED["ONTO"], REAL_ONTO)
             self.assertEqual(onto_path.RESOLVED["TaxOntOy"], REAL_TAX)
-        saved = {}
-        for name in (onto_path.ONTO_ENV, onto_path.TAXONTOY_ENV):
-            saved[name] = os.environ.pop(name, None)
-        try:
-            onto_path.bind(ROOT)
-            self.assertEqual(os.environ[onto_path.ONTO_ENV], str(REAL_ONTO))
-            self.assertEqual(os.environ[onto_path.TAXONTOY_ENV], str(REAL_TAX))
-        finally:
-            for name, value in saved.items():
-                if value is None:
-                    os.environ.pop(name, None)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            onto = root / "ONTO"
+            tax = root / "TaxOntOy"
+            _touch(onto / MARKER, "marker = True\n")
+            _touch(tax / TABLE, "{}\n")
+            anchor = _touch(root / "app" / "tool.py", "")
+            saved_module = sys.modules.get("knowledgegraph")
+            saved_path = list(sys.path)
+            sys.modules.pop("knowledgegraph", None)
+            try:
+                with _cleared_roots():
+                    found = onto_path.bind(anchor)
+                    self.assertEqual(found["ONTO"], onto.resolve())
+                    self.assertEqual(found["TaxOntOy"], tax.resolve())
+                    self.assertEqual(os.environ[onto_path.ONTO_ENV], str(onto.resolve()))
+                    self.assertEqual(os.environ[onto_path.TAXONTOY_ENV], str(tax.resolve()))
+            finally:
+                sys.path[:] = saved_path
+                if saved_module is None:
+                    sys.modules.pop("knowledgegraph", None)
                 else:
-                    os.environ[name] = value
+                    sys.modules["knowledgegraph"] = saved_module
 
 
 class ArgvTests(unittest.TestCase):
@@ -286,19 +298,35 @@ class ArgvTests(unittest.TestCase):
 
 class CliResolutionTests(unittest.TestCase):
     def test_short_form_infers_the_classification(self):
-        code, out, err = run_cli(
-            "tests/fixtures/graph.json", "concepts",
-            env={"ONTO_ROOT": None, "TAXONTOY_ROOT": None, "PYTHONPATH": None},
-        )
-        self.assertEqual(code, 0, err)
-        body = json.loads(out)
-        self.assertTrue(body["provenance"]["classification"]["path"].endswith("TaxOntOy/otl-relations.json"))
-        with _cleared_roots():
-            digest = onto_path.marker_file("TaxOntOy", anchor=ROOT).read_bytes()
-        self.assertEqual(body["provenance"]["classification"]["sha256"], hashlib.sha256(digest).hexdigest())
-        self.assertEqual(body["provenance"]["profile"], "concepts")
-        self.assertEqual(body["classes"]["hierarchy"]["independent_cycles"], 1)
-        self.assertEqual(body["unclassified_edges"], 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "app"
+            project.mkdir()
+            onto = root / "ONTO"
+            tax = root / "TaxOntOy"
+            onto.mkdir()
+            tax.mkdir()
+            shutil.copy(REAL_ONTO / MARKER, onto / MARKER)
+            table = tax / TABLE
+            shutil.copy(REAL_TAX / TABLE, table)
+            shutil.copy(ROOT / "onto_path.py", project / "onto_path.py")
+            shutil.copy(ROOT / "topontology.py", project / "topontology.py")
+            graph = ROOT / "tests/fixtures/graph.json"
+            code, out, err = _run_script(
+                project / "topontology.py",
+                [str(graph), "concepts"],
+                {"ONTO_ROOT": None, "TAXONTOY_ROOT": None, "PYTHONPATH": None},
+            )
+            self.assertEqual(code, 0, err)
+            body = json.loads(out)
+            self.assertTrue(body["provenance"]["classification"]["path"].endswith("TaxOntOy/otl-relations.json"))
+            self.assertEqual(
+                body["provenance"]["classification"]["sha256"],
+                hashlib.sha256(table.read_bytes()).hexdigest(),
+            )
+            self.assertEqual(body["provenance"]["profile"], "concepts")
+            self.assertEqual(body["classes"]["hierarchy"]["independent_cycles"], 1)
+            self.assertEqual(body["unclassified_edges"], 1)
 
     def test_option_beats_env_and_env_does_not_fall_back(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -372,6 +400,83 @@ class CliResolutionTests(unittest.TestCase):
             self.assertIn("ONTO_ROOT", str(raised.exception))
             self.assertIn(str(Path(tmp).resolve()), str(raised.exception))
 
+    def test_commands_with_an_explicit_table_do_not_need_taxontoy(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = Path(tmp) / "not-a-checkout"
+            bad.mkdir()
+            env = {
+                onto_path.ONTO_ENV: None,
+                onto_path.TAXONTOY_ENV: str(bad),
+                "PYTHONPATH": None,
+            }
+            onto = ("--onto-root", str(REAL_ONTO))
+            cases = (
+                ("--help", *onto),
+                ("impact", "--help", *onto),
+                ("deps", "--help", *onto),
+                ("tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo", *onto),
+                (
+                    "tests/fixtures/graph.json", "demo",
+                    "--classification", "tests/fixtures/classes.json",
+                    *onto,
+                ),
+                (
+                    "impact",
+                    "--lock", "child=tests/fixtures/aoi-locks/blueprobe.json",
+                    *onto,
+                ),
+                (
+                    "deps",
+                    "--declared", "tests/fixtures/siblings/aoi.py",
+                    "--source", "queryu=tests/fixtures/siblings/queryu",
+                    *onto,
+                ),
+            )
+            for args in cases:
+                code, out, err = run_cli(*args, env=env)
+                self.assertEqual(code, 0, (args, err))
+                self.assertNotIn("TAXONTOY_ROOT", err)
+                self.assertNotIn("Traceback", err)
+            code, out, err = run_cli(
+                "tests/fixtures/graph.json", "concepts", *onto, env=env,
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("TAXONTOY_ROOT", err)
+            self.assertNotIn("Traceback", err)
+
+    def test_empty_knowledgegraph_is_one_line_on_the_cli(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            empty = Path(tmp) / "onto"
+            empty.mkdir()
+            (empty / MARKER).write_text("", encoding="utf-8")
+            code, out, err = run_cli(
+                "--help",
+                "--onto-root", str(empty),
+                env={onto_path.ONTO_ENV: None, onto_path.TAXONTOY_ENV: None, "PYTHONPATH": None},
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(out, "")
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(err.count("\n"), 1)
+        self.assertIn("knowledgegraph", err)
+
+    def test_import_error_reraises_off_the_cli(self):
+        saved_module = sys.modules.get("knowledgegraph")
+        saved_path = list(sys.path)
+        sys.modules.pop("knowledgegraph", None)
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                (Path(tmp) / MARKER).write_text("", encoding="utf-8")
+                sys.path.insert(0, tmp)
+                with self.assertRaises(ImportError):
+                    topontology._load_graph_api()
+        finally:
+            sys.path[:] = saved_path
+            if saved_module is None:
+                sys.modules.pop("knowledgegraph", None)
+            else:
+                sys.modules["knowledgegraph"] = saved_module
+
 
 class ConftestTests(unittest.TestCase):
     def test_usage_error_names_the_env_var_and_checks_origin(self):
@@ -383,24 +488,34 @@ class ConftestTests(unittest.TestCase):
         stub.UsageError = UsageError
         saved_pytest = sys.modules.get("pytest")
         saved_module = sys.modules.get("knowledgegraph")
+        saved_path = list(sys.path)
         sys.modules["pytest"] = stub
         try:
             spec = importlib.util.spec_from_file_location("tol_conftest_under_test", ROOT / "conftest.py")
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            found = module.activate()
-            self.assertEqual(found["ONTO"], REAL_ONTO)
-            self.assertEqual(found["TaxOntOy"], REAL_TAX)
             with _cleared_roots():
                 with tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp)
+                    missing = root / "nowhere"
+                    missing.mkdir()
                     with self.assertRaises(UsageError) as raised:
-                        module.activate(Path(tmp) / "missing.py")
+                        module.activate(missing / "missing.py")
                     self.assertIn("ONTO_ROOT", str(raised.exception))
+                    onto = root / "ONTO"
+                    tax = root / "TaxOntOy"
+                    _touch(onto / MARKER, "marker = True\n")
+                    _touch(tax / TABLE, "{}\n")
+                    anchor = _touch(root / "app" / "tool.py", "")
+                    sys.modules.pop("knowledgegraph", None)
+                    found = module.activate(anchor)
+                    self.assertEqual(found["ONTO"], onto.resolve())
+                    self.assertEqual(found["TaxOntOy"], tax.resolve())
                     fake = types.ModuleType("knowledgegraph")
-                    fake.__file__ = str(Path(tmp) / MARKER)
+                    fake.__file__ = str(root / "other" / MARKER)
                     sys.modules["knowledgegraph"] = fake
                     with self.assertRaises(UsageError) as raised:
-                        module.activate()
+                        module.activate(anchor)
                     self.assertIn("出どころ", str(raised.exception))
                     self.assertIn("ONTO_ROOT", str(raised.exception))
         finally:
@@ -408,10 +523,31 @@ class ConftestTests(unittest.TestCase):
                 sys.modules.pop("pytest", None)
             else:
                 sys.modules["pytest"] = saved_pytest
+            sys.path[:] = saved_path
             if saved_module is None:
                 sys.modules.pop("knowledgegraph", None)
             else:
                 sys.modules["knowledgegraph"] = saved_module
+
+
+def _run_script(script, args, env):
+    """Run a copied script. Do not measure it; the copy is outside the repo."""
+    merged = os.environ.copy()
+    merged.pop("COVERAGE_PROCESS_START", None)
+    for key, value in env.items():
+        if value is None:
+            merged.pop(key, None)
+        else:
+            merged[key] = value
+    completed = subprocess.run(
+        _traced_command(script, args, merged),
+        cwd=ROOT,
+        env=merged,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return completed.returncode, completed.stdout, completed.stderr
 
 
 class ResolutionMutationTests(unittest.TestCase):
