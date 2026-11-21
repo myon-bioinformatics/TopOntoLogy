@@ -252,7 +252,7 @@ class AnomalyCliTests(unittest.TestCase):
         expected = (ROOT / "tests/expected/anomalies.json").read_text(encoding="utf-8")
         self.assertEqual(out, expected)
         body = json.loads(out)
-        self.assertEqual(body["tool"]["version"], "0.2.0")
+        self.assertEqual(body["tool"]["version"], topontology.__version__)
         self.assertEqual(
             [item["id"] for item in body["anomalies"]["classes"]["star"]["nodes"]["total_degree"]["bands"]["3"]],
             ["C"],

@@ -61,4 +61,26 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 PYTHONPATH=../ONTO uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` の行を測り、実行した行 + 除外した行 + 未実行の行が全体と一致し、未実行が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `30c5ed689cb931bce3787e37056082ce8cb52b3d` を checkout し、`PYTHONPATH` で ONTO を渡します。ツールの版は 0.2.0 です。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `30c5ed689cb931bce3787e37056082ce8cb52b3d` を checkout し、`PYTHONPATH` で ONTO を渡します。ツールの版は 0.3.0 です。
+
+## 時点の並び
+
+`series` は、同じ分類表でグラフの並びを隣同士で比べます。各時点は `--snapshot ラベル=パス` で、順番どおりに繰り返します。引数があるときはそれが優先です。無いときは環境変数 `TOPONTOLOGY_SNAPSHOTS` を、改行またはカンマで区切った `ラベル=パス` として読みます。前後の空白は除き、空なら未設定です。ラベルは不透明な文字列です（OnTautoLogy の main のコミット SHA を想定していますが、ネットワークでは取りに行きません）。
+
+```sh
+PYTHONPATH=../ONTO python -S topontology.py series ../TaxOntOy/otl-relations.json concepts \
+  --snapshot aaaaaaaa=before.json --snapshot bbbbbbbb=after.json
+```
+
+隣り合う組ごとに、グラフ全体の独立閉路 E−V+C と弱連結成分の差分、分類ごとの差分（既存の比較と同じ右引く左）、その差分を説明する追加辺と削除辺（source、relation、target を並べたもの）を返します。ラベルの重複、または時点が 2 つ未満のときは、トレースバックではなく 1 行のエラーで終了コード 1 です。
+
+## vendor-lock/1
+
+`--graph-format vendor-lock` は、`schema` が `vendor-lock/1` の JSON をグラフとして読みます。読む項目は次だけです。
+
+- `schema`。`vendor-lock/1` 以外はエラー
+- `files`。配列でないときはエラー
+- 各要素の `destination`（空でなければこちら）または `path`。ローカル側のノード ID
+- 各要素の `repository` と `source`。上流のノード ID。両方あるときは `repository:source`、`repository` だけならその文字列、`source` だけならその文字列
+
+辺はローカルから上流へ向き、relation は `vendorsFrom` です。`commit`、`ref`、`sha256`、`blob_sha` は読みません。出力のノードと辺は ID で並べます。実在の lock ファイルは同梱せず、`tests/fixtures/vendor-lock.json` は合成した例です。

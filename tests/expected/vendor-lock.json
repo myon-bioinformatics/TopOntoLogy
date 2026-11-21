@@ -1,0 +1,43 @@
+{
+  "classes": {
+    "dependency": {
+      "degree": {
+        "max_in": 1,
+        "max_out": 1,
+        "max_total": 1,
+        "sinks": 2,
+        "sources": 2
+      },
+      "depth": 1,
+      "edges": 2,
+      "incident_nodes": 4,
+      "independent_cycles": 0,
+      "multiple_sources": [],
+      "order_cycle": null,
+      "sample_cycles": [],
+      "weakly_connected_components": {
+        "count": 2,
+        "sizes": [
+          2,
+          2
+        ]
+      }
+    }
+  },
+  "provenance": {
+    "classification": {
+      "path": "tests/fixtures/vendor-classes.json",
+      "sha256": "a765a93c69bcc9f3f68c7b087ebedbbdf4622080c12e5bffc4183af8b60669de"
+    },
+    "graph": {
+      "path": "tests/fixtures/vendor-lock.json",
+      "sha256": "4e388123f5d0a92812d01992afe44bbe496b23eef3eb8ef73529dc78156319d1"
+    },
+    "profile": "demo"
+  },
+  "tool": {
+    "name": "topontology",
+    "version": "0.3.0"
+  },
+  "unclassified_edges": 0
+}
