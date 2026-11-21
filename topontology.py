@@ -902,11 +902,53 @@ def _dict_of_string_tuples(node):
     return parsed
 
 
+_MUTATING_ATTRS = frozenset({
+    "update", "append", "extend", "insert", "pop", "remove", "clear",
+    "setdefault", "add", "discard", "reverse", "sort",
+})
+
+
+def _names_siblings(node):
+    """True when ``node`` is ``SIBLINGS`` or a subscript or attribute of it."""
+    while isinstance(node, (ast.Attribute, ast.Subscript)):
+        node = node.value
+    return isinstance(node, ast.Name) and node.id == "SIBLINGS"
+
+
+def _call_mutates_siblings(node):
+    func = node.func
+    if not isinstance(func, ast.Attribute):
+        return False
+    if func.attr not in _MUTATING_ATTRS:
+        return False
+    return _names_siblings(func.value)
+
+
+def _statement_mutates_siblings(stmt):
+    """True when ``stmt`` writes ``SIBLINGS`` in a form this reader does not apply."""
+    for node in ast.walk(stmt):
+        if isinstance(node, ast.AugAssign) and _names_siblings(node.target):
+            return True
+        if isinstance(node, ast.Delete) and any(_names_siblings(target) for target in node.targets):
+            return True
+        if isinstance(node, ast.Call) and _call_mutates_siblings(node):
+            return True
+        if isinstance(node, ast.Assign) and any(_names_siblings(target) for target in node.targets):
+            return True
+        if isinstance(node, ast.AnnAssign) and _names_siblings(node.target):
+            return True
+        if isinstance(node, ast.NamedExpr) and _names_siblings(node.target):
+            return True
+    return False
+
+
 def siblings_from_source(text):
     """Read the top-level ``SIBLINGS`` dict from a Python file.
 
-    A later ``SIBLINGS["name"] = (...)`` replaces or adds that one entry.
-    Nested assignments are ignored. The tool does not execute the file.
+    A later top-level ``SIBLINGS["name"] = (...)`` replaces or adds that one
+    entry. Any other write — augmented assignment, a mutating method, ``del``,
+    or an assignment nested in ``if`` or another block — is an error. Reads are
+    ignored. The tool does not execute the file.
     """
     try:
         tree = ast.parse(text)
@@ -919,23 +961,25 @@ def siblings_from_source(text):
                 raise ValueError("SIBLINGS must be a dict")
             table = _dict_of_string_tuples(stmt.value)
             continue
-        if not isinstance(stmt, ast.Assign) or len(stmt.targets) != 1:
-            continue
-        target = stmt.targets[0]
-        if isinstance(target, ast.Name) and target.id == "SIBLINGS":
-            table = _dict_of_string_tuples(stmt.value)
-            continue
-        if (
-            isinstance(target, ast.Subscript)
-            and isinstance(target.value, ast.Name)
-            and target.value.id == "SIBLINGS"
-        ):
-            key = target.slice
-            if not isinstance(key, ast.Constant) or not isinstance(key.value, str):
-                raise ValueError("SIBLINGS key must be a string")
-            if table is None:
-                raise ValueError("SIBLINGS is missing")
-            table[key.value] = _string_tuple(stmt.value)
+        if isinstance(stmt, ast.Assign) and len(stmt.targets) == 1:
+            target = stmt.targets[0]
+            if isinstance(target, ast.Name) and target.id == "SIBLINGS":
+                table = _dict_of_string_tuples(stmt.value)
+                continue
+            if (
+                isinstance(target, ast.Subscript)
+                and isinstance(target.value, ast.Name)
+                and target.value.id == "SIBLINGS"
+            ):
+                key = target.slice
+                if not isinstance(key, ast.Constant) or not isinstance(key.value, str):
+                    raise ValueError("SIBLINGS key must be a string")
+                if table is None:
+                    raise ValueError("SIBLINGS is missing")
+                table[key.value] = _string_tuple(stmt.value)
+                continue
+        if _statement_mutates_siblings(stmt):
+            raise ValueError("unsupported SIBLINGS mutation")
     if table is None:
         raise ValueError("SIBLINGS is missing")
     return table
@@ -1066,14 +1110,21 @@ def _import_names(tree):
 
 
 def python_sources(directory):
-    """``.py`` files under ``directory``, skipping tool and cache directories."""
+    """``.py`` files under ``directory``, skipping tool and cache directories.
+
+    A symlink whose target resolves outside ``directory`` is an error. The
+    file is not read.
+    """
     if not directory.is_dir():
         raise ValueError(f"source is not a directory: {directory}")
+    root = directory.resolve()
     found = []
     for path in directory.rglob("*.py"):
         rel = path.relative_to(directory)
         if _SKIP_DIRS.intersection(rel.parts[:-1]):
             continue
+        if path.is_symlink() and not path.resolve().is_relative_to(root):
+            raise ValueError(f"symlink escapes the source directory: {rel.as_posix()}")
         found.append((rel.as_posix(), path))
     found.sort()
     return found
@@ -1128,11 +1179,19 @@ def scan_imports(sources, table, import_map):
 
 
 def _manifest_path(base, value, what):
+    """Resolve one manifest path and keep it inside the manifest directory.
+
+    Absolute paths are allowed when ``resolve`` still lands inside ``base``.
+    ``..`` segments and symlinks that leave ``base`` are rejected.
+    """
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"py-imports/1 {what} must be a non-empty string")
-    path = Path(value.strip())
-    if not path.is_absolute():
-        path = base / path
+    raw = Path(value.strip())
+    path = raw if raw.is_absolute() else base / raw
+    root = base.resolve()
+    resolved = path.resolve()
+    if not resolved.is_relative_to(root):
+        raise ValueError(f"py-imports/1 {what} escapes the manifest directory")
     return path
 
 

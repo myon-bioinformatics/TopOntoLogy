@@ -171,15 +171,49 @@ class MappingTests(unittest.TestCase):
             topontology.siblings_from_source(text)
         text = (
             "def ignored():\n"
-            "    SIBLINGS = {'nested': ('no',)}\n"
+            "    return SIBLINGS['aa']\n"
+            "count = 0\n"
+            "count += 1\n"
+            "del count\n"
+            "other = {}\n"
+            "other.update({})\n"
+            "other['a'].append('c')\n"
+            "len(SIBLINGS)\n"
+            "SIBLINGS.get('aa')\n"
+            "SIBLINGS.keys()\n"
             "SIBLINGS = {'aa': ['b'], 'bb': ('c', 'd')}\n"
             "other['a'] = ('no',)\n"
             "item.attr['a'] = ('no',)\n"
             "SIBLINGS['cc'] = ('e',)\n"
             "SIBLINGS['aa'] = ('z',)\n"
+            "if 'aa' in SIBLINGS:\n"
+            "    y = SIBLINGS['aa']\n"
         )
         table = topontology.siblings_from_source(text)
         self.assertEqual(table, {"aa": ("z",), "bb": ("c", "d"), "cc": ("e",)})
+
+    def test_unsupported_siblings_mutations_raise(self):
+        base = "SIBLINGS = {'a': ('b',)}\n"
+        forms = [
+            "SIBLINGS['a'] += ('c',)\n",
+            "SIBLINGS |= {'b': ('c',)}\n",
+            "SIBLINGS.update({'b': ('c',)})\n",
+            "SIBLINGS['a'].append('c')\n",
+            "del SIBLINGS['a']\n",
+            "del SIBLINGS\n",
+            "del other, SIBLINGS['a']\n",
+            "if True:\n    SIBLINGS['a'] = ('c',)\n",
+            "if True:\n    SIBLINGS: dict = {'a': ('c',)}\n",
+            "for _ in ():\n    SIBLINGS = {'a': ('c',)}\n",
+            "def rewrite():\n    SIBLINGS['a'] = ('c',)\n",
+            "if (SIBLINGS := {'a': ('c',)}):\n    pass\n",
+            "if True:\n    a = SIBLINGS = {'a': ('c',)}\n",
+            "SIBLINGS.attr += ('c',)\n",
+        ]
+        for form in forms:
+            with self.assertRaises(ValueError) as raised:
+                topontology.siblings_from_source(base + form)
+            self.assertIn("unsupported SIBLINGS mutation", str(raised.exception))
 
     def test_parser_rejects_bad_shapes(self):
         samples = [
@@ -187,6 +221,7 @@ class MappingTests(unittest.TestCase):
             "SIBLINGS: dict = {'a': 'b'}",
             "SIBLINGS = {'a': (1,)}",
             "SIBLINGS = {1: ('a',)}",
+            "SIBLINGS = {'aa': ('b',), **{'c': ('d',)}}",
             "SIBLINGS['a'] = ('b',)",
             "SIBLINGS = {'a': ()}\nSIBLINGS[1] = ('b',)",
             "SIBLINGS = 1",
@@ -210,6 +245,16 @@ class MappingTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 topontology.graph_from_siblings({"child": ("a",)}, root=root)
         self.assertEqual(topontology.graph_from_siblings({"child": ()})["edges"], [])
+
+    def test_slashed_declared_paths_are_not_module_names(self):
+        found = topontology.declared_module_paths({
+            "child": ("pythdragoras/core", "pythdragoras", "."),
+            "other": ("queryu/ask",),
+        })
+        self.assertEqual(found, {"pythdragoras": "pythdragoras"})
+        self.assertNotIn("pythdragoras/core", found)
+        self.assertNotIn("queryu/ask", found)
+        self.assertNotIn(".", found)
 
     def test_import_map_rules_and_longest_prefix(self):
         parsed = topontology.load_import_map({
@@ -275,6 +320,32 @@ class MappingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             topontology.python_sources(DECLARED)
 
+    def test_symlink_outside_the_source_root_is_not_read(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            root = parent / "root"
+            outside = parent / "outside"
+            root.mkdir()
+            outside.mkdir()
+            (root / "real.py").write_text("import kept\n", encoding="utf-8")
+            (root / "link_inside.py").symlink_to(Path("real.py"))
+            (outside / "secret.py").write_text("import SECRET\n", encoding="utf-8")
+            (root / "link_file.py").symlink_to(Path("..") / "outside" / "secret.py")
+            with self.assertRaises(ValueError) as raised:
+                topontology.python_sources(root)
+            self.assertIn("link_file.py", str(raised.exception))
+            (root / "link_file.py").unlink()
+            found = topontology.python_sources(root)
+            self.assertEqual([rel for rel, _path in found], ["link_inside.py", "real.py"])
+            graph = topontology.scan_imports(
+                [{"repo": "child", "path": root}],
+                {"child": ()},
+                {"root": "aoi", "modules": {}},
+            )
+            modules = {edge["target"] for edge in graph["edges"]}
+            self.assertIn("kept", modules)
+            self.assertNotIn("SECRET", modules)
+
     def test_empty_directory_is_scanned_and_not_called_unused_for_others(self):
         with tempfile.TemporaryDirectory() as tmp:
             empty = Path(tmp) / "empty"
@@ -290,21 +361,27 @@ class MappingTests(unittest.TestCase):
 
     def test_manifest_accepts_absolute_paths_and_rejects_bad_documents(self):
         with tempfile.TemporaryDirectory() as tmp:
-            base = Path(tmp)
-            manifest = {
+            work = Path(tmp)
+            base = work / "manifest"
+            base.mkdir()
+            declared = base / "declared.py"
+            declared.write_text("SIBLINGS = {'q': ('blueprobe',)}\n", encoding="utf-8")
+            (base / "src").mkdir()
+            (base / "src" / "use.py").write_text("import blueprobe\n", encoding="utf-8")
+            (base / "nested").mkdir()
+            graph = topontology.graph_from_py_imports_document({
                 "schema": "py-imports/1",
-                "declared": str(DECLARED),
-                "sources": [{"repo": " queryu ", "path": str(QUERYU)}],
-            }
-            graph = topontology.graph_from_py_imports_document(manifest, base)
+                "declared": str(declared.resolve()),
+                "sources": [{"repo": " queryu ", "path": str((base / "src").resolve())}],
+            }, base)
             targets = {edge["target"] for edge in graph["edges"] if edge["relation"] == "imports"}
             self.assertEqual(targets, {"blueprobe"})
-            (base / "declared.py").write_text("SIBLINGS = {'q': ('blueprobe',)}\n", encoding="utf-8")
+            stayed = topontology._manifest_path(base, "nested/../declared.py", "declared")
+            self.assertEqual(stayed.resolve(), declared.resolve())
             (base / "map.json").write_text(
                 json.dumps({"schema": "import-map/1", "modules": {"ask": "queryu/ask"}}),
                 encoding="utf-8",
             )
-            (base / "src").mkdir()
             (base / "src" / "use.py").write_text("import ask\n", encoding="utf-8")
             graph = topontology.graph_from_py_imports_document({
                 "schema": "py-imports/1",
@@ -315,6 +392,22 @@ class MappingTests(unittest.TestCase):
             imported = [edge for edge in graph["edges"] if edge["relation"] == "imports"]
             self.assertEqual(imported[0]["target"], "queryu/ask")
             self.assertEqual(imported[0]["basis"], "ask")
+            outside = work / "outside"
+            outside.mkdir()
+            (outside / "declared.py").write_text("SIBLINGS = {'escaped': ('secret',)}\n", encoding="utf-8")
+            (outside / "src").mkdir()
+            (base / "link.py").symlink_to(outside / "declared.py")
+            for value in ("../outside/declared.py", str(outside / "declared.py"), "link.py"):
+                with self.assertRaises(ValueError) as raised:
+                    topontology._manifest_path(base, value, "declared")
+                self.assertIn("escapes", str(raised.exception))
+            with self.assertRaises(ValueError) as raised:
+                topontology.graph_from_py_imports_document({
+                    "schema": "py-imports/1",
+                    "declared": "declared.py",
+                    "sources": [{"repo": "q", "path": "../outside/src"}],
+                }, base)
+            self.assertIn("escapes", str(raised.exception))
         for document in (
             [],
             {"schema": "py-imports/0"},
@@ -520,6 +613,115 @@ class MutationTests(unittest.TestCase):
         )
         self.assertEqual(mutant._mapped_path(".blueprobe", {}, {"blueprobe": "blueprobe"}), "blueprobe")
         self.assertIsNone(topontology._mapped_path(".blueprobe", {}, {"blueprobe": "blueprobe"}))
+
+    def _original_table(self, text):
+        return {"a": ("b",)}
+
+    def test_ignoring_augmented_assignment_is_killed(self):
+        mutant = load_mutant(
+            "if isinstance(node, ast.AugAssign) and _names_siblings(node.target):",
+            "if False and isinstance(node, ast.AugAssign) and _names_siblings(node.target):",
+        )
+        text = "SIBLINGS = {'a': ('b',)}\nSIBLINGS['a'] += ('c',)\n"
+        self.assertEqual(mutant.siblings_from_source(text), self._original_table(text))
+        with self.assertRaises(ValueError):
+            topontology.siblings_from_source(text)
+
+    def test_ignoring_delete_is_killed(self):
+        mutant = load_mutant(
+            "if isinstance(node, ast.Delete) and any(_names_siblings(target) for target in node.targets):",
+            "if False and isinstance(node, ast.Delete) and any(_names_siblings(target) for target in node.targets):",
+        )
+        text = "SIBLINGS = {'a': ('b',)}\ndel SIBLINGS['a']\n"
+        self.assertEqual(mutant.siblings_from_source(text), self._original_table(text))
+
+    def test_ignoring_update_is_killed(self):
+        mutant = load_mutant(
+            '"update", "append", "extend", "insert", "pop", "remove", "clear",',
+            '"append", "extend", "insert", "pop", "remove", "clear",',
+        )
+        text = "SIBLINGS = {'a': ('b',)}\nSIBLINGS.update({'b': ('c',)})\n"
+        self.assertEqual(mutant.siblings_from_source(text), self._original_table(text))
+
+    def test_ignoring_append_is_killed(self):
+        mutant = load_mutant(
+            '"update", "append", "extend", "insert", "pop", "remove", "clear",',
+            '"update", "extend", "insert", "pop", "remove", "clear",',
+        )
+        text = "SIBLINGS = {'a': ('b',)}\nSIBLINGS['a'].append('c')\n"
+        self.assertEqual(mutant.siblings_from_source(text), self._original_table(text))
+
+    def test_ignoring_nested_assignment_is_killed(self):
+        mutant = load_mutant(
+            "if isinstance(node, ast.Assign) and any(_names_siblings(target) for target in node.targets):",
+            "if False and isinstance(node, ast.Assign) and any(_names_siblings(target) for target in node.targets):",
+        )
+        text = "SIBLINGS = {'a': ('b',)}\nif True:\n    SIBLINGS['a'] = ('c',)\n"
+        self.assertEqual(mutant.siblings_from_source(text), self._original_table(text))
+        other = "SIBLINGS = {'a': ('b',)}\nfor _ in ():\n    SIBLINGS = {'a': ('c',)}\n"
+        self.assertEqual(mutant.siblings_from_source(other), self._original_table(other))
+
+    def test_ignoring_nested_annotation_is_killed(self):
+        mutant = load_mutant(
+            "if isinstance(node, ast.AnnAssign) and _names_siblings(node.target):",
+            "if False and isinstance(node, ast.AnnAssign) and _names_siblings(node.target):",
+        )
+        text = "SIBLINGS = {'a': ('b',)}\nif True:\n    SIBLINGS: dict = {'a': ('c',)}\n"
+        self.assertEqual(mutant.siblings_from_source(text), self._original_table(text))
+
+    def test_ignoring_walrus_assignment_is_killed(self):
+        mutant = load_mutant(
+            "if isinstance(node, ast.NamedExpr) and _names_siblings(node.target):",
+            "if False and isinstance(node, ast.NamedExpr) and _names_siblings(node.target):",
+        )
+        text = "SIBLINGS = {'a': ('b',)}\nif (SIBLINGS := {'a': ('c',)}):\n    pass\n"
+        self.assertEqual(mutant.siblings_from_source(text), self._original_table(text))
+
+    def test_symlink_escape_check_is_killed(self):
+        mutant = load_mutant(
+            "if path.is_symlink() and not path.resolve().is_relative_to(root):",
+            "if False and path.is_symlink() and not path.resolve().is_relative_to(root):",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            root = parent / "root"
+            outside = parent / "outside"
+            root.mkdir()
+            outside.mkdir()
+            (outside / "secret.py").write_text("import SECRET\n", encoding="utf-8")
+            (root / "link_file.py").symlink_to(Path("..") / "outside" / "secret.py")
+            found = [rel for rel, _path in mutant.python_sources(root)]
+            self.assertEqual(found, ["link_file.py"])
+            self.assertIn("SECRET", (root / "link_file.py").read_text(encoding="utf-8"))
+            with self.assertRaises(ValueError):
+                topontology.python_sources(root)
+
+    def test_manifest_escape_check_is_killed(self):
+        mutant = load_mutant(
+            "if not resolved.is_relative_to(root):",
+            "if False and not resolved.is_relative_to(root):",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "manifest"
+            outside = Path(tmp) / "outside"
+            base.mkdir()
+            outside.mkdir()
+            target = outside / "declared.py"
+            target.write_text("SIBLINGS = {'escaped': ('secret',)}\n", encoding="utf-8")
+            escaped = mutant._manifest_path(base, "../outside/declared.py", "declared")
+            self.assertEqual(escaped.resolve(), target.resolve())
+            with self.assertRaises(ValueError):
+                topontology._manifest_path(base, "../outside/declared.py", "declared")
+
+    def test_dropping_the_slash_check_is_killed(self):
+        mutant = load_mutant(
+            'if "/" not in path and path != ".":',
+            'if path != ".":',
+        )
+        table = {"child": ("pythdragoras/core", "pythdragoras", ".")}
+        self.assertIn("pythdragoras/core", mutant.declared_module_paths(table))
+        self.assertNotIn(".", mutant.declared_module_paths(table))
+        self.assertNotIn("pythdragoras/core", topontology.declared_module_paths(table))
 
     def test_clearing_the_subscript_assignment_is_killed(self):
         mutant = load_mutant(
