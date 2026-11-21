@@ -491,6 +491,20 @@ VENDOR_LOCK_SCHEMA = "vendor-lock/1"
 _VENDOR_RELATION = "vendorsFrom"
 
 
+def _optional_lock_string(entry, key, index):
+    """Return a stripped string, or empty when the key is absent.
+
+    A present value that is not a string is an error, even if the other
+    of ``repository`` or ``source`` is already a usable string.
+    """
+    if key not in entry:
+        return ""
+    value = entry[key]
+    if not isinstance(value, str):
+        raise ValueError(f"vendor-lock files[{index}] {key} must be a string")
+    return value.strip()
+
+
 def graph_from_vendor_lock(document):
     """Read a vendor-lock/1 document as a directed graph.
 
@@ -526,10 +540,8 @@ def graph_from_vendor_lock(document):
         if not isinstance(local, str) or not local.strip():
             raise ValueError(f"vendor-lock files[{index}] needs destination or path")
         local = local.strip()
-        repository = entry.get("repository")
-        source = entry.get("source")
-        repository = repository.strip() if isinstance(repository, str) else ""
-        source = source.strip() if isinstance(source, str) else ""
+        repository = _optional_lock_string(entry, "repository", index)
+        source = _optional_lock_string(entry, "source", index)
         if repository and source:
             upstream = f"{repository}:{source}"
         elif repository:
@@ -943,12 +955,14 @@ def _snapshots_from_env(text):
 
 
 def _resolve_snapshots(raw_args):
-    parsed = []
-    for token in raw_args:
-        item = _parse_snapshot_token(token)
-        if item is not None:
-            parsed.append(item)
-    if parsed:
+    if raw_args:
+        parsed = []
+        for token in raw_args:
+            item = _parse_snapshot_token(token)
+            if item is not None:
+                parsed.append(item)
+        if not parsed:
+            raise ValueError("snapshot must be LABEL=PATH")
         return parsed
     env = _env_text("TOPONTOLOGY_SNAPSHOTS")
     if not env:
