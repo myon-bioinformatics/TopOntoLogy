@@ -1905,16 +1905,14 @@ def _exclusion_view(with_metrics, without_metrics, delta, *, acyclic_declared):
     """Flags for a with-excluded versus without-excluded comparison.
 
     ``delta`` is without minus with, the same direction as ``compare_graphs``.
-    Excluding the relation removed cycles when the independent-cycle count fell
-    or a directed cycle disappeared. It split components when the weak-component
-    count rose. ``exclusion_passes_acyclicity`` is set only when the class
-    declares ``acyclic``, the graph that includes the relation has a directed
-    cycle, and the graph that excludes it does not.
+    Excluding the relation removed cycles when the independent-cycle count fell.
+    A directed cycle disappearing lowers that count as well. It split components
+    when the weak-component count rose. ``exclusion_passes_acyclicity`` is set
+    only when the class declares ``acyclic``, the graph that includes the
+    relation has a directed cycle, and the graph that excludes it does not.
     """
     removed_cycles = delta["independent_cycles"] < 0
     removed_directed_cycle = delta["directed_cycle"] < 0
-    if removed_directed_cycle:
-        removed_cycles = True
     split_components = delta["weakly_connected_components"] > 0
     passes = False
     if acyclic_declared and with_metrics["order_cycle"] is not None and without_metrics["order_cycle"] is None:
