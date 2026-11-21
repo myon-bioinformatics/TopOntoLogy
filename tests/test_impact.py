@@ -284,7 +284,7 @@ class ImpactCliTests(unittest.TestCase):
         self.assertEqual(json_out, expected)
         code, text, err = run_cli(*_aoi_cli_args(), "--format", "text")
         self.assertEqual(code, 0, err)
-        self.assertIn("tool: topontology 0.3.0", text)
+        self.assertIn("tool: topontology 0.4.0", text)
         self.assertIn(
             "source myon-bioinformatics/myon-bioinformatics:fleet_check.py "
             "downstream_repos=6 relays=(none)",
@@ -451,6 +451,52 @@ class ImpactMutationTests(unittest.TestCase):
         self.assertEqual(real_root["relays"], ["origin"])
         self.assertEqual(changed_root["relays"], [])
         self.assertEqual(changed_root["downstream_repos"], real_root["downstream_repos"])
+
+    def test_overwriting_the_shortest_hop_is_killed(self):
+        # child is reached directly and again through relay. A later write
+        # replaces depth 1 with depth 2. The guarded assignment keeps 1.
+        mutant = load_mutant(
+            "if repo not in depth:\n                depth[repo] = hop",
+            "depth[repo] = hop",
+        )
+        locks = [
+            _lock("child", [
+                _edge("direct.py", "upstream", "root.py"),
+                _edge("via.py", "relay", "copy.py"),
+            ]),
+            _lock("relay", [_edge("copy.py", "upstream", "root.py")]),
+        ]
+        real = topontology.impact_report(locks)
+        changed = mutant.impact_report(locks)
+        real_child = next(item for item in real["sources"][0]["reached"] if item["repository"] == "child")
+        changed_child = next(item for item in changed["sources"][0]["reached"] if item["repository"] == "child")
+        self.assertEqual(real["sources"][0]["id"], "upstream:root.py")
+        self.assertEqual(real_child["depth"], 1)
+        self.assertEqual(changed_child["depth"], 2)
+
+    def test_dropping_the_cycle_flag_is_killed_when_one_root_remains(self):
+        # The cycle still reaches root:r.py, so len(roots) == 1. Without
+        # on_cycle the copy is treated as a single canonical source.
+        mutant = load_mutant(
+            "if on_cycle or len(found) != 1:",
+            "if len(found) != 1:",
+        )
+        locks = [
+            _lock("alpha", [
+                _edge("a.py", "beta", "b.py"),
+                _edge("a.py", "root", "r.py"),
+            ]),
+            _lock("beta", [_edge("b.py", "alpha", "a.py")]),
+        ]
+        real = topontology.impact_report(locks)
+        changed = mutant.impact_report(locks)
+        self.assertFalse(real["policy"]["holds"])
+        alpha = next(item for item in real["policy"]["violations"] if item["repository"] == "alpha")
+        self.assertEqual(alpha["path"], "a.py")
+        self.assertEqual(alpha["roots"], ["root:r.py"])
+        self.assertTrue(alpha["cycle"])
+        self.assertTrue(changed["policy"]["holds"])
+        self.assertEqual(changed["policy"]["violations"], [])
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ from pathlib import Path
 
 from knowledgegraph import graph_mermaid, relation_cycles, topological_order
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 TOOL_NAME = "topontology"
 
 _DEGREE_KEYS = ("max_in", "max_out", "max_total", "sources", "sinks")
@@ -491,10 +491,12 @@ def anomaly_report(graph, classes, *, cycle_limit=5):
 VENDOR_LOCK_SCHEMA = "vendor-lock/1"
 _VENDOR_RELATION = "vendorsFrom"
 
-# taxontoy-relations/1 and /2 keep profiles beside table metadata.
-# `properties` is metadata added in /2. It is not a profile name.
-_NON_PROFILE_KEYS = {
-    "taxontoy-relations/1": frozenset({"schema", "direction", "excluded"}),
+# Profiles are audit, concepts, and cases. The other top-level objects are
+# metadata. `properties` is reserved on /1 as well, so a later object under
+# that key cannot be read as a relation-to-class map.
+_RELATION_SCHEMA_PREFIX = "taxontoy-relations/"
+_KNOWN_RELATION_SCHEMAS = {
+    "taxontoy-relations/1": frozenset({"schema", "direction", "excluded", "properties"}),
     "taxontoy-relations/2": frozenset({"schema", "direction", "excluded", "properties"}),
 }
 
@@ -882,17 +884,22 @@ def _load_graph(path, graph_format="nodes-edges"):
 def _load_classes(path, profile):
     """Return the relation-to-class map named ``profile``.
 
-    A table without ``schema`` is a map of profile name to that map, which is
-    how ``taxontoy-relations`` looked before it grew metadata keys. ``/1`` and
+    A table without ``schema`` is a map of profile name to that map. ``/1`` and
     ``/2`` keep ``audit``, ``concepts``, and ``cases`` in that shape, and put
-    ``direction``, ``excluded``, and (in ``/2``) ``properties`` beside them.
-    Those metadata keys are dicts, so a bare ``profile in table`` check treats
-    ``properties`` as a profile. They are rejected here.
+    ``direction``, ``excluded``, and ``properties`` beside them. Those metadata
+    keys are not profiles, even when ``properties`` is itself a map of strings.
+    Any other ``taxontoy-relations/N`` schema is rejected.
     """
     table = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(table, dict):
         raise ValueError(f"unknown profile: {profile}")
-    reserved = _NON_PROFILE_KEYS.get(table.get("schema"), ())
+    schema = table.get("schema")
+    if schema in _KNOWN_RELATION_SCHEMAS:
+        reserved = _KNOWN_RELATION_SCHEMAS[schema]
+    elif isinstance(schema, str) and schema.startswith(_RELATION_SCHEMA_PREFIX):
+        raise ValueError(f"unknown relation schema: {schema}")
+    else:
+        reserved = ()
     found = table.get(profile)
     if profile in reserved or not isinstance(found, dict):
         raise ValueError(f"unknown profile: {profile}")
