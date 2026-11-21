@@ -9,6 +9,9 @@ import pytest
 
 import onto_path
 
+# 裸の pytest が、隣の checkout や build をこのリポジトリの検査として集めない。
+collect_ignore = ["ONTO", "TaxOntOy", "otl", "build"]
+
 
 def activate(anchor=None):
     """ONTO_ROOT と TAXONTOY_ROOT を入れ、見つからなければ UsageError にする。"""

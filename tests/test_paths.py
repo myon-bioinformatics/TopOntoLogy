@@ -1,4 +1,5 @@
 """Resolution order for ONTO and TaxOntOy, and the mutants that would break it."""
+import ast
 import hashlib
 import importlib.util
 import json
@@ -17,8 +18,6 @@ import onto_path
 import topontology
 from test_topontology import ROOT, _traced_command, run_cli
 
-REAL_ONTO = onto_path.resolve_root("ONTO", anchor=ROOT)
-REAL_TAX = onto_path.resolve_root("TaxOntOy", anchor=ROOT)
 MARKER = "knowledgegraph.py"
 TABLE = "otl-relations.json"
 
@@ -29,6 +28,19 @@ def _cleared_roots():
         os.environ.pop(onto_path.ONTO_ENV, None)
         os.environ.pop(onto_path.TAXONTOY_ENV, None)
         yield
+
+
+def _real_root(name):
+    """The checkout this suite reads. A bad environment value falls back to inference."""
+    try:
+        return onto_path.resolve_root(name, anchor=ROOT)
+    except onto_path.RootError:
+        with _cleared_roots():
+            return onto_path.resolve_root(name, anchor=ROOT)
+
+
+REAL_ONTO = _real_root("ONTO")
+REAL_TAX = _real_root("TaxOntOy")
 
 
 def load_path_mutant(old, new):
@@ -50,19 +62,34 @@ def _touch(path, text="marker\n"):
 
 class LayoutTests(unittest.TestCase):
     def test_real_siblings_resolve_from_a_file_a_directory_and_the_default_anchor(self):
-        for anchor in (ROOT / "onto_path.py", ROOT, None):
-            self.assertEqual(onto_path.resolve_root("ONTO", anchor=anchor), REAL_ONTO)
-            self.assertEqual(onto_path.resolve_root("TaxOntOy", anchor=anchor), REAL_TAX)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            onto = root / "ONTO"
+            tax = root / "TaxOntOy"
+            _touch(onto / MARKER)
+            _touch(tax / TABLE)
+            project = root / "TopOntoLogy"
+            script = _touch(project / "tool.py", "")
+            # A checkout wired only by the environment must not win over this layout.
+            with patch.dict(os.environ, {
+                onto_path.ONTO_ENV: str(root / "other-onto"),
+                onto_path.TAXONTOY_ENV: str(root / "other-tax"),
+            }):
+                with _cleared_roots():
+                    self.assertEqual(onto_path.resolve_root("ONTO", anchor=script), onto.resolve())
+                    self.assertEqual(onto_path.resolve_root("ONTO", anchor=project), onto.resolve())
+                    self.assertEqual(onto_path.resolve_root("TaxOntOy", anchor=script), tax.resolve())
+                    self.assertEqual(onto_path.resolve_root("TaxOntOy", anchor=project), tax.resolve())
+                    self.assertEqual(
+                        onto_path.marker_file("TaxOntOy", anchor=script),
+                        (tax / TABLE).resolve(),
+                    )
         self.assertEqual(onto_path._anchor_dir(None), Path(onto_path.__file__).resolve().parent)
         with self.assertRaises(onto_path.RootError) as raised:
             onto_path.resolve_root("missing-checkout", anchor=ROOT)
         self.assertIn("未知の checkout 名", str(raised.exception))
         self.assertEqual(topontology._profile_text("audit"), "audit")
         self.assertEqual(topontology._profile_text(Path("audit")), "audit")
-        self.assertEqual(
-            onto_path.marker_file("TaxOntOy", anchor=ROOT),
-            REAL_TAX / TABLE,
-        )
 
     def test_explicit_beats_env_and_env_beats_inference(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -479,6 +506,16 @@ class CliResolutionTests(unittest.TestCase):
 
 
 class ConftestTests(unittest.TestCase):
+    def test_pytest_does_not_collect_sibling_checkouts(self):
+        tree = ast.parse((ROOT / "conftest.py").read_text(encoding="utf-8"))
+        found = None
+        for node in tree.body:
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name) and target.id == "collect_ignore":
+                        found = ast.literal_eval(node.value)
+        self.assertEqual(found, ["ONTO", "TaxOntOy", "otl", "build"])
+
     def test_usage_error_names_the_env_var_and_checks_origin(self):
         stub = types.ModuleType("pytest")
 
