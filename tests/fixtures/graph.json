@@ -1,0 +1,16 @@
+{
+  "edges": [
+    {"source": "A", "kind": "narrower", "target": "B"},
+    {"source": "B", "kind": "narrower", "target": "C"},
+    {"source": "A", "kind": "narrower", "target": "C"},
+    {"source": "B", "kind": "similarTo", "target": "C"},
+    {"source": "C", "kind": "similarTo", "target": "B"},
+    {"source": "D", "relation": "hasName", "target": "A"}
+  ],
+  "nodes": [
+    {"id": "A", "name": "A"},
+    {"id": "B"},
+    {"id": "C"},
+    {"id": "D"}
+  ]
+}

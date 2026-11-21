@@ -1,0 +1,181 @@
+{
+  "classes": {
+    "hierarchy": {
+      "delta": {
+        "degree": {
+          "max_in": 0,
+          "max_out": 0,
+          "max_total": 1,
+          "sinks": 0,
+          "sources": 0
+        },
+        "depth": 1,
+        "edges": 1,
+        "incident_nodes": 1,
+        "independent_cycles": 0,
+        "weakly_connected_components": 0
+      },
+      "left": {
+        "degree": {
+          "max_in": 2,
+          "max_out": 2,
+          "max_total": 2,
+          "sinks": 1,
+          "sources": 1
+        },
+        "depth": 2,
+        "edges": 3,
+        "incident_nodes": 3,
+        "independent_cycles": 1,
+        "multiple_sources": [
+          "C"
+        ],
+        "order_cycle": null,
+        "sample_cycles": [],
+        "weakly_connected_components": {
+          "count": 1,
+          "sizes": [
+            3
+          ]
+        }
+      },
+      "right": {
+        "degree": {
+          "max_in": 2,
+          "max_out": 2,
+          "max_total": 3,
+          "sinks": 1,
+          "sources": 1
+        },
+        "depth": 3,
+        "edges": 4,
+        "incident_nodes": 4,
+        "independent_cycles": 1,
+        "multiple_sources": [
+          "C"
+        ],
+        "order_cycle": null,
+        "sample_cycles": [],
+        "weakly_connected_components": {
+          "count": 1,
+          "sizes": [
+            4
+          ]
+        }
+      }
+    },
+    "similarity": {
+      "delta": {
+        "degree": {
+          "max_in": 0,
+          "max_out": 0,
+          "max_total": 0,
+          "sinks": 0,
+          "sources": 0
+        },
+        "depth": null,
+        "edges": 0,
+        "incident_nodes": 0,
+        "independent_cycles": 0,
+        "weakly_connected_components": 0
+      },
+      "left": {
+        "degree": {
+          "max_in": 1,
+          "max_out": 1,
+          "max_total": 2,
+          "sinks": 0,
+          "sources": 0
+        },
+        "depth": null,
+        "edges": 2,
+        "incident_nodes": 2,
+        "independent_cycles": 1,
+        "multiple_sources": [],
+        "order_cycle": [
+          "B",
+          "C",
+          "B"
+        ],
+        "sample_cycles": [
+          [
+            "B",
+            "C",
+            "B"
+          ]
+        ],
+        "weakly_connected_components": {
+          "count": 1,
+          "sizes": [
+            2
+          ]
+        }
+      },
+      "right": {
+        "degree": {
+          "max_in": 1,
+          "max_out": 1,
+          "max_total": 2,
+          "sinks": 0,
+          "sources": 0
+        },
+        "depth": null,
+        "edges": 2,
+        "incident_nodes": 2,
+        "independent_cycles": 1,
+        "multiple_sources": [],
+        "order_cycle": [
+          "B",
+          "C",
+          "B"
+        ],
+        "sample_cycles": [
+          [
+            "B",
+            "C",
+            "B"
+          ]
+        ],
+        "weakly_connected_components": {
+          "count": 1,
+          "sizes": [
+            2
+          ]
+        }
+      }
+    }
+  },
+  "provenance": {
+    "left": {
+      "classification": {
+        "path": "tests/fixtures/classes.json",
+        "sha256": "ac1b00f7e337609258b8e3e8e467c3cf48f64040a9bd59cb9c5901a0c5a5909d"
+      },
+      "graph": {
+        "path": "tests/fixtures/graph.json",
+        "sha256": "3a5ae2d704ef9a7091335642c11dfc531a4e1aac718441304af4ab261335814f"
+      },
+      "profile": "demo"
+    },
+    "right": {
+      "classification": {
+        "path": "tests/fixtures/classes.json",
+        "sha256": "ac1b00f7e337609258b8e3e8e467c3cf48f64040a9bd59cb9c5901a0c5a5909d"
+      },
+      "graph": {
+        "path": "tests/fixtures/graph-extended.json",
+        "sha256": "439a532a3db62de2cea1257b6ffe37d13b7a24565245b47295587a85381aa43f"
+      },
+      "profile": "demo"
+    }
+  },
+  "tool": {
+    "name": "topontology",
+    "version": "0.1.0"
+  },
+  "unclassified_edges": {
+    "delta": 0,
+    "left": 1,
+    "right": 1
+  }
+}
