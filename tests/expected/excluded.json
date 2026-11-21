@@ -1,0 +1,811 @@
+{
+  "acyclicity_flags": [
+    {
+      "class": "dependency",
+      "relation": "blocks"
+    }
+  ],
+  "classes": {
+    "dependency": {
+      "acyclic_declared": true,
+      "delta": {
+        "degree": {
+          "max_in": -2,
+          "max_out": -2,
+          "max_total": -4,
+          "sinks": 0,
+          "sources": 0
+        },
+        "depth": null,
+        "directed_cycle": -1,
+        "edges": -6,
+        "incident_nodes": -3,
+        "independent_cycles": -4,
+        "sample_cycles": -2,
+        "weakly_connected_components": -1
+      },
+      "exclusion_passes_acyclicity": true,
+      "removed_cycles": true,
+      "removed_directed_cycle": true,
+      "split_components": false,
+      "with": {
+        "degree": {
+          "max_in": 3,
+          "max_out": 3,
+          "max_total": 6,
+          "sinks": 1,
+          "sources": 1
+        },
+        "depth": null,
+        "edges": 8,
+        "incident_nodes": 6,
+        "independent_cycles": 4,
+        "multiple_sources": [
+          "B"
+        ],
+        "order_cycle": [
+          "A",
+          "B",
+          "A"
+        ],
+        "sample_cycles": [
+          [
+            "A",
+            "B",
+            "A"
+          ],
+          [
+            "B",
+            "C",
+            "B"
+          ]
+        ],
+        "weakly_connected_components": {
+          "count": 2,
+          "sizes": [
+            3,
+            3
+          ]
+        }
+      },
+      "without": {
+        "degree": {
+          "max_in": 1,
+          "max_out": 1,
+          "max_total": 2,
+          "sinks": 1,
+          "sources": 1
+        },
+        "depth": 2,
+        "edges": 2,
+        "incident_nodes": 3,
+        "independent_cycles": 0,
+        "multiple_sources": [],
+        "order_cycle": null,
+        "sample_cycles": [],
+        "weakly_connected_components": {
+          "count": 1,
+          "sizes": [
+            3
+          ]
+        }
+      }
+    },
+    "overlap": {
+      "acyclic_declared": false,
+      "delta": {
+        "degree": {
+          "max_in": -1,
+          "max_out": -1,
+          "max_total": -3,
+          "sinks": 1,
+          "sources": 1
+        },
+        "depth": null,
+        "directed_cycle": -1,
+        "edges": -6,
+        "incident_nodes": -3,
+        "independent_cycles": -3,
+        "sample_cycles": -2,
+        "weakly_connected_components": 0
+      },
+      "exclusion_passes_acyclicity": false,
+      "removed_cycles": true,
+      "removed_directed_cycle": true,
+      "split_components": false,
+      "with": {
+        "degree": {
+          "max_in": 2,
+          "max_out": 2,
+          "max_total": 4,
+          "sinks": 1,
+          "sources": 1
+        },
+        "depth": null,
+        "edges": 8,
+        "incident_nodes": 7,
+        "independent_cycles": 3,
+        "multiple_sources": [
+          "B"
+        ],
+        "order_cycle": [
+          "A",
+          "B",
+          "A"
+        ],
+        "sample_cycles": [
+          [
+            "A",
+            "B",
+            "A"
+          ],
+          [
+            "B",
+            "C",
+            "B"
+          ]
+        ],
+        "weakly_connected_components": {
+          "count": 2,
+          "sizes": [
+            4,
+            3
+          ]
+        }
+      },
+      "without": {
+        "degree": {
+          "max_in": 1,
+          "max_out": 1,
+          "max_total": 1,
+          "sinks": 2,
+          "sources": 2
+        },
+        "depth": 1,
+        "edges": 2,
+        "incident_nodes": 4,
+        "independent_cycles": 0,
+        "multiple_sources": [],
+        "order_cycle": null,
+        "sample_cycles": [],
+        "weakly_connected_components": {
+          "count": 2,
+          "sizes": [
+            2,
+            2
+          ]
+        }
+      }
+    }
+  },
+  "excluded": [
+    "belongsTo",
+    "blocks",
+    "depends_on",
+    "overlapsWith"
+  ],
+  "provenance": {
+    "classification": {
+      "path": "tests/fixtures/excluded-relations.json",
+      "sha256": "60c61b05edf56391c701523533f0efc9213c6aeb2c8d8014b82da7eff7387573"
+    },
+    "graph": {
+      "path": "tests/fixtures/excluded-graph.json",
+      "sha256": "7493a74fc472f5e5fc32b0ffde105ceec237406267e706370c84a07548fc32d9"
+    },
+    "profile": "audit"
+  },
+  "relations": [
+    {
+      "alias_of": [],
+      "edges": 1,
+      "impacts": [
+        {
+          "acyclic_declared": true,
+          "class": "dependency",
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 0,
+              "sinks": -1,
+              "sources": -1
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": -1,
+            "incident_nodes": -2,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": -1
+          },
+          "exclusion_passes_acyclicity": false,
+          "removed_cycles": false,
+          "removed_directed_cycle": false,
+          "split_components": false,
+          "with": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 2,
+              "sources": 2
+            },
+            "depth": 2,
+            "edges": 3,
+            "incident_nodes": 5,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 2,
+              "sizes": [
+                3,
+                2
+              ]
+            }
+          },
+          "without": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 2,
+            "edges": 2,
+            "incident_nodes": 3,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                3
+              ]
+            }
+          }
+        },
+        {
+          "acyclic_declared": false,
+          "class": "overlap",
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": -1,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": -2,
+            "directed_cycle": 0,
+            "edges": -1,
+            "incident_nodes": 0,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": 1
+          },
+          "exclusion_passes_acyclicity": false,
+          "removed_cycles": false,
+          "removed_directed_cycle": false,
+          "split_components": true,
+          "with": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 3,
+            "edges": 3,
+            "incident_nodes": 4,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                4
+              ]
+            }
+          },
+          "without": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 2,
+              "sources": 2
+            },
+            "depth": 1,
+            "edges": 2,
+            "incident_nodes": 4,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 2,
+              "sizes": [
+                2,
+                2
+              ]
+            }
+          }
+        }
+      ],
+      "relation": "belongsTo"
+    },
+    {
+      "alias_of": [],
+      "edges": 2,
+      "impacts": [
+        {
+          "acyclic_declared": true,
+          "class": "dependency",
+          "delta": {
+            "degree": {
+              "max_in": -1,
+              "max_out": -1,
+              "max_total": -2,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": null,
+            "directed_cycle": -1,
+            "edges": -2,
+            "incident_nodes": 0,
+            "independent_cycles": -2,
+            "sample_cycles": -2,
+            "weakly_connected_components": 0
+          },
+          "exclusion_passes_acyclicity": true,
+          "removed_cycles": true,
+          "removed_directed_cycle": true,
+          "split_components": false,
+          "with": {
+            "degree": {
+              "max_in": 2,
+              "max_out": 2,
+              "max_total": 4,
+              "sinks": 0,
+              "sources": 0
+            },
+            "depth": null,
+            "edges": 4,
+            "incident_nodes": 3,
+            "independent_cycles": 2,
+            "multiple_sources": [
+              "B"
+            ],
+            "order_cycle": [
+              "A",
+              "B",
+              "A"
+            ],
+            "sample_cycles": [
+              [
+                "A",
+                "B",
+                "A"
+              ],
+              [
+                "B",
+                "C",
+                "B"
+              ]
+            ],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                3
+              ]
+            }
+          },
+          "without": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 2,
+            "edges": 2,
+            "incident_nodes": 3,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                3
+              ]
+            }
+          }
+        },
+        {
+          "acyclic_declared": false,
+          "class": "overlap",
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": -1,
+              "sinks": -1,
+              "sources": -1
+            },
+            "depth": -1,
+            "directed_cycle": 0,
+            "edges": -2,
+            "incident_nodes": -3,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": -1
+          },
+          "exclusion_passes_acyclicity": false,
+          "removed_cycles": false,
+          "removed_directed_cycle": false,
+          "split_components": false,
+          "with": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 3,
+              "sources": 3
+            },
+            "depth": 2,
+            "edges": 4,
+            "incident_nodes": 7,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 3,
+              "sizes": [
+                3,
+                2,
+                2
+              ]
+            }
+          },
+          "without": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 2,
+              "sources": 2
+            },
+            "depth": 1,
+            "edges": 2,
+            "incident_nodes": 4,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 2,
+              "sizes": [
+                2,
+                2
+              ]
+            }
+          }
+        }
+      ],
+      "relation": "blocks"
+    },
+    {
+      "alias_of": [
+        "dependsOn"
+      ],
+      "edges": 2,
+      "impacts": [
+        {
+          "acyclic_declared": true,
+          "class": "dependency",
+          "delta": {
+            "degree": {
+              "max_in": -1,
+              "max_out": -1,
+              "max_total": -2,
+              "sinks": 0,
+              "sources": 0
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": -2,
+            "incident_nodes": 0,
+            "independent_cycles": -2,
+            "sample_cycles": 0,
+            "weakly_connected_components": 0
+          },
+          "exclusion_passes_acyclicity": false,
+          "removed_cycles": true,
+          "removed_directed_cycle": false,
+          "split_components": false,
+          "with": {
+            "degree": {
+              "max_in": 2,
+              "max_out": 2,
+              "max_total": 4,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 2,
+            "edges": 4,
+            "incident_nodes": 3,
+            "independent_cycles": 2,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                3
+              ]
+            }
+          },
+          "without": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 2,
+            "edges": 2,
+            "incident_nodes": 3,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                3
+              ]
+            }
+          }
+        },
+        {
+          "acyclic_declared": false,
+          "class": "overlap",
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": -1,
+              "sinks": -1,
+              "sources": -1
+            },
+            "depth": -1,
+            "directed_cycle": 0,
+            "edges": -2,
+            "incident_nodes": -3,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": -1
+          },
+          "exclusion_passes_acyclicity": false,
+          "removed_cycles": false,
+          "removed_directed_cycle": false,
+          "split_components": false,
+          "with": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 3,
+              "sources": 3
+            },
+            "depth": 2,
+            "edges": 4,
+            "incident_nodes": 7,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 3,
+              "sizes": [
+                3,
+                2,
+                2
+              ]
+            }
+          },
+          "without": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 2,
+              "sources": 2
+            },
+            "depth": 1,
+            "edges": 2,
+            "incident_nodes": 4,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 2,
+              "sizes": [
+                2,
+                2
+              ]
+            }
+          }
+        }
+      ],
+      "relation": "depends_on"
+    },
+    {
+      "alias_of": [],
+      "edges": 1,
+      "impacts": [
+        {
+          "acyclic_declared": true,
+          "class": "dependency",
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 0,
+              "sinks": -1,
+              "sources": -1
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": -1,
+            "incident_nodes": -2,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": -1
+          },
+          "exclusion_passes_acyclicity": false,
+          "removed_cycles": false,
+          "removed_directed_cycle": false,
+          "split_components": false,
+          "with": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 2,
+              "sources": 2
+            },
+            "depth": 2,
+            "edges": 3,
+            "incident_nodes": 5,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 2,
+              "sizes": [
+                3,
+                2
+              ]
+            }
+          },
+          "without": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 2,
+            "edges": 2,
+            "incident_nodes": 3,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                3
+              ]
+            }
+          }
+        },
+        {
+          "acyclic_declared": false,
+          "class": "overlap",
+          "delta": {
+            "degree": {
+              "max_in": -1,
+              "max_out": -1,
+              "max_total": -1,
+              "sinks": 0,
+              "sources": 0
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": -1,
+            "incident_nodes": 0,
+            "independent_cycles": -1,
+            "sample_cycles": 0,
+            "weakly_connected_components": 0
+          },
+          "exclusion_passes_acyclicity": false,
+          "removed_cycles": true,
+          "removed_directed_cycle": false,
+          "split_components": false,
+          "with": {
+            "degree": {
+              "max_in": 2,
+              "max_out": 2,
+              "max_total": 2,
+              "sinks": 2,
+              "sources": 2
+            },
+            "depth": 1,
+            "edges": 3,
+            "incident_nodes": 4,
+            "independent_cycles": 1,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 2,
+              "sizes": [
+                2,
+                2
+              ]
+            }
+          },
+          "without": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 2,
+              "sources": 2
+            },
+            "depth": 1,
+            "edges": 2,
+            "incident_nodes": 4,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 2,
+              "sizes": [
+                2,
+                2
+              ]
+            }
+          }
+        }
+      ],
+      "relation": "overlapsWith"
+    }
+  ],
+  "tool": {
+    "name": "topontology",
+    "version": "0.6.0"
+  },
+  "unclassified_edges": {
+    "delta": 6,
+    "with": 0,
+    "without": 6
+  }
+}

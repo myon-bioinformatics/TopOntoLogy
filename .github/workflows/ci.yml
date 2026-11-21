@@ -56,6 +56,18 @@ jobs:
           diff -u tests/expected/boundary.json "$out/boundary.json"
           uv run --no-project python -S topontology.py series tests/fixtures/classes.json demo --snapshot one=tests/fixtures/series-one.json --snapshot two=tests/fixtures/series-two.json --snapshot three=tests/fixtures/series-three.json --format canonical > "$out/series.json"
           diff -u tests/expected/series.json "$out/series.json"
+          uv run --no-project python -S topontology.py series tests/fixtures/vendor-classes.json demo --graph-format vendor-lock \
+            --snapshot c8184924634965e38c89420c61ef8f3c14a6e2ff=tests/fixtures/aoi-history/c8184924634965e38c89420c61ef8f3c14a6e2ff.json \
+            --snapshot 37950ed9ecc10ee0d65dea57fa8223cbb711367c=tests/fixtures/aoi-history/37950ed9ecc10ee0d65dea57fa8223cbb711367c.json \
+            --snapshot bf753d89f797c534292b09bad631ed24d1a9af5a=tests/fixtures/aoi-history/bf753d89f797c534292b09bad631ed24d1a9af5a.json \
+            --snapshot b4d91f117729396c9443a7f86f587ec46f6347f7=tests/fixtures/aoi-history/b4d91f117729396c9443a7f86f587ec46f6347f7.json \
+            --snapshot 673fc7b11d94ccad16740c0998683618f2e86254=tests/fixtures/aoi-history/673fc7b11d94ccad16740c0998683618f2e86254.json \
+            --snapshot 014afdc6063b8db17135731b24c624e19d3c410f=tests/fixtures/aoi-history/014afdc6063b8db17135731b24c624e19d3c410f.json \
+            --snapshot 44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143=tests/fixtures/aoi-history/44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143.json \
+            --format canonical > "$out/series-locks.json"
+          diff -u tests/expected/series-locks.json "$out/series-locks.json"
+          uv run --no-project python -S topontology.py excluded tests/fixtures/excluded-graph.json tests/fixtures/excluded-relations.json audit --format canonical > "$out/excluded.json"
+          diff -u tests/expected/excluded.json "$out/excluded.json"
           uv run --no-project python -S topontology.py tests/fixtures/vendor-lock.json tests/fixtures/vendor-classes.json demo --graph-format vendor-lock --format canonical > "$out/vendor-lock.json"
           diff -u tests/expected/vendor-lock.json "$out/vendor-lock.json"
           uv run --no-project python -S topontology.py impact \

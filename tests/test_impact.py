@@ -284,7 +284,7 @@ class ImpactCliTests(unittest.TestCase):
         self.assertEqual(json_out, expected)
         code, text, err = run_cli(*_aoi_cli_args(), "--format", "text")
         self.assertEqual(code, 0, err)
-        self.assertIn("tool: topontology 0.5.0", text)
+        self.assertIn("tool: topontology 0.6.0", text)
         self.assertIn(
             "source myon-bioinformatics/myon-bioinformatics:fleet_check.py "
             "downstream_repos=6 relays=(none)",

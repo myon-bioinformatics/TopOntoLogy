@@ -14,7 +14,7 @@ from pathlib import Path
 
 from knowledgegraph import graph_mermaid, relation_cycles, topological_order
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 TOOL_NAME = "topontology"
 
 _GRAPH_FORMATS = ("nodes-edges", "vendor-lock", "aoi-siblings", "py-imports")
@@ -621,13 +621,88 @@ def _edges_in_class(graph, classes, category):
     return chosen
 
 
+def _snapshot_nodes(graph):
+    """Nodes incident to at least one edge. Isolated ``nodes`` entries are not seen."""
+    found = set()
+    for edge in graph["edges"]:
+        source, target = _ends(edge)
+        found.add(source)
+        found.add(target)
+    return found
+
+
+def _snapshot_classes(graph, classes):
+    """Relation classes of the edges that touch each incident node."""
+    found = defaultdict(set)
+    for edge in graph["edges"]:
+        relation = edge_relation(edge)
+        if relation not in classes:
+            continue
+        category = classes[relation]
+        source, target = _ends(edge)
+        found[source].add(category)
+        found[target].add(category)
+    return found
+
+
+def node_churn(snapshots, classes):
+    """Presence of each node across an ordered series.
+
+    A node is present at a snapshot when it is an endpoint of an edge. The
+    series is treated as starting from absence, so the first appearance is an
+    enter. ``churn`` is the number of enter and leave transitions. ``disappeared``
+    is the snapshot after the last presence when the node is absent at the end,
+    and null when it is still present. ``repeated_churn`` keeps nodes whose
+    churn is greater than 1 (they did not merely appear and stay), sorted by
+    churn descending and then ``node_sort_key``.
+    """
+    labels = [item["label"] for item in snapshots]
+    present = [_snapshot_nodes(item["graph"]) for item in snapshots]
+    class_sets = [_snapshot_classes(item["graph"], classes) for item in snapshots]
+    nodes = set()
+    for group in present:
+        nodes.update(group)
+    rows = []
+    for node in sorted(nodes, key=node_sort_key):
+        seen = [node in group for group in present]
+        first = next(index for index, flag in enumerate(seen) if flag)
+        last = len(seen) - 1 - next(index for index, flag in enumerate(reversed(seen)) if flag)
+        enters = 0
+        leaves = 0
+        previous = False
+        for flag in seen:
+            if flag and not previous:
+                enters += 1
+            elif previous and not flag:
+                leaves += 1
+            previous = flag
+        categories = set()
+        for mapping in class_sets:
+            categories.update(mapping.get(node, ()))
+        disappeared = None if seen[-1] else labels[last + 1]
+        rows.append({
+            "id": node,
+            "first_seen": labels[first],
+            "last_seen": labels[last],
+            "disappeared": disappeared,
+            "enters": enters,
+            "leaves": leaves,
+            "churn": enters + leaves,
+            "classes": sorted(categories),
+        })
+    repeated = [row for row in rows if row["churn"] > 1]
+    repeated.sort(key=lambda row: (-row["churn"], node_sort_key(row["id"])))
+    return {"nodes": rows, "repeated_churn": repeated}
+
+
 def series_report(snapshots, classes, *, cycle_limit=5):
-    """Compare each consecutive snapshot pair.
+    """Compare each consecutive snapshot pair and record node churn.
 
     ``snapshots`` is an ordered list of ``{"label", "path", "graph"}``. The
     graph-level block is E−V+C, weak components, and the other class metrics
     on every edge. Class blocks reuse ``compare_graphs``. Added and removed
     edges are the multiset difference that accounts for each numeric edge delta.
+    ``nodes`` and ``repeated_churn`` come from ``node_churn``.
     """
     if len(snapshots) < 2:
         raise ValueError("series needs at least 2 snapshots")
@@ -664,7 +739,8 @@ def series_report(snapshots, classes, *, cycle_limit=5):
             "classes": classes_out,
             "unclassified_edges": compared["unclassified_edges"],
         })
-    return {"pairs": pairs}
+    churn = node_churn(snapshots, classes)
+    return {"pairs": pairs, "nodes": churn["nodes"], "repeated_churn": churn["repeated_churn"]}
 
 
 def file_record(path):
@@ -1724,7 +1800,206 @@ def _series_text(body):
                 f"  {name}: edges {row['delta']['edges']:+d} "
                 f"independent_cycles {row['delta']['independent_cycles']:+d}"
             )
+    lines.extend(_churn_lines(body))
     return "\n".join(lines) + "\n"
+
+
+def _churn_lines(body):
+    lines = ["nodes:"]
+    if not body["nodes"]:
+        lines.append("  (none)")
+    for row in body["nodes"]:
+        disappeared = "(none)" if row["disappeared"] is None else row["disappeared"]
+        categories = ", ".join(row["classes"]) if row["classes"] else "(none)"
+        lines.append(
+            f"  {node_text(row['id'])} first_seen={row['first_seen']} "
+            f"last_seen={row['last_seen']} disappeared={disappeared} "
+            f"enters={row['enters']} leaves={row['leaves']} churn={row['churn']} "
+            f"classes={categories}"
+        )
+    lines.append("repeated_churn:")
+    if not body["repeated_churn"]:
+        lines.append("  (none)")
+    for row in body["repeated_churn"]:
+        lines.append(f"  {node_text(row['id'])} churn={row['churn']}")
+    return lines
+
+
+def _separator_key(name):
+    """Fold a relation name the way TaxOntOy detects a separator alias.
+
+    '_' , '-' , and spaces break tokens. An interior capital starts a new token.
+    Comparison is case-insensitive, so ``depends_on`` and ``dependsOn`` share a key.
+    """
+    parts, token = [], []
+    for char in name:
+        if char in "_- ":
+            if token:
+                parts.append("".join(token).casefold())
+                token = []
+            continue
+        if char.isupper() and token:
+            parts.append("".join(token).casefold())
+            token = [char]
+        else:
+            token.append(char)
+    if token:
+        parts.append("".join(token).casefold())
+    return tuple(parts)
+
+
+def _alias_of(name, classes):
+    """Classified relations whose separator key equals ``name``."""
+    key = _separator_key(name)
+    return sorted(relation for relation in classes if _separator_key(relation) == key)
+
+
+def _excluded_names(table, profile, classes):
+    """Sorted excluded relation names for ``profile``.
+
+    A ``taxontoy-relations/1`` or ``/2`` table stores them under ``excluded``.
+    An unversioned table has no excluded list. A name that is also classified
+    is an error, matching the TaxOntOy rule that the two sets are disjoint.
+    """
+    schema = table.get("schema")
+    if schema in _KNOWN_RELATION_SCHEMAS:
+        excluded = table.get("excluded")
+        if not isinstance(excluded, dict):
+            raise ValueError("excluded must be an object")
+        if profile not in excluded:
+            raise ValueError(f"excluded list missing for profile: {profile}")
+        names = excluded[profile]
+    elif isinstance(schema, str) and schema.startswith(_RELATION_SCHEMA_PREFIX):
+        raise ValueError(f"excluded list is not defined for relation schema: {schema}")
+    else:
+        return []
+    if not isinstance(names, list):
+        raise ValueError(f"excluded.{profile} must be an array")
+    seen = set()
+    for name in names:
+        if not isinstance(name, str) or not name or name != name.strip():
+            raise ValueError(f"excluded.{profile} names must be non-empty strings")
+        if name in seen:
+            raise ValueError(f"excluded.{profile} has a duplicate name: {name}")
+        if name in classes:
+            raise ValueError(f"{profile}: {name} is both classified and excluded")
+        seen.add(name)
+    return sorted(seen)
+
+
+def _class_declares_acyclic(table, category):
+    """True when ``properties.classes.<category>`` declares ``acyclic``."""
+    props = table.get("properties")
+    if not isinstance(props, dict):
+        return False
+    bodies = props.get("classes")
+    if not isinstance(bodies, dict):
+        return False
+    body = bodies.get(category)
+    if not isinstance(body, dict):
+        return False
+    return "acyclic" in body
+
+
+def _exclusion_view(with_metrics, without_metrics, delta, *, acyclic_declared):
+    """Flags for a with-excluded versus without-excluded comparison.
+
+    ``delta`` is without minus with, the same direction as ``compare_graphs``.
+    Excluding the relation removed cycles when the independent-cycle count fell.
+    A directed cycle disappearing lowers that count as well. It split components
+    when the weak-component count rose. ``exclusion_passes_acyclicity`` is set
+    only when the class declares ``acyclic``, the graph that includes the
+    relation has a directed cycle, and the graph that excludes it does not.
+    """
+    removed_cycles = delta["independent_cycles"] < 0
+    removed_directed_cycle = delta["directed_cycle"] < 0
+    split_components = delta["weakly_connected_components"] > 0
+    passes = False
+    if acyclic_declared and with_metrics["order_cycle"] is not None and without_metrics["order_cycle"] is None:
+        passes = True
+    return {
+        "acyclic_declared": acyclic_declared,
+        "with": with_metrics,
+        "without": without_metrics,
+        "delta": delta,
+        "removed_cycles": removed_cycles,
+        "removed_directed_cycle": removed_directed_cycle,
+        "split_components": split_components,
+        "exclusion_passes_acyclicity": passes,
+    }
+
+
+def _folded_metrics(graph, classes, assignments, category, cycle_limit, acyclic_declared):
+    """Compare one class with ``assignments`` folded in, against the published classes.
+
+    ``compare_graphs`` supplies the delta (without minus with).
+    """
+    folded = dict(classes)
+    folded.update(assignments)
+    with_report = summarize(graph, folded, cycle_limit=cycle_limit)
+    without_report = summarize(graph, classes, cycle_limit=cycle_limit)
+    compared = compare_graphs(with_report, without_report)
+    row = compared["classes"][category]
+    return _exclusion_view(row["left"], row["right"], row["delta"], acyclic_declared=acyclic_declared)
+
+
+def _relation_edge_count(graph, name):
+    return sum(1 for edge in graph["edges"] if edge_relation(edge) == name)
+
+
+def _unclassified_delta(graph, classes, names):
+    classified = set(classes)
+    folded = classified | set(names)
+    without = sum(1 for edge in graph["edges"] if edge_relation(edge) not in classified)
+    included = sum(1 for edge in graph["edges"] if edge_relation(edge) not in folded)
+    return {"with": included, "without": without, "delta": without - included}
+
+
+def excluded_impact(graph, classes, table, profile, *, cycle_limit=5):
+    """Structural effect of the profile's excluded relations.
+
+    For each class, every excluded relation is folded into that class and the
+    result is compared with the published class through ``compare_graphs``.
+    Each excluded relation is also folded alone, once per class, so a cycle or
+    a split can be attributed to one name. ``depends_on`` is an alias of
+    ``dependsOn`` when their separator keys match; ``acyclicity_flags`` lists
+    the relation/class pairs whose exclusion is what lets a declared-acyclic
+    class pass.
+    """
+    if not isinstance(table, dict):
+        raise ValueError("classification JSON must be an object")
+    names = _excluded_names(table, profile, classes)
+    categories = sorted(set(classes.values()))
+    declared = {category: _class_declares_acyclic(table, category) for category in categories}
+    class_rows = {}
+    for category in categories:
+        assignments = {name: category for name in names}
+        class_rows[category] = _folded_metrics(
+            graph, classes, assignments, category, cycle_limit, declared[category])
+    relations = []
+    flags = []
+    for name in names:
+        impacts = []
+        for category in categories:
+            view = _folded_metrics(
+                graph, classes, {name: category}, category, cycle_limit, declared[category])
+            impacts.append({"class": category, **view})
+            if view["exclusion_passes_acyclicity"]:
+                flags.append({"class": category, "relation": name})
+        relations.append({
+            "alias_of": _alias_of(name, classes),
+            "edges": _relation_edge_count(graph, name),
+            "impacts": impacts,
+            "relation": name,
+        })
+    flags.sort(key=lambda item: (item["relation"], item["class"]))
+    return {
+        "acyclicity_flags": flags,
+        "classes": class_rows,
+        "excluded": names,
+        "relations": relations,
+        "unclassified_edges": _unclassified_delta(graph, classes, names),
+    }
 
 
 def series_main(argv):
@@ -1998,11 +2273,107 @@ def deps_main(argv):
     return 0
 
 
+def _yes(flag):
+    return "yes" if flag else "no"
+
+
+def _flag_text(row):
+    return (
+        f"removed_cycles={_yes(row['removed_cycles'])} "
+        f"removed_directed_cycle={_yes(row['removed_directed_cycle'])} "
+        f"split_components={_yes(row['split_components'])} "
+        f"acyclic_declared={_yes(row['acyclic_declared'])} "
+        f"exclusion_passes_acyclicity={_yes(row['exclusion_passes_acyclicity'])}"
+    )
+
+
+def _impact_brief(delta):
+    return (
+        f"independent_cycles={_signed(delta['independent_cycles'])} "
+        f"weakly_connected_components={_signed(delta['weakly_connected_components'])} "
+        f"depth={_signed(delta['depth'])} "
+        f"directed_cycle={_signed(delta['directed_cycle'])}"
+    )
+
+
+def _excluded_text(body):
+    lines = [f"tool: {body['tool']['name']} {body['tool']['version']}"]
+    lines.extend(_provenance_lines("", body["provenance"]))
+    names = body["excluded"]
+    lines.append("excluded: " + (", ".join(names) if names else "(none)"))
+    flags = body["acyclicity_flags"]
+    if flags:
+        rendered = ", ".join(f"{item['relation']} {item['class']}" for item in flags)
+    else:
+        rendered = "(none)"
+    lines.append(f"acyclicity_flags: {rendered}")
+    unclassified = body["unclassified_edges"]
+    lines.append(_change(
+        "unclassified_edges", unclassified["with"], unclassified["without"], unclassified["delta"]).lstrip())
+    if not body["classes"]:
+        lines.append("classes: (none)")
+    for name in sorted(body["classes"]):
+        row = body["classes"][name]
+        lines.extend(_comparison_lines(name, row["with"], row["without"], row["delta"]))
+        lines.append(f"  flags: {_flag_text(row)}")
+    if not body["relations"]:
+        lines.append("relations: (none)")
+    for relation in body["relations"]:
+        alias = ", ".join(relation["alias_of"]) if relation["alias_of"] else "(none)"
+        lines.append(
+            f"relation {relation['relation']} edges={relation['edges']} alias_of={alias}"
+        )
+        if not relation["impacts"]:
+            lines.append("  (no class)")
+        for impact in relation["impacts"]:
+            lines.append(f"  {impact['class']}: {_flag_text(impact)} {_impact_brief(impact['delta'])}")
+    return "\n".join(lines) + "\n"
+
+
+def excluded_main(argv):
+    parser = argparse.ArgumentParser(
+        prog=f"{TOOL_NAME} excluded",
+        description="Compare each class with and without the table's excluded relations.",
+    )
+    parser.add_argument("graph", nargs="?", type=Path)
+    parser.add_argument("classification", nargs="?", type=Path)
+    parser.add_argument("profile", nargs="?")
+    parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges")
+    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
+    parser.add_argument("--json", action="store_true", help="shorthand for --format json")
+    parser.add_argument("--cycle-limit", type=int, default=5, metavar="N")
+    parser.add_argument("-o", "--output", type=Path)
+    args = parser.parse_args(argv)
+    fmt = _resolve_format(args)
+    if args.cycle_limit < 0:
+        raise ValueError("--cycle-limit must be >= 0")
+    graph_path = _resolve_input(args.graph, "TOPONTOLOGY_GRAPH", "graph path")
+    classification = _resolve_input(args.classification, "TOPONTOLOGY_CLASSIFICATION", "classification path")
+    profile = _resolve_profile(args.profile)
+    classes = _load_classes(classification, profile)
+    table = json.loads(classification.read_text(encoding="utf-8"))
+    graph = _load_graph(graph_path, args.graph_format)
+    body = excluded_impact(graph, classes, table, profile, cycle_limit=args.cycle_limit)
+    document_body = document(body, input_provenance(graph_path, classification, profile))
+    text = _excluded_text(document_body) if fmt == "text" else dump_json(document_body)
+    if args.output is None:
+        sys.stdout.write(text)
+    else:
+        args.output.write_text(text, encoding="utf-8")
+    return 0
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     else:
         argv = list(argv)
+    if argv[:1] == ["excluded"]:
+        try:
+            return excluded_main(argv[1:])
+        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as error:
+            print(error, file=sys.stderr)
+            return 1
     if argv[:1] == ["series"]:
         try:
             return series_main(argv[1:])

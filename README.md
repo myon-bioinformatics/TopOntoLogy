@@ -69,7 +69,7 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 PYTHONPATH=../ONTO uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99` を checkout し、`PYTHONPATH` で ONTO を渡します。ツールの版は 0.5.0 です。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99` を checkout し、`PYTHONPATH` で ONTO を渡します。ツールの版は 0.6.0 です。
 
 ## 時点の並び
 
@@ -81,6 +81,38 @@ PYTHONPATH=../ONTO python -S topontology.py series ../TaxOntOy/otl-relations.jso
 ```
 
 隣り合う組ごとに、グラフ全体の独立閉路 E−V+C と弱連結成分の差分、分類ごとの差分（既存の比較と同じ右引く左）、その差分を説明する追加辺と削除辺（source、relation、target を並べたもの）を返します。ラベルの重複、または時点が 2 つ未満のときは、トレースバックではなく 1 行のエラーで終了コード 1 です。
+
+同じ出力に、系列全体でのノードの出入りが入ります。ノードは、その時点の辺の端点に現れたときいる。`nodes` の各項目は次です。
+
+- `first_seen` は、最初にいた時点のラベル
+- `last_seen` は、最後にいた時点のラベル
+- `disappeared` は、最後の時点にいないときの、最後にいた時点の次のラベル。最後までいるときは null。途中で消えて戻ったあとも最後にいるなら null で、途中の離脱は `leaves` に残します
+- `enters` は、不在から存在への回数。系列の前は不在とみなすので、最初の出現も 1
+- `leaves` は、存在から不在への回数
+- `churn` は `enters` と `leaves` の和
+- `classes` は、そのノードに触れた辺の関係が属するクラス。分類表に無い関係は入れません。名前順です
+
+`repeated_churn` は churn が 2 以上のノードです。一度現れて最後まで残るノード（churn が 1）は含めません。並びは churn の降順で、同じときはノード ID の `(型名, 文字列化した値)` の昇順です。
+
+`--graph-format vendor-lock` を付けると、時点のパスは `vendor-lock/1` です。`tests/fixtures/aoi-history/` は、公開されている Aoi の `vendor.lock.json` の履歴です。そのパスを変更したコミットは 15 件で、blob も 15 個、すべて違います。グラフが読む `repository`、`source`、`destination` が変わるのはそのうち 7 件です。残りの 8 件は `commit` や `sha256` だけの差で、このツールの辺は変わりません。main `320126983a992e30730350c5e9b0e4051c0d33d4` の blob `644535e13ddbe5639bd6d0f93e2c4ba97d1d208e` は、最後にファイルを変えた `d059324dd9d83a30b20bd4f675105fb2799e7c89` と同じで、グラフは `44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143` から変わっていません。fixture には、その 7 時点についてグラフが読む項目だけを残してあります。出自は `provenance.json` です。フルクローンはしていません。
+
+この 7 時点では、`vendor/markdown.py` は最初から最後まで残り、churn は 1 です。`vendor/web_ui.py` と `vendor/web-ui-LICENSE` は途中で現れ、`014afdc6063b8db17135731b24c624e19d3c410f` で消えます。上流の ID は `b4d91f117729396c9443a7f86f587ec46f6347f7` で `myon-bioinformatics/web-ui` から `myon-bioinformatics/PySaiyanWeBoo` へ替わるので、古い上流ノードはそこで消え、新しい上流ノードはそこで現れ、ファイルを外した時点で消えます。どのノードも enters は 1 で、一度消えたノードが戻った例はありません。churn が 2 の 6 ノードが `repeated_churn` で、ID の順に並びます。
+
+## 除外した関係を戻したときの構造
+
+`excluded` は、分類表の `excluded` に並ぶ関係をクラスへ戻した場合と、除外したままの場合を比べます。差分は `compare_graphs` で、右（除外したまま）から左（戻したとき）を引きます。見るのは弱連結成分、独立閉路、深さ、有向閉路です。
+
+```sh
+PYTHONPATH=../ONTO python -S topontology.py excluded audit.json ../TaxOntOy/otl-relations.json audit
+```
+
+クラスごとの比較は、そのプロファイルの除外関係をすべてそのクラスへ入れたときです。関係ごとの比較は、一つの関係だけを一つのクラスへ入れたときです。除外すると独立閉路が減る、または有向閉路が消えるとき `removed_cycles` です。有向閉路が消えるときは `removed_directed_cycle` も真です。弱連結成分が増えるときは `split_components` で、除外していた関係が成分をつないでいたことを示します。
+
+`exclusion_passes_acyclicity` は、クラスが `properties.classes` で `acyclic` を宣言していて、関係を戻すと有向閉路があり、除外すると無いときだけ真です。`acyclicity_flags` はその関係とクラスの組です。`_`、`-`、空白、途中の大文字を区切りとして畳むと分類済みの関係と同じになる名前は `alias_of` に残します。`depends_on` は `dependsOn` の別名候補です。別名だからといって、その関係だけを戻したときに有向閉路ができるとは限りません。
+
+TaxOntOy のピン `8621f2261d694af0de35e103ad2387872ca10b99` の `otl-relations.json` では、audit の除外が 18（`belongsTo`、`blocks`、`depends_on`、`targets` など）、concepts の除外が 6 です。同じピンの `coverage.json` では、`dependsOn` は 13 辺で非循環、`depends_on` も 13 辺で、向きも含めて同じ端点の組であり、区切りの別名でもあります。`depends_on` だけを dependency へ戻すと辺が 13 本増えて独立閉路も 13 増えますが、有向閉路は増えず、非循環の宣言は戻す前も戻したあとも通ります。`exclusion_passes_acyclicity` は `depends_on` については偽です。`blocks` も 13 辺で、`dependsOn` の逆向きの組です。dependency は `acyclic` を宣言しているので、`blocks` をそのクラスへ戻すと各組が有向の 2 閉路になり、除外したままなら非循環の検査を通ります。フラグが立つのは `blocks` と dependency の組です。`build/audit.json` 自体は公開ツリーに無いので、この帰結は公開された被覆報告と端点集合の定義から出しています。
+
+`--format text` と json で、`--json` は `--format json` の省略、`--format canonical` は json と同じバイト列です。出自にはグラフと分類表のパス、sha256、プロファイル、ツールの版が入ります。`schema` の無い表には除外リストが無く、差分は 0 です。
 
 ## vendor-lock/1
 

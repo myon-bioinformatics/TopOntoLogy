@@ -1,0 +1,171 @@
+{
+  "repository": "myon-bioinformatics/Aoi",
+  "path": "vendor.lock.json",
+  "main": "320126983a992e30730350c5e9b0e4051c0d33d4",
+  "main_blob": "644535e13ddbe5639bd6d0f93e2c4ba97d1d208e",
+  "commits_touching_path": 15,
+  "unique_blobs": 15,
+  "unique_graphs": 7,
+  "kept": [
+    "schema",
+    "files[].repository",
+    "files[].source",
+    "files[].destination"
+  ],
+  "omitted": [
+    "commit",
+    "ref",
+    "sha256",
+    "blob_sha"
+  ],
+  "repositories": [
+    "myon-bioinformatics/PySaiyanWeBoo",
+    "myon-bioinformatics/markdown",
+    "myon-bioinformatics/myon-bioinformatics",
+    "myon-bioinformatics/web-ui"
+  ],
+  "note": "Aoi の vendor.lock.json を、ファイルを変更したコミットから blob だけ取得した。フルクローンはしていない。グラフが読む repository, source, destination だけを残し、commit, ref, sha256, blob_sha は省いた。時点は、その3項目が変わったコミットだけである。",
+  "blobs": [
+    {
+      "commit": "c8184924634965e38c89420c61ef8f3c14a6e2ff",
+      "blob": "8b36ba019c6b68c70da33fc0ac0e0ebd178d0a59",
+      "graph_commit": "c8184924634965e38c89420c61ef8f3c14a6e2ff"
+    },
+    {
+      "commit": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "blob": "e85c12bdb341fa36379026bbe55fe7c3792dfd2c",
+      "graph_commit": "37950ed9ecc10ee0d65dea57fa8223cbb711367c"
+    },
+    {
+      "commit": "c37c7bd3b5eac16ef24d7e7b95d936aed755eee5",
+      "blob": "d924e6f728adb4f0365a7631bd66c878441176a2",
+      "graph_commit": "37950ed9ecc10ee0d65dea57fa8223cbb711367c"
+    },
+    {
+      "commit": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+      "blob": "e3fa66de26a790771c8b94ac9da5f5d156d4ff82",
+      "graph_commit": "bf753d89f797c534292b09bad631ed24d1a9af5a"
+    },
+    {
+      "commit": "bc7761d390d4f79110aaf00e0a1aae25c4676c12",
+      "blob": "063fd7ce4928ee855edb0fdbfb46feddbfbd6799",
+      "graph_commit": "bf753d89f797c534292b09bad631ed24d1a9af5a"
+    },
+    {
+      "commit": "46257b421fcec2987e0f0d9307201113e232fe09",
+      "blob": "dfb2bb60681407f18908438951f43601a54af565",
+      "graph_commit": "bf753d89f797c534292b09bad631ed24d1a9af5a"
+    },
+    {
+      "commit": "eb6ed26321d17d7a8daf1366f477c9d3f067696a",
+      "blob": "49da79ce8ce5eaa4670098df218969025abcaa63",
+      "graph_commit": "bf753d89f797c534292b09bad631ed24d1a9af5a"
+    },
+    {
+      "commit": "cb46791d0e7ac322580387262be34ada394bfebd",
+      "blob": "3fd2af8462028cf0e40e1426b0a352aff51f7cae",
+      "graph_commit": "bf753d89f797c534292b09bad631ed24d1a9af5a"
+    },
+    {
+      "commit": "9e0147a17695ce63fa73daf75d8195a4f49095bb",
+      "blob": "e425bbe54f130650df76d95d1fce314c49ba79aa",
+      "graph_commit": "bf753d89f797c534292b09bad631ed24d1a9af5a"
+    },
+    {
+      "commit": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "blob": "c9f4a6670651de72a252650198fff945ada89a2e",
+      "graph_commit": "b4d91f117729396c9443a7f86f587ec46f6347f7"
+    },
+    {
+      "commit": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "blob": "8658f46bbf0c7240db968ef9f481c6df5b7e44e2",
+      "graph_commit": "673fc7b11d94ccad16740c0998683618f2e86254"
+    },
+    {
+      "commit": "3d8dcc70a9c4e6c4f4b7de05868f54acd3901ce7",
+      "blob": "43b76fc6636a7d33422d30b6173b350056f46624",
+      "graph_commit": "673fc7b11d94ccad16740c0998683618f2e86254"
+    },
+    {
+      "commit": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "blob": "e32dd2bb75e70fd4d4169b859a15e63bf799f5b8",
+      "graph_commit": "014afdc6063b8db17135731b24c624e19d3c410f"
+    },
+    {
+      "commit": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "blob": "51845c2d7cdfd223fef761f992b1887a1bb4ca6a",
+      "graph_commit": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143"
+    },
+    {
+      "commit": "d059324dd9d83a30b20bd4f675105fb2799e7c89",
+      "blob": "644535e13ddbe5639bd6d0f93e2c4ba97d1d208e",
+      "graph_commit": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143"
+    }
+  ],
+  "graphs": [
+    {
+      "commit": "c8184924634965e38c89420c61ef8f3c14a6e2ff",
+      "blob": "8b36ba019c6b68c70da33fc0ac0e0ebd178d0a59",
+      "fixture": "c8184924634965e38c89420c61ef8f3c14a6e2ff.json",
+      "same_graph_commits": [
+        "c8184924634965e38c89420c61ef8f3c14a6e2ff"
+      ]
+    },
+    {
+      "commit": "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+      "blob": "e85c12bdb341fa36379026bbe55fe7c3792dfd2c",
+      "fixture": "37950ed9ecc10ee0d65dea57fa8223cbb711367c.json",
+      "same_graph_commits": [
+        "37950ed9ecc10ee0d65dea57fa8223cbb711367c",
+        "c37c7bd3b5eac16ef24d7e7b95d936aed755eee5"
+      ]
+    },
+    {
+      "commit": "bf753d89f797c534292b09bad631ed24d1a9af5a",
+      "blob": "e3fa66de26a790771c8b94ac9da5f5d156d4ff82",
+      "fixture": "bf753d89f797c534292b09bad631ed24d1a9af5a.json",
+      "same_graph_commits": [
+        "bf753d89f797c534292b09bad631ed24d1a9af5a",
+        "bc7761d390d4f79110aaf00e0a1aae25c4676c12",
+        "46257b421fcec2987e0f0d9307201113e232fe09",
+        "eb6ed26321d17d7a8daf1366f477c9d3f067696a",
+        "cb46791d0e7ac322580387262be34ada394bfebd",
+        "9e0147a17695ce63fa73daf75d8195a4f49095bb"
+      ]
+    },
+    {
+      "commit": "b4d91f117729396c9443a7f86f587ec46f6347f7",
+      "blob": "c9f4a6670651de72a252650198fff945ada89a2e",
+      "fixture": "b4d91f117729396c9443a7f86f587ec46f6347f7.json",
+      "same_graph_commits": [
+        "b4d91f117729396c9443a7f86f587ec46f6347f7"
+      ]
+    },
+    {
+      "commit": "673fc7b11d94ccad16740c0998683618f2e86254",
+      "blob": "8658f46bbf0c7240db968ef9f481c6df5b7e44e2",
+      "fixture": "673fc7b11d94ccad16740c0998683618f2e86254.json",
+      "same_graph_commits": [
+        "673fc7b11d94ccad16740c0998683618f2e86254",
+        "3d8dcc70a9c4e6c4f4b7de05868f54acd3901ce7"
+      ]
+    },
+    {
+      "commit": "014afdc6063b8db17135731b24c624e19d3c410f",
+      "blob": "e32dd2bb75e70fd4d4169b859a15e63bf799f5b8",
+      "fixture": "014afdc6063b8db17135731b24c624e19d3c410f.json",
+      "same_graph_commits": [
+        "014afdc6063b8db17135731b24c624e19d3c410f"
+      ]
+    },
+    {
+      "commit": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+      "blob": "51845c2d7cdfd223fef761f992b1887a1bb4ca6a",
+      "fixture": "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143.json",
+      "same_graph_commits": [
+        "44a0a39a14e49ea938a3c83c8dbe4b3fba9e4143",
+        "d059324dd9d83a30b20bd4f675105fb2799e7c89"
+      ]
+    }
+  ]
+}

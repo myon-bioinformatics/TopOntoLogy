@@ -1,0 +1,25 @@
+{
+  "schema": "vendor-lock/1",
+  "files": [
+    {
+      "repository": "myon-bioinformatics/markdown",
+      "source": "markdown.py",
+      "destination": "vendor/markdown.py"
+    },
+    {
+      "repository": "myon-bioinformatics/markdown",
+      "source": "LICENSE",
+      "destination": "vendor/markdown-LICENSE"
+    },
+    {
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "py_launch.cjs",
+      "destination": "vendor/py_launch.cjs"
+    },
+    {
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/uv_tool_build.py",
+      "destination": "vendor/uv_tool_build.py"
+    }
+  ]
+}
