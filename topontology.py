@@ -5,16 +5,47 @@ import argparse
 import ast
 import hashlib
 import json
-import os
 import statistics
 import sys
 from collections import defaultdict, deque
 from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 
+import tol_paths
+
+
+def _boot():
+    """Resolve ONTO and TaxOntOy before importing knowledgegraph.
+
+    As a script, ``--onto-root`` and ``--taxontoy-root`` win. Importing the
+    module uses the environment or a sibling checkout.
+    """
+    explicit_onto = None
+    explicit_tax = None
+    if __name__ == "__main__":
+        try:
+            explicit_onto, explicit_tax = tol_paths.explicit_from_argv(sys.argv[1:])
+        except tol_paths.RootError as error:
+            print(error, file=sys.stderr)
+            raise SystemExit(1) from None
+    try:
+        tol_paths.configure(
+            Path(__file__),
+            explicit_onto=explicit_onto,
+            explicit_taxontoy=explicit_tax,
+        )
+    except tol_paths.RootError as error:
+        if __name__ == "__main__":
+            print(error, file=sys.stderr)
+            raise SystemExit(1) from None
+        raise
+
+
+_boot()
+
 from knowledgegraph import graph_mermaid, relation_cycles, topological_order
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 TOOL_NAME = "topontology"
 
 _GRAPH_FORMATS = ("nodes-edges", "vendor-lock", "aoi-siblings", "py-imports")
@@ -25,8 +56,25 @@ IMPORT_MAP_SCHEMA = "import-map/1"
 PY_IMPORTS_SCHEMA = "py-imports/1"
 _DEFAULT_ROOT_REPO = "aoi"
 _SKIP_DIRS = frozenset({".git", ".venv", ".test-deps", "__pycache__", "build"})
-
 _DEGREE_KEYS = ("max_in", "max_out", "max_total", "sources", "sinks")
+_MUTATING_ATTRS = frozenset({
+    "update", "append", "extend", "insert", "pop", "remove", "clear",
+    "setdefault", "add", "discard", "reverse", "sort",
+})
+
+# Profiles are audit, concepts, and cases. schema, direction, excluded, and
+# properties are reserved on /1 and /2, so a later object under properties
+# cannot be read as a relation-to-class map.
+VENDOR_LOCK_SCHEMA = "vendor-lock/1"
+_VENDOR_RELATION = "vendorsFrom"
+_RELATION_SCHEMA_PREFIX = "taxontoy-relations/"
+PROFILE_NAMES = ("audit", "concepts", "cases")
+DEFAULT_CYCLE_LIMIT = 5
+DEFAULT_FORMAT = "json"
+_KNOWN_RELATION_SCHEMAS = {
+    "taxontoy-relations/1": frozenset({"schema", "direction", "excluded", "properties"}),
+    "taxontoy-relations/2": frozenset({"schema", "direction", "excluded", "properties"}),
+}
 
 
 def edge_relation(edge):
@@ -262,7 +310,7 @@ def _class_metrics(edges, cycle_limit):
     }
 
 
-def summarize(graph, classes, *, cycle_limit=5):
+def summarize(graph, classes, *, cycle_limit=DEFAULT_CYCLE_LIMIT):
     groups = {category: [] for category in sorted(set(classes.values()))}
     unclassified = 0
     for edge in graph["edges"]:
@@ -479,7 +527,7 @@ def _across_classes(class_metrics):
     }
 
 
-def anomaly_report(graph, classes, *, cycle_limit=5):
+def anomaly_report(graph, classes, *, cycle_limit=DEFAULT_CYCLE_LIMIT):
     """Sigma bands for nodes in each class and relation, and for the classes themselves."""
     by_class = {category: [] for category in sorted(set(classes.values()))}
     by_relation = {relation: [] for relation in sorted(classes)}
@@ -496,19 +544,6 @@ def anomaly_report(graph, classes, *, cycle_limit=5):
         "relations": {name: _node_scope(edges) for name, edges in by_relation.items()},
         "across_classes": _across_classes(class_metrics),
     }
-
-
-VENDOR_LOCK_SCHEMA = "vendor-lock/1"
-_VENDOR_RELATION = "vendorsFrom"
-
-# Profiles are audit, concepts, and cases. The other top-level objects are
-# metadata. `properties` is reserved on /1 as well, so a later object under
-# that key cannot be read as a relation-to-class map.
-_RELATION_SCHEMA_PREFIX = "taxontoy-relations/"
-_KNOWN_RELATION_SCHEMAS = {
-    "taxontoy-relations/1": frozenset({"schema", "direction", "excluded", "properties"}),
-    "taxontoy-relations/2": frozenset({"schema", "direction", "excluded", "properties"}),
-}
 
 
 def _optional_lock_string(entry, key, index):
@@ -695,7 +730,7 @@ def node_churn(snapshots, classes):
     return {"nodes": rows, "repeated_churn": repeated}
 
 
-def series_report(snapshots, classes, *, cycle_limit=5):
+def series_report(snapshots, classes, *, cycle_limit=DEFAULT_CYCLE_LIMIT):
     """Compare each consecutive snapshot pair and record node churn.
 
     ``snapshots`` is an ordered list of ``{"label", "path", "graph"}``. The
@@ -976,12 +1011,6 @@ def _dict_of_string_tuples(node):
             raise ValueError("SIBLINGS key must be a string")
         parsed[key.value] = _string_tuple(item)
     return parsed
-
-
-_MUTATING_ATTRS = frozenset({
-    "update", "append", "extend", "insert", "pop", "remove", "clear",
-    "setdefault", "add", "discard", "reverse", "sort",
-})
 
 
 def _names_siblings(node):
@@ -1435,30 +1464,64 @@ def _load_classes(path, profile):
     return found
 
 
-def _env_text(name):
-    raw = os.environ.get(name)
-    if raw is None:
-        return None
-    text = raw.strip()
-    return text or None
+def _profile_text(value):
+    if isinstance(value, Path):
+        return value.as_posix()
+    return value
 
 
-def _resolve_input(value, env_name, what):
-    if value is not None:
-        return Path(value)
-    raw = _env_text(env_name)
-    if raw:
-        return Path(raw)
-    raise ValueError(f"pass the {what} or set {env_name}")
+def _graph_positionals(graph, classification, profile):
+    """``graph [classification] profile``. Two tokens are graph and profile."""
+    if profile is None and classification is not None:
+        return graph, None, _profile_text(classification)
+    return graph, classification, profile
 
 
-def _resolve_profile(value):
-    if value is not None:
-        return value
-    raw = _env_text("TOPONTOLOGY_PROFILE")
-    if raw:
-        return raw
-    raise ValueError("pass the profile or set TOPONTOLOGY_PROFILE")
+def _series_positionals(classification, profile):
+    """``[classification] profile``. One token is the profile."""
+    if profile is None and classification is not None:
+        return None, _profile_text(classification)
+    return classification, profile
+
+
+def _require_path(value, what):
+    if value is None:
+        raise ValueError(f"pass the {what}")
+    return Path(value)
+
+
+def _require_profile(value):
+    if value is None:
+        raise ValueError("pass the profile")
+    return value
+
+
+def _resolve_classification(positional, option, tax_explicit):
+    """Option, then the positional table, then TaxOntOy's otl-relations.json."""
+    if option is not None:
+        return Path(option)
+    if positional is not None:
+        return Path(positional)
+    return tol_paths.default_classification(tax_explicit, anchor=Path(__file__))
+
+
+def _add_root_options(parser):
+    parser.add_argument(
+        "--onto-root", type=Path,
+        help="ONTO checkout (default: ONTO_ROOT, then a sibling or ancestor checkout)",
+    )
+    parser.add_argument(
+        "--taxontoy-root", type=Path,
+        help="TaxOntOy checkout (default: TAXONTOY_ROOT, then a sibling or ancestor checkout)",
+    )
+
+
+def _add_classification_option(parser):
+    names = ", ".join(PROFILE_NAMES)
+    parser.add_argument(
+        "--classification", dest="classification_option", type=Path,
+        help=f"classification table (default: TaxOntOy otl-relations.json; profiles include {names})",
+    )
 
 
 def _require_class(report, name, flag):
@@ -1477,18 +1540,13 @@ def _parse_assignment(text):
 def _resolve_boundary(value):
     if value is None:
         return None
-    if value == "":
-        raw = _env_text("TOPONTOLOGY_BOUNDARY")
-        if not raw:
-            raise ValueError("pass a classification table to --boundary or set TOPONTOLOGY_BOUNDARY")
-        return Path(raw)
     return Path(value)
 
 
 def _resolve_format(args):
     if args.json and args.format not in (None, "json", "canonical"):
         raise ValueError("--json cannot be combined with a different --format")
-    return args.format or "json"
+    return args.format or DEFAULT_FORMAT
 
 
 def _parse_snapshot_token(token):
@@ -1502,15 +1560,6 @@ def _parse_snapshot_token(token):
     return label, Path(path)
 
 
-def _snapshots_from_env(text):
-    snapshots = []
-    for piece in text.replace(",", "\n").splitlines():
-        item = _parse_snapshot_token(piece)
-        if item is not None:
-            snapshots.append(item)
-    return snapshots
-
-
 def _parse_lock_token(token):
     text = token.strip()
     if not text:
@@ -1522,45 +1571,23 @@ def _parse_lock_token(token):
     return repository, Path(path)
 
 
-def _locks_from_env(text):
-    locks = []
-    for piece in text.replace(",", "\n").splitlines():
-        item = _parse_lock_token(piece)
+def _resolve_pairs(raw_args, parse, what):
+    parsed = []
+    for token in raw_args:
+        item = parse(token)
         if item is not None:
-            locks.append(item)
-    return locks
+            parsed.append(item)
+    if raw_args and not parsed:
+        raise ValueError(what)
+    return parsed
 
 
 def _resolve_locks(raw_args):
-    if raw_args:
-        parsed = []
-        for token in raw_args:
-            item = _parse_lock_token(token)
-            if item is not None:
-                parsed.append(item)
-        if not parsed:
-            raise ValueError("lock must be REPOSITORY=PATH")
-        return parsed
-    env = _env_text("TOPONTOLOGY_LOCKS")
-    if not env:
-        return []
-    return _locks_from_env(env)
+    return _resolve_pairs(raw_args, _parse_lock_token, "lock must be REPOSITORY=PATH")
 
 
 def _resolve_snapshots(raw_args):
-    if raw_args:
-        parsed = []
-        for token in raw_args:
-            item = _parse_snapshot_token(token)
-            if item is not None:
-                parsed.append(item)
-        if not parsed:
-            raise ValueError("snapshot must be LABEL=PATH")
-        return parsed
-    env = _env_text("TOPONTOLOGY_SNAPSHOTS")
-    if not env:
-        return []
-    return _snapshots_from_env(env)
+    return _resolve_pairs(raw_args, _parse_snapshot_token, "snapshot must be LABEL=PATH")
 
 
 def _vendor_copies(locks):
@@ -1955,7 +1982,7 @@ def _unclassified_delta(graph, classes, names):
     return {"with": included, "without": without, "delta": without - included}
 
 
-def excluded_impact(graph, classes, table, profile, *, cycle_limit=5):
+def excluded_impact(graph, classes, table, profile, *, cycle_limit=DEFAULT_CYCLE_LIMIT):
     """Structural effect of the profile's excluded relations.
 
     For each class, every excluded relation is folded into that class and the
@@ -2006,19 +2033,22 @@ def series_main(argv):
     parser = argparse.ArgumentParser(prog=f"{TOOL_NAME} series", description="Compare an ordered list of graph snapshots.")
     parser.add_argument("classification", nargs="?", type=Path)
     parser.add_argument("profile", nargs="?")
+    _add_classification_option(parser)
+    _add_root_options(parser)
     parser.add_argument("--snapshot", action="append", default=[], metavar="LABEL=PATH",
-                        help="one snapshot; repeat in time order. Overrides TOPONTOLOGY_SNAPSHOTS")
+                        help="one snapshot; repeat in time order")
     parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges")
     parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
-    parser.add_argument("--cycle-limit", type=int, default=5, metavar="N")
+    parser.add_argument("--cycle-limit", type=int, default=DEFAULT_CYCLE_LIMIT, metavar="N")
     parser.add_argument("-o", "--output", type=Path)
     args = parser.parse_args(argv)
     fmt = _resolve_format(args)
     if args.cycle_limit < 0:
         raise ValueError("--cycle-limit must be >= 0")
-    classification = _resolve_input(args.classification, "TOPONTOLOGY_CLASSIFICATION", "classification path")
-    profile = _resolve_profile(args.profile)
+    positional, profile = _series_positionals(args.classification, args.profile)
+    profile = _require_profile(profile)
+    classification = _resolve_classification(positional, args.classification_option, args.taxontoy_root)
     classes = _load_classes(classification, profile)
     snapshots = []
     for label, path in _resolve_snapshots(args.snapshot):
@@ -2081,7 +2111,8 @@ def impact_main(argv):
         description="Report how far each vendored file reaches downstream.",
     )
     parser.add_argument("--lock", action="append", default=[], metavar="REPOSITORY=PATH",
-                        help="vendor-lock/1 owned by REPOSITORY. Overrides TOPONTOLOGY_LOCKS")
+                        help="vendor-lock/1 owned by REPOSITORY")
+    _add_root_options(parser)
     parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
     parser.add_argument("-o", "--output", type=Path)
@@ -2117,13 +2148,10 @@ def impact_main(argv):
     return 0
 
 
-def _resolve_optional(value, env_name):
-    if value is not None:
-        return Path(value)
-    raw = _env_text(env_name)
-    if raw:
-        return Path(raw)
-    return None
+def _resolve_optional(value):
+    if value is None:
+        return None
+    return Path(value)
 
 
 def _parse_source_token(token):
@@ -2137,34 +2165,13 @@ def _parse_source_token(token):
     return repo, Path(path)
 
 
-def _sources_from_env(text):
-    sources = []
-    for piece in text.replace(",", "\n").splitlines():
-        item = _parse_source_token(piece)
-        if item is not None:
-            sources.append(item)
-    return sources
-
-
 def _resolve_sources(raw_args):
-    if raw_args:
-        parsed = []
-        for token in raw_args:
-            item = _parse_source_token(token)
-            if item is not None:
-                parsed.append(item)
-        if not parsed:
-            raise ValueError("source must be REPO=PATH")
-        return parsed
-    env = _env_text("TOPONTOLOGY_SOURCES")
-    if not env:
-        return []
-    return _sources_from_env(env)
+    return _resolve_pairs(raw_args, _parse_source_token, "source must be REPO=PATH")
 
 
 def _load_sources(pairs):
     if not pairs:
-        raise ValueError("pass at least one source or set TOPONTOLOGY_SOURCES")
+        raise ValueError("pass at least one source")
     loaded = []
     seen = set()
     for repo, path in pairs:
@@ -2232,19 +2239,18 @@ def deps_main(argv):
         prog=f"{TOOL_NAME} deps",
         description="Compare declared SIBLINGS paths with Python imports in local source directories.",
     )
-    parser.add_argument("--declared", type=Path,
-                        help="Python file that assigns SIBLINGS. Overrides TOPONTOLOGY_DECLARED")
-    parser.add_argument("--import-map", type=Path,
-                        help="import-map/1 JSON. Overrides TOPONTOLOGY_IMPORT_MAP")
+    parser.add_argument("--declared", type=Path, help="Python file that assigns SIBLINGS")
+    parser.add_argument("--import-map", type=Path, help="import-map/1 JSON")
     parser.add_argument("--source", action="append", default=[], metavar="REPO=PATH",
-                        help="local source directory for one repo. Overrides TOPONTOLOGY_SOURCES")
+                        help="local source directory for one repo")
+    _add_root_options(parser)
     parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
     parser.add_argument("-o", "--output", type=Path)
     args = parser.parse_args(argv)
     fmt = _resolve_format(args)
-    declared = _resolve_input(args.declared, "TOPONTOLOGY_DECLARED", "declared file")
-    import_map_path = _resolve_optional(args.import_map, "TOPONTOLOGY_IMPORT_MAP")
+    declared = _require_path(args.declared, "declared file")
+    import_map_path = _resolve_optional(args.import_map)
     sources = _load_sources(_resolve_sources(args.source))
     body, files = dependency_report(declared, sources, import_map_path)
     provenance = {
@@ -2338,18 +2344,21 @@ def excluded_main(argv):
     parser.add_argument("graph", nargs="?", type=Path)
     parser.add_argument("classification", nargs="?", type=Path)
     parser.add_argument("profile", nargs="?")
+    _add_classification_option(parser)
+    _add_root_options(parser)
     parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges")
     parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
-    parser.add_argument("--cycle-limit", type=int, default=5, metavar="N")
+    parser.add_argument("--cycle-limit", type=int, default=DEFAULT_CYCLE_LIMIT, metavar="N")
     parser.add_argument("-o", "--output", type=Path)
     args = parser.parse_args(argv)
     fmt = _resolve_format(args)
     if args.cycle_limit < 0:
         raise ValueError("--cycle-limit must be >= 0")
-    graph_path = _resolve_input(args.graph, "TOPONTOLOGY_GRAPH", "graph path")
-    classification = _resolve_input(args.classification, "TOPONTOLOGY_CLASSIFICATION", "classification path")
-    profile = _resolve_profile(args.profile)
+    graph, positional, profile = _graph_positionals(args.graph, args.classification, args.profile)
+    graph_path = _require_path(graph, "graph path")
+    profile = _require_profile(profile)
+    classification = _resolve_classification(positional, args.classification_option, args.taxontoy_root)
     classes = _load_classes(classification, profile)
     table = json.loads(classification.read_text(encoding="utf-8"))
     graph = _load_graph(graph_path, args.graph_format)
@@ -2396,12 +2405,14 @@ def main(argv=None):
     parser.add_argument("graph", nargs="?", type=Path)
     parser.add_argument("classification", nargs="?", type=Path)
     parser.add_argument("profile", nargs="?")
+    _add_classification_option(parser)
+    _add_root_options(parser)
     parser.add_argument("--format", choices=("text", "json", "canonical", "mermaid"),
                         help="json and canonical write the same sorted JSON document (default: json); "
                              "text is a line summary; mermaid draws one class")
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
-    parser.add_argument("--cycle-limit", type=int, default=5, metavar="N",
-                        help="maximum representative cycles to keep per class (default: 5)")
+    parser.add_argument("--cycle-limit", type=int, default=DEFAULT_CYCLE_LIMIT, metavar="N",
+                        help=f"maximum representative cycles to keep per class (default: {DEFAULT_CYCLE_LIMIT})")
     parser.add_argument("--class", dest="class_name", help="class to draw, or the left side of --compare-class")
     parser.add_argument("--compare", type=Path, metavar="GRAPH",
                         help="compare this graph with another graph under the same classification and profile")
@@ -2409,8 +2420,8 @@ def main(argv=None):
                         help="compare --class with another class of the same graph")
     parser.add_argument("--anomalies", action="store_true",
                         help="add 1σ, 2σ, and 3σ bands for degree, component size, and depth")
-    parser.add_argument("--boundary", nargs="?", const="", default=None, metavar="TABLE",
-                        help="compare with a second classification table; omit the path to use TOPONTOLOGY_BOUNDARY")
+    parser.add_argument("--boundary", type=Path, metavar="TABLE",
+                        help="compare with a second classification table")
     parser.add_argument("--merge", action="append", default=[], metavar="CLASS",
                         help="two classes to merge; use with --into")
     parser.add_argument("--into", metavar="CLASS", help="class name produced by --merge")
@@ -2425,10 +2436,11 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         fmt = _resolve_format(args)
-        args.graph = _resolve_input(args.graph, "TOPONTOLOGY_GRAPH", "graph path")
-        args.classification = _resolve_input(
-            args.classification, "TOPONTOLOGY_CLASSIFICATION", "classification path")
-        args.profile = _resolve_profile(args.profile)
+        graph, positional, profile = _graph_positionals(args.graph, args.classification, args.profile)
+        args.graph = _require_path(graph, "graph path")
+        args.profile = _require_profile(profile)
+        args.classification = _resolve_classification(
+            positional, args.classification_option, args.taxontoy_root)
         boundary = _resolve_boundary(args.boundary)
         if args.cycle_limit < 0:
             raise ValueError("--cycle-limit must be >= 0")

@@ -11,7 +11,8 @@ jobs:
       matrix:
         python: ['3.11', '3.15']
     env:
-      PYTHONPATH: ${{ github.workspace }}/ONTO
+      ONTO_ROOT: ${{ github.workspace }}/ONTO
+      TAXONTOY_ROOT: ${{ github.workspace }}/TaxOntOy
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -31,7 +32,7 @@ jobs:
         with:
           repository: myon-bioinformatics/TaxOntOy
           ref: 8621f2261d694af0de35e103ad2387872ca10b99
-          path: TOO
+          path: TaxOntOy
           persist-credentials: false
           fetch-depth: 1
       - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
@@ -39,6 +40,25 @@ jobs:
           version: "0.13.9"
           python-version: ${{ matrix.python }}
       - run: uv run --no-project python -S -m unittest discover -s tests -v
+      - name: Inference finds the checkouts with no env vars
+        run: |
+          set -euo pipefail
+          unset ONTO_ROOT TAXONTOY_ROOT PYTHONPATH
+          uv run --no-project python -S topontology.py tests/fixtures/graph.json concepts --format canonical > "$RUNNER_TEMP/inferred.json"
+          uv run --no-project python -S - "$RUNNER_TEMP/inferred.json" <<'PY'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+          report = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          table = Path("TaxOntOy/otl-relations.json").read_bytes()
+          assert report["provenance"]["classification"]["path"].endswith("TaxOntOy/otl-relations.json")
+          assert report["provenance"]["classification"]["sha256"] == hashlib.sha256(table).hexdigest()
+          assert report["provenance"]["profile"] == "concepts"
+          assert report["classes"]["hierarchy"]["independent_cycles"] == 1
+          assert report["unclassified_edges"] == 1
+          PY
+          uv run --no-project python -S -m unittest discover -s tests -q
       - name: Regenerated output matches the committed files
         run: |
           set -euo pipefail
@@ -94,14 +114,14 @@ jobs:
       - name: Pinned TaxOntOy table classifies the fixture
         run: |
           set -euo pipefail
-          uv run --no-project python -S topontology.py tests/fixtures/graph.json "$GITHUB_WORKSPACE/TOO/otl-relations.json" concepts --format canonical > "$RUNNER_TEMP/too.json"
+          uv run --no-project python -S topontology.py tests/fixtures/graph.json "$GITHUB_WORKSPACE/TaxOntOy/otl-relations.json" concepts --format canonical > "$RUNNER_TEMP/too.json"
           uv run --no-project python -S - "$RUNNER_TEMP/too.json" <<'PY'
           import hashlib
           import json
           import sys
           from pathlib import Path
           report = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          table = Path("TOO/otl-relations.json").read_bytes()
+          table = Path("TaxOntOy/otl-relations.json").read_bytes()
           assert report["provenance"]["classification"]["sha256"] == hashlib.sha256(table).hexdigest()
           assert report["tool"]["name"] == "topontology"
           row = report["classes"]["hierarchy"]
@@ -111,7 +131,7 @@ jobs:
           assert report["classes"]["similarity"]["independent_cycles"] == 1
           assert report["unclassified_edges"] == 1
           PY
-          if uv run --no-project python -S topontology.py tests/fixtures/graph.json "$GITHUB_WORKSPACE/TOO/otl-relations.json" properties --format canonical > "$RUNNER_TEMP/properties.out" 2>"$RUNNER_TEMP/properties.err"; then
+          if uv run --no-project python -S topontology.py tests/fixtures/graph.json "$GITHUB_WORKSPACE/TaxOntOy/otl-relations.json" properties --format canonical > "$RUNNER_TEMP/properties.out" 2>"$RUNNER_TEMP/properties.err"; then
             echo "properties was accepted as a profile" >&2
             exit 1
           fi
@@ -119,7 +139,7 @@ jobs:
       - name: Coverage includes CLI subprocesses
         run: |
           set -euo pipefail
-          printf '%s\n' '[run]' 'branch = true' 'source = topontology,topology' 'parallel = true' 'relative_files = true' > "$RUNNER_TEMP/coveragerc.ini"
+          printf '%s\n' '[run]' 'branch = true' 'source = topontology,topology,tol_paths' 'parallel = true' 'relative_files = true' > "$RUNNER_TEMP/coveragerc.ini"
           export COVERAGE_PROCESS_START="$RUNNER_TEMP/coveragerc.ini"
           uv run --no-project --with coverage==7.13.1 python -m coverage run --rcfile "$COVERAGE_PROCESS_START" -m unittest discover -s tests -v
           uv run --no-project --with coverage==7.13.1 python -m coverage combine --rcfile "$COVERAGE_PROCESS_START"
@@ -130,7 +150,7 @@ jobs:
           report = json.load(open(sys.argv[1], encoding="utf-8"))
           def check(kind, executed, excluded, unexecuted, total):
               print(f"{kind} executed={executed} excluded={excluded} unexecuted={unexecuted} total={total}")
-              if executed + excluded + unexecuted != total or unexecuted != 0:
+              if executed + excluded + unexecuted != total or unexecuted != 0 or excluded != 0:
                   raise SystemExit(f"{kind} coverage gap")
           sex = sexc = sun = stot = bex = bexc = bun = btot = 0
           for info in report["files"].values():

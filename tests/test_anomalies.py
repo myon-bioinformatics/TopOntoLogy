@@ -363,12 +363,7 @@ class AnomalyCliTests(unittest.TestCase):
             code, out, err = run_cli(str(graph), str(table), "demo", "--boundary", env={
                 "TOPONTOLOGY_BOUNDARY": f"  {other}  ",
             })
-            self.assertEqual(code, 0, err)
-            code, out, err = run_cli(str(graph), str(table), "demo", "--boundary", env={
-                "TOPONTOLOGY_BOUNDARY": "   ",
-            })
-            self.assertEqual(code, 1)
-            self.assertIn("TOPONTOLOGY_BOUNDARY", err)
+            self.assertEqual(code, 2)
             self.assertNotIn("Traceback", err)
 
             code, out, err = run_cli(str(graph), str(table), "demo", "--assign", "broader")

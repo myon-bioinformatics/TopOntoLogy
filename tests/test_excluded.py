@@ -239,7 +239,7 @@ class ExcludedCliTests(unittest.TestCase):
         expected = (ROOT / "tests/expected/excluded.json").read_text(encoding="utf-8")
         self.assertEqual(out, expected)
         body = json.loads(out)
-        self.assertEqual(body["tool"]["version"], "0.6.0")
+        self.assertEqual(body["tool"]["version"], topontology.__version__)
         self.assertEqual(body["provenance"]["profile"], "audit")
         self.assertEqual(body["acyclicity_flags"], [{"class": "dependency", "relation": "blocks"}])
         code, text, err = run_cli(
@@ -247,7 +247,7 @@ class ExcludedCliTests(unittest.TestCase):
             "--format", "text",
         )
         self.assertEqual(code, 0, err)
-        self.assertIn("tool: topontology 0.6.0", text)
+        self.assertIn(f"tool: topontology {topontology.__version__}", text)
         self.assertIn("excluded: belongsTo, blocks, depends_on, overlapsWith", text)
         self.assertIn("acyclicity_flags: blocks dependency", text)
         self.assertIn("relation depends_on edges=2 alias_of=dependsOn", text)
@@ -271,11 +271,14 @@ class ExcludedCliTests(unittest.TestCase):
     def test_env_override_empty_profile_and_vendor_lock(self):
         code, out, err = run_cli(
             "excluded",
+            "tests/fixtures/excluded-graph.json",
+            "tests/fixtures/excluded-relations.json",
+            "cases",
             "--format", "json",
             env={
-                "TOPONTOLOGY_GRAPH": "tests/fixtures/excluded-graph.json",
-                "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/excluded-relations.json",
-                "TOPONTOLOGY_PROFILE": "  cases  ",
+                "TOPONTOLOGY_GRAPH": "tests/fixtures/graph.json",
+                "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/classes.json",
+                "TOPONTOLOGY_PROFILE": "audit",
             },
         )
         self.assertEqual(code, 0, err)
@@ -339,6 +342,8 @@ class ExcludedCliTests(unittest.TestCase):
         self.assertNotIn("Traceback", err)
         code, out, err = run_cli("excluded", env={"TOPONTOLOGY_PROFILE": "audit"})
         self.assertEqual(code, 1)
+        self.assertIn("pass the graph path", err)
+        self.assertNotIn("TOPONTOLOGY_PROFILE", err)
         self.assertNotIn("Traceback", err)
 
 

@@ -13,16 +13,25 @@
 
 ![TaxOntOy の関係分類表と OnTautoLogy のグラフを組み合わせ、分類ごとに閉路・連結成分・到達可能性などを調べ、JSON・テキスト・Mermaid 図に出力する流れ](docs/assets/topontology-overview.jpg)
 
-OTL の nodes/edges JSON と TOO の分類表は引数で渡します。引数を省略したときは環境変数 `TOPONTOLOGY_GRAPH`、`TOPONTOLOGY_CLASSIFICATION`、`TOPONTOLOGY_PROFILE` を使います。引数が優先です。ONTO の `knowledgegraph.py` は `PYTHONPATH` で渡します。プログラムは隣の checkout を探しません。Python 3.11 以降の標準ライブラリだけを使います。
+グラフとプロファイルを引数で渡します。分類表を省くと TaxOntOy の `otl-relations.json` を使います。ONTO はプログラムが `sys.path` の先頭に足すので、`PYTHONPATH` は要りません。Python 3.11 以降の標準ライブラリだけを使います。
+
+ONTO と TaxOntOy の場所は `tol_paths.py` だけが知っています。解決の順は次です。
+
+1. 明示の `--onto-root` / `--taxontoy-root`
+2. 環境変数 `ONTO_ROOT` / `TAXONTOY_ROOT`
+3. 推定。TopOntoLogy の隣の `../ONTO` と `../TaxOntOy` を先に見ます。親リポジトリの子や孫として入っているときは、アンカーから上へ辿り、マーカー（`knowledgegraph.py`、`otl-relations.json`）のある checkout を探します
+
+空の明示引数は環境変数へ落としません。マーカーが無いディレクトリは使いません。見つからないときは、設定する環境変数の名前を書いた日本語のエラーで止まります。`knowledgegraph` の出どころが解決した ONTO でなければ、黙って別のコピーは使いません。
 
 ```sh
-PYTHONPATH=../ONTO python -S topontology.py audit.json ../TaxOntOy/otl-relations.json audit
-PYTHONPATH=../ONTO python -S topontology.py audit.json ../TaxOntOy/otl-relations.json audit --format text
-PYTHONPATH=../ONTO python -S topontology.py before.json ../TaxOntOy/otl-relations.json concepts --compare after.json
-PYTHONPATH=../ONTO python -S topontology.py audit.json ../TaxOntOy/otl-relations.json concepts --format mermaid --class hierarchy
-TOPONTOLOGY_GRAPH=audit.json TOPONTOLOGY_CLASSIFICATION=../TaxOntOy/otl-relations.json TOPONTOLOGY_PROFILE=audit \
-  PYTHONPATH=../ONTO python -S topontology.py --format text
+python -S topontology.py audit.json audit
+python -S topontology.py audit.json audit --format text
+python -S topontology.py before.json concepts --compare after.json
+python -S topontology.py audit.json concepts --format mermaid --class hierarchy
+python -S topontology.py audit.json ../TaxOntOy/otl-relations.json audit
 ```
+
+位置引数が 3 つのときは `グラフ 分類表 プロファイル` です。2 つのときは `グラフ プロファイル` で、分類表は既定です。別の表は `--classification` でも渡せます。
 
 導入した環境ではコマンド名は `topontology` です。読み取り専用で、ネットワークへは出ません。書き出すのは標準出力か、`-o` で指定したファイルだけです。
 
@@ -51,7 +60,7 @@ JSON はキー順を固定した一つの文書です。`--format canonical` と
 
 `--anomalies` は、分類ごとと関係ごとに、ノードの入次数・出次数・合計次数・弱連結成分の大きさ・根からの最長路を集め、平均から 1σ、2σ、3σ を超えるものを帯として返します。ちょうど kσ の点はその帯には入れません。3 点未満、または分散が 0 のときは割らずに `not applicable` です。閉路のある範囲では深さの帯も `not applicable` です。同じ偏差の並びは `(型名, 文字列化した値)` で決めます。
 
-分類の境界を動かすときは、右の分類から左の分類を引きます。`--boundary 別の分類表` はもう一つの表と比べます。パスを省くと `TOPONTOLOGY_BOUNDARY` を使い、空白だけなら未設定です。`--merge 分類 --merge 分類 --into 新しい分類` は二つの分類を一つにまとめ、`--split 分類 --assign 関係=分類` は指定した関係を別の分類へ移します。`--assign` は繰り返して複数の関係を移せます。どちらの出自にもグラフと分類表のパスと sha256 が入り、まとめ方や分割は `mapping` に残します。
+分類の境界を動かすときは、右の分類から左の分類を引きます。`--boundary 別の分類表` はもう一つの表と比べます。`--merge 分類 --merge 分類 --into 新しい分類` は二つの分類を一つにまとめ、`--split 分類 --assign 関係=分類` は指定した関係を別の分類へ移します。`--assign` は繰り返して複数の関係を移せます。どちらの出自にもグラフと分類表のパスと sha256 が入り、まとめ方や分割は `mapping` に残します。
 
 `tests/expected/` は、この決定的な出力を fixture から再生成したものです。CI が同じコマンドを実行し、差分があれば失敗します。
 
@@ -66,17 +75,17 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 ## テスト
 
 ```sh
-PYTHONPATH=../ONTO uv run --no-project python -S -m unittest discover -s tests -v
+uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99` を checkout し、`PYTHONPATH` で ONTO を渡します。ツールの版は 0.6.0 です。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `tol_paths.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.7.0 です。
 
 ## 時点の並び
 
-`series` は、同じ分類表でグラフの並びを隣同士で比べます。各時点は `--snapshot ラベル=パス` で、順番どおりに繰り返します。引数があるときはそれが優先です。無いときは環境変数 `TOPONTOLOGY_SNAPSHOTS` を、改行またはカンマで区切った `ラベル=パス` として読みます。前後の空白は除き、空なら未設定です。ラベルは不透明な文字列です（OnTautoLogy の main のコミット SHA を想定していますが、ネットワークでは取りに行きません）。
+`series` は、同じ分類表でグラフの並びを隣同士で比べます。各時点は `--snapshot ラベル=パス` で、順番どおりに繰り返します。分類表を省くと TaxOntOy の `otl-relations.json` です。`--classification` で別の表を渡せます。ラベルは不透明な文字列です（OnTautoLogy の main のコミット SHA を想定していますが、ネットワークでは取りに行きません）。
 
 ```sh
-PYTHONPATH=../ONTO python -S topontology.py series ../TaxOntOy/otl-relations.json concepts \
+python -S topontology.py series concepts \
   --snapshot aaaaaaaa=before.json --snapshot bbbbbbbb=after.json
 ```
 
@@ -103,7 +112,7 @@ PYTHONPATH=../ONTO python -S topontology.py series ../TaxOntOy/otl-relations.jso
 `excluded` は、分類表の `excluded` に並ぶ関係をクラスへ戻した場合と、除外したままの場合を比べます。差分は `compare_graphs` で、右（除外したまま）から左（戻したとき）を引きます。見るのは弱連結成分、独立閉路、深さ、有向閉路です。
 
 ```sh
-PYTHONPATH=../ONTO python -S topontology.py excluded audit.json ../TaxOntOy/otl-relations.json audit
+python -S topontology.py excluded audit.json audit
 ```
 
 クラスごとの比較は、そのプロファイルの除外関係をすべてそのクラスへ入れたときです。関係ごとの比較は、一つの関係だけを一つのクラスへ入れたときです。除外すると独立閉路が減る、または有向閉路が消えるとき `removed_cycles` です。有向閉路が消えるときは `removed_directed_cycle` も真です。弱連結成分が増えるときは `split_components` で、除外していた関係が成分をつないでいたことを示します。
@@ -127,7 +136,7 @@ TaxOntOy のピン `8621f2261d694af0de35e103ad2387872ca10b99` の `otl-relations
 
 ## vendor-lock の影響範囲
 
-`impact` は、複数の `vendor-lock/1` をリポジトリごとに読み、`vendorsFrom` を上流から下流へ辿ります。各ロックは `--lock リポジトリ=パス` です。引数が無いときは環境変数 `TOPONTOLOGY_LOCKS` を、改行またはカンマで区切った `リポジトリ=パス` として読みます。前後の空白は除き、空なら未設定です。引数があるときは環境変数を使いません。
+`impact` は、複数の `vendor-lock/1` をリポジトリごとに読み、`vendorsFrom` を上流から下流へ辿ります。各ロックは `--lock リポジトリ=パス` です。
 
 ロックを持つリポジトリのコピーは `リポジトリ:destination` です。別のロックが `repository:source` でそのファイルを指すと、ホップがつながります。上流の各 `リポジトリ:ファイル` について、到達する下流リポジトリの数、そこまでの最短ホップ、その先へファイルを渡している子リポジトリ（中継）を返します。数の多い順、同じなら ID の順です。同じ入力は同じバイト列です。
 
@@ -136,7 +145,7 @@ TaxOntOy のピン `8621f2261d694af0de35e103ad2387872ca10b99` の `otl-relations
 到達の距離は `collections.deque`、閉路の有無は `graphlib.TopologicalSorter` です。ONTO の `knowledgegraph.py` には、この逆向きの到達を返す関数はまだありません。
 
 ```sh
-PYTHONPATH=../ONTO python -S topontology.py impact \
+python -S topontology.py impact \
   --lock myon-bioinformatics/Aoi=vendor.lock.json \
   --lock myon-bioinformatics/QueRyu=queryu/vendor.lock.json
 ```
@@ -147,17 +156,15 @@ PYTHONPATH=../ONTO python -S topontology.py impact \
 
 ## 宣言した依存と、実際の import
 
-`deps` は、Aoi の `aoi.py` が持つ `SIBLINGS`（宣言）と、渡したローカルのソースディレクトリにある Python の import（実際）を比べます。ファイルは `ast` で読むだけで、実行しません。パスは引数か環境変数だけで、ネットワークにも clone にも行きません。
+`deps` は、Aoi の `aoi.py` が持つ `SIBLINGS`（宣言）と、渡したローカルのソースディレクトリにある Python の import（実際）を比べます。ファイルは `ast` で読むだけで、実行しません。パスは引数だけで、ネットワークにも clone にも行きません。
 
 ```sh
-PYTHONPATH=../ONTO python -S topontology.py deps \
+python -S topontology.py deps \
   --declared aoi.py \
   --import-map import-map.json \
   --source dragowing=./dragowing \
   --source queryu=./queryu
 ```
-
-`--declared` を省くと `TOPONTOLOGY_DECLARED`、`--import-map` を省くと `TOPONTOLOGY_IMPORT_MAP`、`--source` が無いときは `TOPONTOLOGY_SOURCES` を、改行またはカンマで区切った `リポジトリ=パス` として読みます。前後の空白は除き、空なら未設定です。引数があるときは、その項目の環境変数を使いません。
 
 宣言の辺は、子の名前から `SIBLINGS` のパス文字列へ向きます。`queryu` と `queryu/core` は別の辺です。`.` はランチャーのルートで、リポジトリ名の既定は `aoi` です。対応表の `root` で変えられます。
 
