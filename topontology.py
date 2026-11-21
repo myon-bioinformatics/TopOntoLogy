@@ -92,6 +92,23 @@ def _mermaid_terms(nodes):
     return terms
 
 
+def _mermaid_names(nodes, labels, terms):
+    """Box labels for ONTO ``graph_mermaid``.
+
+    Unique display strings are left unchanged. When two nodes would share a
+    box label, the disambiguated term from ``_mermaid_terms`` is used so
+    unnamed ``1`` and ``"1"`` stay distinguishable after ONTO renumbers IDs.
+    """
+    display = {node: node_text(labels.get(node, node)) for node in nodes}
+    counts = {}
+    for node in nodes:
+        counts[display[node]] = counts.get(display[node], 0) + 1
+    return {
+        node: terms[node] if counts[display[node]] > 1 else display[node]
+        for node in nodes
+    }
+
+
 def _degrees(edges):
     nodes = set()
     inbound, outbound = defaultdict(int), defaultdict(int)
@@ -298,12 +315,13 @@ def render_mermaid(graph, edges, provenance, class_name):
         key=node_sort_key,
     )
     terms = _mermaid_terms(present)
+    names = _mermaid_names(present, labels, terms)
     ordered = sorted(edges, key=lambda edge: (
         node_sort_key(edge["source"]), edge_relation(edge),
         node_sort_key(edge["target"]), edge.get("basis") or ""))
     diagram = graph_mermaid({
         "nodes": [
-            {"id": terms[node], "name": node_text(labels.get(node, node))}
+            {"id": terms[node], "name": names[node]}
             for node in present
         ],
         "edges": [
@@ -441,10 +459,18 @@ def _load_classes(path, profile):
     return table[profile]
 
 
+def _env_text(name):
+    raw = os.environ.get(name)
+    if raw is None:
+        return None
+    text = raw.strip()
+    return text or None
+
+
 def _resolve_input(value, env_name, what):
     if value is not None:
         return Path(value)
-    raw = os.environ.get(env_name)
+    raw = _env_text(env_name)
     if raw:
         return Path(raw)
     raise ValueError(f"pass the {what} or set {env_name}")
@@ -453,7 +479,7 @@ def _resolve_input(value, env_name, what):
 def _resolve_profile(value):
     if value is not None:
         return value
-    raw = os.environ.get("TOPONTOLOGY_PROFILE")
+    raw = _env_text("TOPONTOLOGY_PROFILE")
     if raw:
         return raw
     raise ValueError("pass the profile or set TOPONTOLOGY_PROFILE")
