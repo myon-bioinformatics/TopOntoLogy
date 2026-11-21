@@ -198,7 +198,7 @@ class SeriesCliTests(unittest.TestCase):
         expected = (ROOT / "tests/expected/series.json").read_text(encoding="utf-8")
         self.assertEqual(out, expected)
         body = json.loads(out)
-        self.assertEqual(body["tool"]["version"], "0.4.0")
+        self.assertEqual(body["tool"]["version"], "0.5.0")
         self.assertEqual([item["label"] for item in body["provenance"]["snapshots"]], ["one", "two", "three"])
         self.assertEqual(body["pairs"][0]["graph"]["delta"]["independent_cycles"], 0)
         self.assertEqual(body["pairs"][0]["graph"]["delta"]["weakly_connected_components"], 1)

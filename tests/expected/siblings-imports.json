@@ -1,0 +1,92 @@
+{
+  "classes": {
+    "actual": {
+      "degree": {
+        "max_in": 2,
+        "max_out": 4,
+        "max_total": 4,
+        "sinks": 4,
+        "sources": 2
+      },
+      "depth": 1,
+      "edges": 7,
+      "incident_nodes": 6,
+      "independent_cycles": 2,
+      "multiple_sources": [
+        "queryu/ask"
+      ],
+      "order_cycle": null,
+      "sample_cycles": [],
+      "weakly_connected_components": {
+        "count": 1,
+        "sizes": [
+          6
+        ]
+      }
+    },
+    "declared": {
+      "degree": {
+        "max_in": 0,
+        "max_out": 0,
+        "max_total": 0,
+        "sinks": 0,
+        "sources": 0
+      },
+      "depth": 0,
+      "edges": 0,
+      "incident_nodes": 0,
+      "independent_cycles": 0,
+      "multiple_sources": [],
+      "order_cycle": null,
+      "sample_cycles": [],
+      "weakly_connected_components": {
+        "count": 0,
+        "sizes": []
+      }
+    },
+    "unmapped": {
+      "degree": {
+        "max_in": 3,
+        "max_out": 15,
+        "max_total": 15,
+        "sinks": 11,
+        "sources": 2
+      },
+      "depth": 1,
+      "edges": 20,
+      "incident_nodes": 13,
+      "independent_cycles": 8,
+      "multiple_sources": [
+        "json",
+        "os",
+        "pathlib",
+        "pytest",
+        "sys"
+      ],
+      "order_cycle": null,
+      "sample_cycles": [],
+      "weakly_connected_components": {
+        "count": 1,
+        "sizes": [
+          13
+        ]
+      }
+    }
+  },
+  "provenance": {
+    "classification": {
+      "path": "tests/fixtures/sibling-classes.json",
+      "sha256": "51c5def52275795e2662a6211daf8e6358285fb9ce7061b4b18eb4d17408071e"
+    },
+    "graph": {
+      "path": "tests/fixtures/siblings/py-imports.json",
+      "sha256": "e1d19f94f48d8b87b54084055b81d6e4ed57e9438c9f9db3fc5a08439719d669"
+    },
+    "profile": "siblings"
+  },
+  "tool": {
+    "name": "topontology",
+    "version": "0.5.0"
+  },
+  "unclassified_edges": 0
+}

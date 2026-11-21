@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -13,8 +14,17 @@ from pathlib import Path
 
 from knowledgegraph import graph_mermaid, relation_cycles, topological_order
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 TOOL_NAME = "topontology"
+
+_GRAPH_FORMATS = ("nodes-edges", "vendor-lock", "aoi-siblings", "py-imports")
+DECLARED_RELATION = "declares"
+IMPORT_RELATION = "imports"
+UNMAPPED_RELATION = "unmapped"
+IMPORT_MAP_SCHEMA = "import-map/1"
+PY_IMPORTS_SCHEMA = "py-imports/1"
+_DEFAULT_ROOT_REPO = "aoi"
+_SKIP_DIRS = frozenset({".git", ".venv", ".test-deps", "__pycache__", "build"})
 
 _DEGREE_KEYS = ("max_in", "max_out", "max_total", "sources", "sinks")
 
@@ -870,10 +880,394 @@ def render_text(body):
     return "\n".join(lines) + "\n"
 
 
+def _string_tuple(node):
+    if not isinstance(node, (ast.Tuple, ast.List)):
+        raise ValueError("SIBLINGS values must be tuples of strings")
+    values = []
+    for elt in node.elts:
+        if not isinstance(elt, ast.Constant) or not isinstance(elt.value, str):
+            raise ValueError("SIBLINGS values must be tuples of strings")
+        values.append(elt.value)
+    return tuple(values)
+
+
+def _dict_of_string_tuples(node):
+    if not isinstance(node, ast.Dict):
+        raise ValueError("SIBLINGS must be a dict")
+    parsed = {}
+    for key, item in zip(node.keys, node.values):
+        if not isinstance(key, ast.Constant) or not isinstance(key.value, str):
+            raise ValueError("SIBLINGS key must be a string")
+        parsed[key.value] = _string_tuple(item)
+    return parsed
+
+
+def siblings_from_source(text):
+    """Read the top-level ``SIBLINGS`` dict from a Python file.
+
+    A later ``SIBLINGS["name"] = (...)`` replaces or adds that one entry.
+    Nested assignments are ignored. The tool does not execute the file.
+    """
+    try:
+        tree = ast.parse(text)
+    except SyntaxError as error:
+        raise ValueError(f"could not parse SIBLINGS: {error.msg}") from error
+    table = None
+    for stmt in tree.body:
+        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name) and stmt.target.id == "SIBLINGS":
+            if stmt.value is None:
+                raise ValueError("SIBLINGS must be a dict")
+            table = _dict_of_string_tuples(stmt.value)
+            continue
+        if not isinstance(stmt, ast.Assign) or len(stmt.targets) != 1:
+            continue
+        target = stmt.targets[0]
+        if isinstance(target, ast.Name) and target.id == "SIBLINGS":
+            table = _dict_of_string_tuples(stmt.value)
+            continue
+        if (
+            isinstance(target, ast.Subscript)
+            and isinstance(target.value, ast.Name)
+            and target.value.id == "SIBLINGS"
+        ):
+            key = target.slice
+            if not isinstance(key, ast.Constant) or not isinstance(key.value, str):
+                raise ValueError("SIBLINGS key must be a string")
+            if table is None:
+                raise ValueError("SIBLINGS is missing")
+            table[key.value] = _string_tuple(stmt.value)
+    if table is None:
+        raise ValueError("SIBLINGS is missing")
+    return table
+
+
+def sibling_repo(path, root):
+    """Repo that owns a ``SIBLINGS`` path. ``.`` is the launcher root."""
+    if path == ".":
+        return root
+    return path.split("/", 1)[0]
+
+
+def _dep_edge_sort(edge):
+    return (
+        str(edge["source"]),
+        str(edge["relation"]),
+        str(edge["target"]),
+        str(edge.get("basis") or ""),
+        str(edge.get("file") or ""),
+        edge.get("line") or 0,
+    )
+
+
+def _graph_from_edges(edges):
+    nodes = set()
+    for edge in edges:
+        nodes.add(edge["source"])
+        nodes.add(edge["target"])
+    ordered = sorted(edges, key=_dep_edge_sort)
+    return {"nodes": [{"id": node} for node in sorted(nodes)], "edges": ordered}
+
+
+def graph_from_siblings(table, *, root=_DEFAULT_ROOT_REPO):
+    """One ``declares`` edge per ``SIBLINGS`` path.
+
+    The target is the path string (``queryu/core``, ``.``). ``basis`` is the
+    sibling repo: the first path component, or ``root`` when the path is ``.``.
+    """
+    if not isinstance(root, str) or not root.strip():
+        raise ValueError("root name must be a non-empty string")
+    root = root.strip()
+    edges = []
+    for child, paths in table.items():
+        if not isinstance(child, str) or not child:
+            raise ValueError("SIBLINGS key must be a non-empty string")
+        for path in paths:
+            if path != "." and (not path or path != path.strip() or path.startswith("/") or path.endswith("/")):
+                raise ValueError(f"invalid sibling path: {path!r}")
+            edges.append({
+                "source": child,
+                "relation": DECLARED_RELATION,
+                "target": path,
+                "basis": sibling_repo(path, root),
+            })
+    return _graph_from_edges(edges)
+
+
+def declared_module_paths(table):
+    """Module names contributed by a path that is itself the import name.
+
+    ``pythdragoras`` placed on the import path is ``import pythdragoras``. A path with a
+    slash (``pythdragoras/core``, ``.``) does not name the modules inside it.
+    """
+    found = {}
+    for paths in table.values():
+        for path in paths:
+            if "/" not in path and path != ".":
+                found.setdefault(path, path)
+    return found
+
+
+def load_import_map(document):
+    """``import-map/1``: module name (or dotted prefix) to a ``SIBLINGS`` path.
+
+    Longest prefix wins, and this map wins over ``declared_module_paths``.
+    ``root`` names the repo for the path ``.`` (default ``aoi``).
+    """
+    if not isinstance(document, dict):
+        raise ValueError("import map must be an object")
+    schema = document.get("schema")
+    if schema != IMPORT_MAP_SCHEMA:
+        raise ValueError(f"unknown import-map schema: {schema!r}")
+    root = document.get("root", _DEFAULT_ROOT_REPO)
+    if not isinstance(root, str) or not root.strip():
+        raise ValueError("import map root must be a non-empty string")
+    modules = document.get("modules", {})
+    if not isinstance(modules, dict):
+        raise ValueError("import map modules must be an object")
+    parsed = {}
+    for key, value in modules.items():
+        if not isinstance(key, str) or not key or key.startswith("."):
+            raise ValueError(f"import map module must be a non-empty module name: {key!r}")
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"import map path for {key} must be a non-empty string")
+        parsed[key] = value.strip()
+    return {"root": root.strip(), "modules": parsed}
+
+
+def _mapped_path(module, explicit, declared_modules):
+    """Return the ``SIBLINGS`` path for ``module``, or None when nothing maps it.
+
+    A relative import (``module`` starts with ``.``) is never mapped. An
+    explicit prefix matches before a single-component path from the declared
+    table. Unmapped names are kept by the caller.
+    """
+    if module.startswith("."):
+        return None
+    parts = module.split(".")
+    for end in range(len(parts), 0, -1):
+        key = ".".join(parts[:end])
+        if key in explicit:
+            return explicit[key]
+    return declared_modules.get(parts[0])
+
+
+def _import_names(tree):
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                yield node.lineno, alias.name
+        elif isinstance(node, ast.ImportFrom):
+            prefix = "." * node.level
+            if node.module:
+                yield node.lineno, prefix + node.module
+            else:
+                for alias in node.names:
+                    yield node.lineno, prefix + alias.name
+
+
+def python_sources(directory):
+    """``.py`` files under ``directory``, skipping tool and cache directories."""
+    if not directory.is_dir():
+        raise ValueError(f"source is not a directory: {directory}")
+    found = []
+    for path in directory.rglob("*.py"):
+        rel = path.relative_to(directory)
+        if _SKIP_DIRS.intersection(rel.parts[:-1]):
+            continue
+        found.append((rel.as_posix(), path))
+    found.sort()
+    return found
+
+
+def scan_imports(sources, table, import_map):
+    """Import edges for each ``{"repo", "path"}`` source directory.
+
+    Mapped imports use relation ``imports`` and the ``SIBLINGS`` path as the
+    target. Every other import, including relative imports, is an ``unmapped``
+    edge. Nothing is dropped.
+    """
+    explicit = import_map["modules"]
+    declared_modules = declared_module_paths(table)
+    edges = []
+    files = []
+    for source in sources:
+        repo = source["repo"]
+        for rel, path in python_sources(source["path"]):
+            files.append({
+                "repo": repo,
+                "path": rel,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            })
+            try:
+                tree = ast.parse(path.read_text(encoding="utf-8"), filename=rel)
+            except SyntaxError as error:
+                raise ValueError(f"{repo}:{rel}: {error.msg}") from error
+            for line, module in _import_names(tree):
+                mapped = _mapped_path(module, explicit, declared_modules)
+                if mapped is None:
+                    edges.append({
+                        "source": repo,
+                        "relation": UNMAPPED_RELATION,
+                        "target": module,
+                        "basis": rel,
+                        "line": line,
+                    })
+                else:
+                    edges.append({
+                        "source": repo,
+                        "relation": IMPORT_RELATION,
+                        "target": mapped,
+                        "basis": module,
+                        "file": rel,
+                        "line": line,
+                    })
+    files.sort(key=lambda item: (item["repo"], item["path"]))
+    graph = _graph_from_edges(edges)
+    graph["files"] = files
+    return graph
+
+
+def _manifest_path(base, value, what):
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"py-imports/1 {what} must be a non-empty string")
+    path = Path(value.strip())
+    if not path.is_absolute():
+        path = base / path
+    return path
+
+
+def graph_from_py_imports_document(document, base):
+    """Read a ``py-imports/1`` manifest and scan the local directories it names.
+
+    Paths are relative to the manifest's directory unless absolute. The tool
+    does not fetch or clone them.
+    """
+    if not isinstance(document, dict) or document.get("schema") != PY_IMPORTS_SCHEMA:
+        schema = document.get("schema") if isinstance(document, dict) else None
+        raise ValueError(f"unknown py-imports schema: {schema!r}")
+    declared_path = _manifest_path(base, document.get("declared"), "declared")
+    table = siblings_from_source(declared_path.read_text(encoding="utf-8"))
+    import_map = {"root": _DEFAULT_ROOT_REPO, "modules": {}}
+    if "import_map" in document:
+        map_path = _manifest_path(base, document.get("import_map"), "import_map")
+        import_map = load_import_map(json.loads(map_path.read_text(encoding="utf-8")))
+    entries = document.get("sources")
+    if not isinstance(entries, list) or not entries:
+        raise ValueError("py-imports/1 requires a sources array")
+    sources = []
+    seen = set()
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            raise ValueError(f"py-imports sources[{index}] must be an object")
+        repo = entry.get("repo")
+        if not isinstance(repo, str) or not repo.strip():
+            raise ValueError(f"py-imports sources[{index}] repo must be a non-empty string")
+        repo = repo.strip()
+        if repo in seen:
+            raise ValueError(f"duplicate source repo: {repo}")
+        seen.add(repo)
+        sources.append({
+            "repo": repo,
+            "path": _manifest_path(base, entry.get("path"), f"sources[{index}] path"),
+        })
+    sources.sort(key=lambda item: item["repo"])
+    return scan_imports(sources, table, import_map)
+
+
+def _edges_by_target(edges, relation):
+    grouped = defaultdict(lambda: defaultdict(list))
+    for edge in edges:
+        if edge_relation(edge) != relation:
+            continue
+        source, target = _ends(edge)
+        grouped[source][target].append(edge)
+    return grouped
+
+
+def _used_record(repo, target, edges, root):
+    return {
+        "source": repo,
+        "target": target,
+        "repo": sibling_repo(target, root),
+        "modules": sorted({edge["basis"] for edge in edges}),
+        "files": sorted({edge["file"] for edge in edges}),
+    }
+
+
+def _unused_record(repo, target, root):
+    return {"source": repo, "target": target, "repo": sibling_repo(target, root)}
+
+
+def _unmapped_rows(by_target):
+    rows = []
+    for module, edges in by_target.items():
+        for edge in edges:
+            rows.append({"module": module, "path": edge["basis"], "line": edge["line"]})
+    rows.sort(key=lambda row: (row["path"], row["line"], row["module"]))
+    return rows
+
+
+def compare_declared_imports(declared_edges, actual_edges, scanned, *, root=_DEFAULT_ROOT_REPO):
+    """Per scanned repo: matching, declared-but-unused, used-but-undeclared, unmapped.
+
+    The comparable edge is ``(source, SIBLINGS path)``. ``declares`` comes from
+    the declared graph and ``imports`` from the actual graph. ``unmapped``
+    edges stay in their own list. Repos that ``SIBLINGS`` names but that were
+    not scanned are ``not_scanned`` rather than unused. ONTO's knowledgegraph
+    helpers do not provide this set difference.
+    """
+    declared = _edges_by_target(declared_edges, DECLARED_RELATION)
+    imported = _edges_by_target(actual_edges, IMPORT_RELATION)
+    unmapped = _edges_by_target(actual_edges, UNMAPPED_RELATION)
+    scanned_list = sorted(scanned)
+    repos = {}
+    for repo in scanned_list:
+        declared_targets = set(declared.get(repo, {}))
+        imported_targets = set(imported.get(repo, {}))
+        matching = sorted(declared_targets & imported_targets)
+        unused = sorted(declared_targets - imported_targets)
+        undeclared = sorted(imported_targets - declared_targets)
+        repos[repo] = {
+            "matching": [_used_record(repo, target, imported[repo][target], root) for target in matching],
+            "declared_but_unused": [_unused_record(repo, target, root) for target in unused],
+            "used_but_undeclared": [
+                _used_record(repo, target, imported[repo][target], root) for target in undeclared
+            ],
+            "unmapped": _unmapped_rows(unmapped.get(repo, {})),
+        }
+    return {
+        "scanned": scanned_list,
+        "not_scanned": sorted(set(declared) - set(scanned_list)),
+        "repos": repos,
+    }
+
+
+def dependency_report(declared_path, sources, import_map_path=None):
+    """Compare one ``SIBLINGS`` file with imports under the given source roots."""
+    table = siblings_from_source(declared_path.read_text(encoding="utf-8"))
+    if import_map_path is None:
+        import_map = {"root": _DEFAULT_ROOT_REPO, "modules": {}}
+    else:
+        import_map = load_import_map(json.loads(import_map_path.read_text(encoding="utf-8")))
+    declared_graph = graph_from_siblings(table, root=import_map["root"])
+    scanned = scan_imports(sources, table, import_map)
+    body = compare_declared_imports(
+        declared_graph["edges"],
+        scanned["edges"],
+        [item["repo"] for item in sources],
+        root=import_map["root"],
+    )
+    return body, scanned["files"]
+
+
 def _load_graph(path, graph_format="nodes-edges"):
+    if graph_format == "aoi-siblings":
+        return graph_from_siblings(siblings_from_source(path.read_text(encoding="utf-8")))
     document = json.loads(path.read_text(encoding="utf-8"))
     if graph_format == "vendor-lock":
         return graph_from_vendor_lock(document)
+    if graph_format == "py-imports":
+        return graph_from_py_imports_document(document, path.parent)
     if graph_format != "nodes-edges":
         raise ValueError(f"unknown graph format: {graph_format}")
     if not isinstance(document, dict) or not isinstance(document.get("edges"), list):
@@ -1280,7 +1674,7 @@ def series_main(argv):
     parser.add_argument("profile", nargs="?")
     parser.add_argument("--snapshot", action="append", default=[], metavar="LABEL=PATH",
                         help="one snapshot; repeat in time order. Overrides TOPONTOLOGY_SNAPSHOTS")
-    parser.add_argument("--graph-format", choices=("nodes-edges", "vendor-lock"), default="nodes-edges")
+    parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges")
     parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
     parser.add_argument("--cycle-limit", type=int, default=5, metavar="N")
@@ -1389,6 +1783,162 @@ def impact_main(argv):
     return 0
 
 
+def _resolve_optional(value, env_name):
+    if value is not None:
+        return Path(value)
+    raw = _env_text(env_name)
+    if raw:
+        return Path(raw)
+    return None
+
+
+def _parse_source_token(token):
+    text = token.strip()
+    if not text:
+        return None
+    repo, separator, path = text.partition("=")
+    repo, path = repo.strip(), path.strip()
+    if not separator or not repo or not path:
+        raise ValueError("source must be REPO=PATH")
+    return repo, Path(path)
+
+
+def _sources_from_env(text):
+    sources = []
+    for piece in text.replace(",", "\n").splitlines():
+        item = _parse_source_token(piece)
+        if item is not None:
+            sources.append(item)
+    return sources
+
+
+def _resolve_sources(raw_args):
+    if raw_args:
+        parsed = []
+        for token in raw_args:
+            item = _parse_source_token(token)
+            if item is not None:
+                parsed.append(item)
+        if not parsed:
+            raise ValueError("source must be REPO=PATH")
+        return parsed
+    env = _env_text("TOPONTOLOGY_SOURCES")
+    if not env:
+        return []
+    return _sources_from_env(env)
+
+
+def _load_sources(pairs):
+    if not pairs:
+        raise ValueError("pass at least one source or set TOPONTOLOGY_SOURCES")
+    loaded = []
+    seen = set()
+    for repo, path in pairs:
+        if repo in seen:
+            raise ValueError(f"duplicate source repo: {repo}")
+        seen.add(repo)
+        if not path.is_dir():
+            raise ValueError(f"source is not a directory: {path}")
+        loaded.append({"repo": repo, "path": path})
+    loaded.sort(key=lambda item: item["repo"])
+    return loaded
+
+
+def _edge_list(edges):
+    if not edges:
+        return "(none)"
+    parts = []
+    for edge in edges:
+        text = f"{edge['target']} -> {edge['repo']}"
+        if edge.get("modules"):
+            text += " modules=" + ",".join(edge["modules"])
+        if edge.get("files"):
+            text += " files=" + ",".join(edge["files"])
+        parts.append(text)
+    return "; ".join(parts)
+
+
+def _unmapped_list(rows):
+    if not rows:
+        return "(none)"
+    return ", ".join(f"{row['path']}:{row['line']}:{row['module']}" for row in rows)
+
+
+def _deps_text(body):
+    lines = [f"tool: {body['tool']['name']} {body['tool']['version']}"]
+    declared = body["provenance"]["declared"]
+    lines.append(f"declared: {declared['path']}")
+    lines.append(f"declared_sha256: {declared['sha256']}")
+    if "import_map" in body["provenance"]:
+        record = body["provenance"]["import_map"]
+        lines.append(f"import_map: {record['path']}")
+        lines.append(f"import_map_sha256: {record['sha256']}")
+    for source in body["provenance"]["sources"]:
+        lines.append(f"source {source['repo']}: {source['path']}")
+        for item in source["files"]:
+            lines.append(f"  file {item['path']} sha256:{item['sha256']}")
+    scanned = ", ".join(body["scanned"]) if body["scanned"] else "(none)"
+    missing = ", ".join(body["not_scanned"]) if body["not_scanned"] else "(none)"
+    lines.append(f"scanned: {scanned}")
+    lines.append(f"not_scanned: {missing}")
+    if not body["repos"]:
+        lines.append("repos: (none)")
+    for repo in body["repos"]:
+        row = body["repos"][repo]
+        lines.append(f"repo {repo}:")
+        lines.append(f"  matching: {_edge_list(row['matching'])}")
+        lines.append(f"  declared_but_unused: {_edge_list(row['declared_but_unused'])}")
+        lines.append(f"  used_but_undeclared: {_edge_list(row['used_but_undeclared'])}")
+        lines.append(f"  unmapped: {_unmapped_list(row['unmapped'])}")
+    return "\n".join(lines) + "\n"
+
+
+def deps_main(argv):
+    parser = argparse.ArgumentParser(
+        prog=f"{TOOL_NAME} deps",
+        description="Compare declared SIBLINGS paths with Python imports in local source directories.",
+    )
+    parser.add_argument("--declared", type=Path,
+                        help="Python file that assigns SIBLINGS. Overrides TOPONTOLOGY_DECLARED")
+    parser.add_argument("--import-map", type=Path,
+                        help="import-map/1 JSON. Overrides TOPONTOLOGY_IMPORT_MAP")
+    parser.add_argument("--source", action="append", default=[], metavar="REPO=PATH",
+                        help="local source directory for one repo. Overrides TOPONTOLOGY_SOURCES")
+    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
+    parser.add_argument("--json", action="store_true", help="shorthand for --format json")
+    parser.add_argument("-o", "--output", type=Path)
+    args = parser.parse_args(argv)
+    fmt = _resolve_format(args)
+    declared = _resolve_input(args.declared, "TOPONTOLOGY_DECLARED", "declared file")
+    import_map_path = _resolve_optional(args.import_map, "TOPONTOLOGY_IMPORT_MAP")
+    sources = _load_sources(_resolve_sources(args.source))
+    body, files = dependency_report(declared, sources, import_map_path)
+    provenance = {
+        "declared": file_record(declared),
+        "sources": [
+            {
+                "repo": item["repo"],
+                "path": item["path"].as_posix(),
+                "files": [
+                    {"path": row["path"], "sha256": row["sha256"]}
+                    for row in files
+                    if row["repo"] == item["repo"]
+                ],
+            }
+            for item in sources
+        ],
+    }
+    if import_map_path is not None:
+        provenance["import_map"] = file_record(import_map_path)
+    document_body = document(body, provenance)
+    text = _deps_text(document_body) if fmt == "text" else dump_json(document_body)
+    if args.output is None:
+        sys.stdout.write(text)
+    else:
+        args.output.write_text(text, encoding="utf-8")
+    return 0
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -1397,6 +1947,12 @@ def main(argv=None):
     if argv[:1] == ["series"]:
         try:
             return series_main(argv[1:])
+        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as error:
+            print(error, file=sys.stderr)
+            return 1
+    if argv[:1] == ["deps"]:
+        try:
+            return deps_main(argv[1:])
         except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as error:
             print(error, file=sys.stderr)
             return 1
@@ -1431,8 +1987,10 @@ def main(argv=None):
     parser.add_argument("--split", metavar="CLASS", help="class to split with --assign")
     parser.add_argument("--assign", action="append", default=[], metavar="RELATION=CLASS",
                         help="move one relation of --split onto another class")
-    parser.add_argument("--graph-format", choices=("nodes-edges", "vendor-lock"), default="nodes-edges",
-                        help="nodes-edges reads a graph JSON; vendor-lock reads a vendor-lock/1 file")
+    parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges",
+                        help="nodes-edges reads a graph JSON; vendor-lock reads a vendor-lock/1 file; "
+                             "aoi-siblings reads SIBLINGS from a Python file; "
+                             "py-imports reads a py-imports/1 manifest of local source directories")
     parser.add_argument("-o", "--output", type=Path, help="write the document to this path instead of stdout")
     args = parser.parse_args(argv)
     try:

@@ -1,0 +1,37 @@
+{
+  "note": "Bytes copied from the named commits. The tool does not fetch them. sha256 is of the file bytes; git_blob is the Git blob SHA, which matches Aoi 320126983a992e30730350c5e9b0e4051c0d33d4 at the upstream path.",
+  "files": [
+    {
+      "path": "aoi.py",
+      "repository": "myon-bioinformatics/Aoi",
+      "commit": "320126983a992e30730350c5e9b0e4051c0d33d4",
+      "upstream": "aoi.py",
+      "git_blob": "36daa0aa77385fefdf4fc4d3f7c8cb925b8d6869",
+      "sha256": "57e55f6fc10ff782706877eef72f19c363ca6e694eabc5b668d1409f67f26cbc"
+    },
+    {
+      "path": "dragowing/conftest.py",
+      "repository": "myon-bioinformatics/DRAgoWing",
+      "commit": "4dbfb902e07c83555346497762c77f5c6e656a2b",
+      "upstream": "conftest.py",
+      "git_blob": "9e16c56bb6c16e7f8342acaf0d1d83193d9466e0",
+      "sha256": "85eb5d167df67cbfba9af725680eab42fc1c8651ffa8799fa72a06810768c712"
+    },
+    {
+      "path": "dragowing/tests/test_forms.py",
+      "repository": "myon-bioinformatics/DRAgoWing",
+      "commit": "4dbfb902e07c83555346497762c77f5c6e656a2b",
+      "upstream": "tests/test_forms.py",
+      "git_blob": "cea4b35d6e7c62b38595b3a42e3f938611f0934c",
+      "sha256": "f056f762bbbb9aef14343b70473c332e895afb2cb5cfccec7a2f1d813d1798d4"
+    },
+    {
+      "path": "queryu/conftest.py",
+      "repository": "myon-bioinformatics/QueRyu",
+      "commit": "2cba00797e0a564489c4dcc98859051cad678519",
+      "upstream": "conftest.py",
+      "git_blob": "78ab8de15c015ce3715d1f512d53a5553fe7c536",
+      "sha256": "5eedcc2ad0a88c460925d4a75c76c3a93e90d2759d828e16ae6cce70e0b8e5b8"
+    }
+  ]
+}
