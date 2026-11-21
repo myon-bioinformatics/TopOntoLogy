@@ -1,0 +1,486 @@
+{
+  "pairs": [
+    {
+      "classes": {
+        "hierarchy": {
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 1,
+              "sinks": 0,
+              "sources": 0
+            },
+            "depth": 1,
+            "directed_cycle": 0,
+            "edges": 1,
+            "incident_nodes": 1,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": 0
+          },
+          "edges_changed": {
+            "added": [
+              {
+                "relation": "narrower",
+                "source": "B",
+                "target": "C"
+              }
+            ],
+            "removed": []
+          },
+          "left": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 1,
+            "edges": 1,
+            "incident_nodes": 2,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                2
+              ]
+            }
+          },
+          "right": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 2,
+            "edges": 2,
+            "incident_nodes": 3,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                3
+              ]
+            }
+          }
+        },
+        "similarity": {
+          "delta": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 1,
+            "directed_cycle": 0,
+            "edges": 1,
+            "incident_nodes": 2,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": 1
+          },
+          "edges_changed": {
+            "added": [
+              {
+                "relation": "similarTo",
+                "source": "D",
+                "target": "E"
+              }
+            ],
+            "removed": []
+          },
+          "left": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 0,
+              "sinks": 0,
+              "sources": 0
+            },
+            "depth": 0,
+            "edges": 0,
+            "incident_nodes": 0,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 0,
+              "sizes": []
+            }
+          },
+          "right": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 1,
+            "edges": 1,
+            "incident_nodes": 2,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                2
+              ]
+            }
+          }
+        }
+      },
+      "graph": {
+        "delta": {
+          "degree": {
+            "max_in": 0,
+            "max_out": 0,
+            "max_total": 1,
+            "sinks": 1,
+            "sources": 1
+          },
+          "depth": 1,
+          "directed_cycle": 0,
+          "edges": 2,
+          "incident_nodes": 3,
+          "independent_cycles": 0,
+          "sample_cycles": 0,
+          "weakly_connected_components": 1
+        },
+        "edges_changed": {
+          "added": [
+            {
+              "relation": "narrower",
+              "source": "B",
+              "target": "C"
+            },
+            {
+              "relation": "similarTo",
+              "source": "D",
+              "target": "E"
+            }
+          ],
+          "removed": []
+        },
+        "left": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 1,
+            "sources": 1
+          },
+          "depth": 1,
+          "edges": 1,
+          "incident_nodes": 2,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 1,
+            "sizes": [
+              2
+            ]
+          }
+        },
+        "right": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 2,
+            "sinks": 2,
+            "sources": 2
+          },
+          "depth": 2,
+          "edges": 3,
+          "incident_nodes": 5,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 2,
+            "sizes": [
+              3,
+              2
+            ]
+          }
+        }
+      },
+      "left": "one",
+      "right": "two",
+      "unclassified_edges": {
+        "delta": 0,
+        "left": 0,
+        "right": 0
+      }
+    },
+    {
+      "classes": {
+        "hierarchy": {
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": -1,
+              "sinks": 0,
+              "sources": 0
+            },
+            "depth": -1,
+            "directed_cycle": 0,
+            "edges": -1,
+            "incident_nodes": -1,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": 0
+          },
+          "edges_changed": {
+            "added": [],
+            "removed": [
+              {
+                "relation": "narrower",
+                "source": "A",
+                "target": "B"
+              }
+            ]
+          },
+          "left": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 2,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 2,
+            "edges": 2,
+            "incident_nodes": 3,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                3
+              ]
+            }
+          },
+          "right": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 1,
+            "edges": 1,
+            "incident_nodes": 2,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                2
+              ]
+            }
+          }
+        },
+        "similarity": {
+          "delta": {
+            "degree": {
+              "max_in": 0,
+              "max_out": 0,
+              "max_total": 0,
+              "sinks": 0,
+              "sources": 0
+            },
+            "depth": 0,
+            "directed_cycle": 0,
+            "edges": 0,
+            "incident_nodes": 0,
+            "independent_cycles": 0,
+            "sample_cycles": 0,
+            "weakly_connected_components": 0
+          },
+          "edges_changed": {
+            "added": [],
+            "removed": []
+          },
+          "left": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 1,
+            "edges": 1,
+            "incident_nodes": 2,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                2
+              ]
+            }
+          },
+          "right": {
+            "degree": {
+              "max_in": 1,
+              "max_out": 1,
+              "max_total": 1,
+              "sinks": 1,
+              "sources": 1
+            },
+            "depth": 1,
+            "edges": 1,
+            "incident_nodes": 2,
+            "independent_cycles": 0,
+            "multiple_sources": [],
+            "order_cycle": null,
+            "sample_cycles": [],
+            "weakly_connected_components": {
+              "count": 1,
+              "sizes": [
+                2
+              ]
+            }
+          }
+        }
+      },
+      "graph": {
+        "delta": {
+          "degree": {
+            "max_in": 0,
+            "max_out": 0,
+            "max_total": -1,
+            "sinks": 0,
+            "sources": 0
+          },
+          "depth": -1,
+          "directed_cycle": 0,
+          "edges": -1,
+          "incident_nodes": -1,
+          "independent_cycles": 0,
+          "sample_cycles": 0,
+          "weakly_connected_components": 0
+        },
+        "edges_changed": {
+          "added": [],
+          "removed": [
+            {
+              "relation": "narrower",
+              "source": "A",
+              "target": "B"
+            }
+          ]
+        },
+        "left": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 2,
+            "sinks": 2,
+            "sources": 2
+          },
+          "depth": 2,
+          "edges": 3,
+          "incident_nodes": 5,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 2,
+            "sizes": [
+              3,
+              2
+            ]
+          }
+        },
+        "right": {
+          "degree": {
+            "max_in": 1,
+            "max_out": 1,
+            "max_total": 1,
+            "sinks": 2,
+            "sources": 2
+          },
+          "depth": 1,
+          "edges": 2,
+          "incident_nodes": 4,
+          "independent_cycles": 0,
+          "multiple_sources": [],
+          "order_cycle": null,
+          "sample_cycles": [],
+          "weakly_connected_components": {
+            "count": 2,
+            "sizes": [
+              2,
+              2
+            ]
+          }
+        }
+      },
+      "left": "two",
+      "right": "three",
+      "unclassified_edges": {
+        "delta": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  ],
+  "provenance": {
+    "classification": {
+      "path": "tests/fixtures/classes.json",
+      "sha256": "ac1b00f7e337609258b8e3e8e467c3cf48f64040a9bd59cb9c5901a0c5a5909d"
+    },
+    "profile": "demo",
+    "snapshots": [
+      {
+        "label": "one",
+        "path": "tests/fixtures/series-one.json",
+        "sha256": "a655153e338b5a4324673fc364dc77153e57b22202a4ab7643a7fcc925afcb8a"
+      },
+      {
+        "label": "two",
+        "path": "tests/fixtures/series-two.json",
+        "sha256": "f47db24ad33544c81a73e46fc15de1bf8e85076c0f3085b858ed6d1d015a94a9"
+      },
+      {
+        "label": "three",
+        "path": "tests/fixtures/series-three.json",
+        "sha256": "1698be9dcd17d926bc8abc38a4c17fff022e288d949d52c9249b51e9094ec685"
+      }
+    ]
+  },
+  "tool": {
+    "name": "topontology",
+    "version": "0.3.0"
+  }
+}

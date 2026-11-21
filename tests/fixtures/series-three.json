@@ -1,0 +1,12 @@
+{
+  "edges": [
+    {"source": "B", "kind": "narrower", "target": "C"},
+    {"source": "D", "kind": "similarTo", "target": "E"}
+  ],
+  "nodes": [
+    {"id": "B"},
+    {"id": "C"},
+    {"id": "D"},
+    {"id": "E"}
+  ]
+}

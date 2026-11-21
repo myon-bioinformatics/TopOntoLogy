@@ -1,0 +1,19 @@
+{
+  "schema": "vendor-lock/1",
+  "files": [
+    {
+      "repository": "example/upstream",
+      "source": "lib.py",
+      "destination": "vendor/lib.py",
+      "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "repository": "example/upstream",
+      "source": "other.py",
+      "destination": "vendor/other.py",
+      "ref": "main",
+      "blob_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ]
+}

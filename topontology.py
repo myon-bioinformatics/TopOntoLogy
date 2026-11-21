@@ -12,7 +12,7 @@ from pathlib import Path
 
 from knowledgegraph import graph_mermaid, relation_cycles, topological_order
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 TOOL_NAME = "topontology"
 
 _DEGREE_KEYS = ("max_in", "max_out", "max_total", "sources", "sinks")
@@ -487,6 +487,154 @@ def anomaly_report(graph, classes, *, cycle_limit=5):
     }
 
 
+VENDOR_LOCK_SCHEMA = "vendor-lock/1"
+_VENDOR_RELATION = "vendorsFrom"
+
+
+def graph_from_vendor_lock(document):
+    """Read a vendor-lock/1 document as a directed graph.
+
+    Fields read: ``schema``, ``files``, and on each file ``destination`` or
+    ``path``, plus ``repository`` and ``source``. ``commit``, ``ref``,
+    ``sha256``, and ``blob_sha`` are ignored. Each file is a node identified by
+    ``destination`` when that is a non-empty string, otherwise by ``path``.
+    The edge runs from that local node to the upstream it vendors from, with
+    relation ``vendorsFrom``. The upstream id is ``repository:source`` when
+    both are non-empty strings, ``repository`` when only that is set, and
+    ``source`` when there is no repository. Any other schema is rejected.
+    """
+    if not isinstance(document, dict):
+        raise ValueError("vendor-lock JSON must be an object")
+    schema = document.get("schema")
+    if schema != VENDOR_LOCK_SCHEMA:
+        raise ValueError(f"unknown vendor-lock schema: {schema!r}")
+    files = document.get("files")
+    if not isinstance(files, list):
+        raise ValueError("vendor-lock/1 requires a files array")
+    nodes = {}
+    edges = []
+
+    def add_node(ident):
+        nodes.setdefault(ident, {"id": ident})
+
+    for index, entry in enumerate(files):
+        if not isinstance(entry, dict):
+            raise ValueError(f"vendor-lock files[{index}] must be an object")
+        local = entry.get("destination")
+        if not isinstance(local, str) or not local.strip():
+            local = entry.get("path")
+        if not isinstance(local, str) or not local.strip():
+            raise ValueError(f"vendor-lock files[{index}] needs destination or path")
+        local = local.strip()
+        repository = entry.get("repository")
+        source = entry.get("source")
+        repository = repository.strip() if isinstance(repository, str) else ""
+        source = source.strip() if isinstance(source, str) else ""
+        if repository and source:
+            upstream = f"{repository}:{source}"
+        elif repository:
+            upstream = repository
+        elif source:
+            upstream = source
+        else:
+            raise ValueError(f"vendor-lock files[{index}] needs repository or source")
+        add_node(local)
+        add_node(upstream)
+        edges.append({"source": local, "relation": _VENDOR_RELATION, "target": upstream})
+    edges.sort(key=lambda edge: (edge["source"], edge["target"]))
+    return {"nodes": [nodes[key] for key in sorted(nodes)], "edges": edges}
+
+
+def _edge_record(edge):
+    source, target = _ends(edge)
+    return {"source": source, "relation": edge_relation(edge), "target": target}
+
+
+def _edge_sort_key(record):
+    return (node_sort_key(record["source"]), str(record["relation"]), node_sort_key(record["target"]))
+
+
+def _edge_counts(edges):
+    counts = {}
+    for edge in edges:
+        record = _edge_record(edge)
+        key = (record["source"], record["relation"], record["target"])
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def attribute_edges(left_edges, right_edges):
+    """Multiset difference of edges as sorted added and removed triples."""
+    left = _edge_counts(left_edges)
+    right = _edge_counts(right_edges)
+    added, removed = [], []
+    for key in set(left) | set(right):
+        record = {"source": key[0], "relation": key[1], "target": key[2]}
+        delta = right.get(key, 0) - left.get(key, 0)
+        if delta > 0:
+            added.extend([dict(record) for _ in range(delta)])
+        elif delta < 0:
+            removed.extend([dict(record) for _ in range(-delta)])
+    added.sort(key=_edge_sort_key)
+    removed.sort(key=_edge_sort_key)
+    return {"added": added, "removed": removed}
+
+
+def _edges_in_class(graph, classes, category):
+    chosen = []
+    for edge in graph["edges"]:
+        relation = edge_relation(edge)
+        if relation in classes and classes[relation] == category:
+            chosen.append(edge)
+    return chosen
+
+
+def series_report(snapshots, classes, *, cycle_limit=5):
+    """Compare each consecutive snapshot pair.
+
+    ``snapshots`` is an ordered list of ``{"label", "path", "graph"}``. The
+    graph-level block is E−V+C, weak components, and the other class metrics
+    on every edge. Class blocks reuse ``compare_graphs``. Added and removed
+    edges are the multiset difference that accounts for each numeric edge delta.
+    """
+    if len(snapshots) < 2:
+        raise ValueError("series needs at least 2 snapshots")
+    seen = set()
+    for snapshot in snapshots:
+        label = snapshot["label"]
+        if label in seen:
+            raise ValueError(f"duplicate snapshot label: {label}")
+        seen.add(label)
+    pairs = []
+    for left, right in zip(snapshots, snapshots[1:]):
+        left_report = summarize(left["graph"], classes, cycle_limit=cycle_limit)
+        right_report = summarize(right["graph"], classes, cycle_limit=cycle_limit)
+        compared = compare_graphs(left_report, right_report)
+        classes_out = {}
+        for name in sorted(compared["classes"]):
+            row = dict(compared["classes"][name])
+            row["edges_changed"] = attribute_edges(
+                _edges_in_class(left["graph"], classes, name),
+                _edges_in_class(right["graph"], classes, name),
+            )
+            classes_out[name] = row
+        graph_left = _class_metrics(left["graph"]["edges"], cycle_limit)
+        graph_right = _class_metrics(right["graph"]["edges"], cycle_limit)
+        pairs.append({
+            "left": left["label"],
+            "right": right["label"],
+            "graph": {
+                "left": graph_left,
+                "right": graph_right,
+                "delta": delta_metrics(graph_left, graph_right),
+                "edges_changed": attribute_edges(left["graph"]["edges"], right["graph"]["edges"]),
+            },
+            "classes": classes_out,
+            "unclassified_edges": compared["unclassified_edges"],
+        })
+    return {"pairs": pairs}
+
+
 def file_record(path):
     return {"path": path.as_posix(), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
@@ -700,11 +848,15 @@ def render_text(body):
     return "\n".join(lines) + "\n"
 
 
-def _load_graph(path):
-    graph = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(graph, dict) or not isinstance(graph.get("edges"), list):
+def _load_graph(path, graph_format="nodes-edges"):
+    document = json.loads(path.read_text(encoding="utf-8"))
+    if graph_format == "vendor-lock":
+        return graph_from_vendor_lock(document)
+    if graph_format != "nodes-edges":
+        raise ValueError(f"unknown graph format: {graph_format}")
+    if not isinstance(document, dict) or not isinstance(document.get("edges"), list):
         raise ValueError("graph JSON must be an object with an edges array")
-    return graph
+    return document
 
 
 def _load_classes(path, profile):
@@ -770,7 +922,128 @@ def _resolve_format(args):
     return args.format or "json"
 
 
+def _parse_snapshot_token(token):
+    text = token.strip()
+    if not text:
+        return None
+    label, separator, path = text.partition("=")
+    label, path = label.strip(), path.strip()
+    if not separator or not label or not path:
+        raise ValueError("snapshot must be LABEL=PATH")
+    return label, Path(path)
+
+
+def _snapshots_from_env(text):
+    snapshots = []
+    for piece in text.replace(",", "\n").splitlines():
+        item = _parse_snapshot_token(piece)
+        if item is not None:
+            snapshots.append(item)
+    return snapshots
+
+
+def _resolve_snapshots(raw_args):
+    parsed = []
+    for token in raw_args:
+        item = _parse_snapshot_token(token)
+        if item is not None:
+            parsed.append(item)
+    if parsed:
+        return parsed
+    env = _env_text("TOPONTOLOGY_SNAPSHOTS")
+    if not env:
+        return []
+    return _snapshots_from_env(env)
+
+
+def _series_text(body):
+    lines = [f"tool: {body['tool']['name']} {body['tool']['version']}"]
+    lines.append(f"classification: {body['provenance']['classification']['path']}")
+    lines.append(f"classification_sha256: {body['provenance']['classification']['sha256']}")
+    lines.append(f"profile: {body['provenance']['profile']}")
+    for snapshot in body["provenance"]["snapshots"]:
+        lines.append(f"snapshot {snapshot['label']}: {snapshot['path']} sha256:{snapshot['sha256']}")
+    for pair in body["pairs"]:
+        lines.append(f"pair {pair['left']} -> {pair['right']}:")
+        delta = pair["graph"]["delta"]
+        lines.append(
+            f"  independent_cycles: {delta['independent_cycles']:+d} "
+            f"weakly_connected_components: {delta['weakly_connected_components']:+d}"
+        )
+        changed = pair["graph"]["edges_changed"]
+        added = ", ".join(
+            f"{node_text(item['source'])} {item['relation']} {node_text(item['target'])}"
+            for item in changed["added"]
+        ) or "(none)"
+        removed = ", ".join(
+            f"{node_text(item['source'])} {item['relation']} {node_text(item['target'])}"
+            for item in changed["removed"]
+        ) or "(none)"
+        lines.append(f"  added: {added}")
+        lines.append(f"  removed: {removed}")
+        for name in sorted(pair["classes"]):
+            row = pair["classes"][name]
+            lines.append(
+                f"  {name}: edges {row['delta']['edges']:+d} "
+                f"independent_cycles {row['delta']['independent_cycles']:+d}"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def series_main(argv):
+    parser = argparse.ArgumentParser(prog=f"{TOOL_NAME} series", description="Compare an ordered list of graph snapshots.")
+    parser.add_argument("classification", nargs="?", type=Path)
+    parser.add_argument("profile", nargs="?")
+    parser.add_argument("--snapshot", action="append", default=[], metavar="LABEL=PATH",
+                        help="one snapshot; repeat in time order. Overrides TOPONTOLOGY_SNAPSHOTS")
+    parser.add_argument("--graph-format", choices=("nodes-edges", "vendor-lock"), default="nodes-edges")
+    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
+    parser.add_argument("--json", action="store_true", help="shorthand for --format json")
+    parser.add_argument("--cycle-limit", type=int, default=5, metavar="N")
+    parser.add_argument("-o", "--output", type=Path)
+    args = parser.parse_args(argv)
+    fmt = _resolve_format(args)
+    if args.cycle_limit < 0:
+        raise ValueError("--cycle-limit must be >= 0")
+    classification = _resolve_input(args.classification, "TOPONTOLOGY_CLASSIFICATION", "classification path")
+    profile = _resolve_profile(args.profile)
+    classes = _load_classes(classification, profile)
+    snapshots = []
+    for label, path in _resolve_snapshots(args.snapshot):
+        snapshots.append({
+            "label": label,
+            "path": path,
+            "graph": _load_graph(path, args.graph_format),
+        })
+    body = series_report(snapshots, classes, cycle_limit=args.cycle_limit)
+    provenance = {
+        "snapshots": [
+            {"label": item["label"], "path": item["path"].as_posix(), "sha256": file_record(item["path"])["sha256"]}
+            for item in snapshots
+        ],
+        "classification": file_record(classification),
+        "profile": profile,
+    }
+    document_body = document(body, provenance)
+    text = _series_text(document_body) if fmt == "text" else dump_json(document_body)
+    if args.output is None:
+        sys.stdout.write(text)
+    else:
+        args.output.write_text(text, encoding="utf-8")
+    return 0
+
+
 def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+    else:
+        argv = list(argv)
+    if argv[:1] == ["series"]:
+        try:
+            return series_main(argv[1:])
+        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as error:
+            print(error, file=sys.stderr)
+            return 1
     parser = argparse.ArgumentParser(prog=TOOL_NAME, description=__doc__)
     parser.add_argument("graph", nargs="?", type=Path)
     parser.add_argument("classification", nargs="?", type=Path)
@@ -796,6 +1069,8 @@ def main(argv=None):
     parser.add_argument("--split", metavar="CLASS", help="class to split with --assign")
     parser.add_argument("--assign", action="append", default=[], metavar="RELATION=CLASS",
                         help="move one relation of --split onto another class")
+    parser.add_argument("--graph-format", choices=("nodes-edges", "vendor-lock"), default="nodes-edges",
+                        help="nodes-edges reads a graph JSON; vendor-lock reads a vendor-lock/1 file")
     parser.add_argument("-o", "--output", type=Path, help="write the document to this path instead of stdout")
     args = parser.parse_args(argv)
     try:
@@ -829,7 +1104,7 @@ def main(argv=None):
         if args.compare_class and not args.class_name:
             raise ValueError("--compare-class requires --class")
         classes = _load_classes(args.classification, args.profile)
-        graph = _load_graph(args.graph)
+        graph = _load_graph(args.graph, args.graph_format)
         report = summarize(graph, classes, cycle_limit=args.cycle_limit)
         provenance = input_provenance(args.graph, args.classification, args.profile)
         if fmt == "mermaid":
@@ -838,7 +1113,7 @@ def main(argv=None):
                       and classes[edge_relation(edge)] == args.class_name]
             text = render_mermaid(graph, chosen, provenance, args.class_name)
         elif args.compare:
-            other = _load_graph(args.compare)
+            other = _load_graph(args.compare, args.graph_format)
             other_report = summarize(other, classes, cycle_limit=args.cycle_limit)
             body = compare_graphs(report, other_report)
             both = {

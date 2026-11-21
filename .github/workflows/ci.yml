@@ -54,6 +54,10 @@ jobs:
           diff -u tests/expected/anomalies.json "$out/anomalies.json"
           uv run --no-project python -S topontology.py tests/fixtures/graph.json tests/fixtures/classes.json demo --merge hierarchy --merge similarity --into linked --format canonical > "$out/boundary.json"
           diff -u tests/expected/boundary.json "$out/boundary.json"
+          uv run --no-project python -S topontology.py series tests/fixtures/classes.json demo --snapshot one=tests/fixtures/series-one.json --snapshot two=tests/fixtures/series-two.json --snapshot three=tests/fixtures/series-three.json --format canonical > "$out/series.json"
+          diff -u tests/expected/series.json "$out/series.json"
+          uv run --no-project python -S topontology.py tests/fixtures/vendor-lock.json tests/fixtures/vendor-classes.json demo --graph-format vendor-lock --format canonical > "$out/vendor-lock.json"
+          diff -u tests/expected/vendor-lock.json "$out/vendor-lock.json"
       - name: Pinned TaxOntOy table classifies the fixture
         run: |
           set -euo pipefail
@@ -77,7 +81,7 @@ jobs:
       - name: Coverage includes CLI subprocesses
         run: |
           set -euo pipefail
-          printf '%s\n' '[run]' 'source = topontology,topology' 'parallel = true' 'relative_files = true' > "$RUNNER_TEMP/coveragerc.ini"
+          printf '%s\n' '[run]' 'branch = true' 'source = topontology,topology' 'parallel = true' 'relative_files = true' > "$RUNNER_TEMP/coveragerc.ini"
           export COVERAGE_PROCESS_START="$RUNNER_TEMP/coveragerc.ini"
           uv run --no-project --with coverage==7.13.1 python -m coverage run --rcfile "$COVERAGE_PROCESS_START" -m unittest discover -s tests -v
           uv run --no-project --with coverage==7.13.1 python -m coverage combine --rcfile "$COVERAGE_PROCESS_START"
@@ -86,19 +90,22 @@ jobs:
           import json
           import sys
           report = json.load(open(sys.argv[1], encoding="utf-8"))
-          executed = excluded = unexecuted = total = 0
+          def check(kind, executed, excluded, unexecuted, total):
+              print(f"{kind} executed={executed} excluded={excluded} unexecuted={unexecuted} total={total}")
+              if executed + excluded + unexecuted != total or unexecuted != 0:
+                  raise SystemExit(f"{kind} coverage gap")
+          sex = sexc = sun = stot = bex = bexc = bun = btot = 0
           for info in report["files"].values():
               summary = info["summary"]
-              executed += summary["covered_lines"]
-              excluded += summary["excluded_lines"]
-              unexecuted += summary["missing_lines"]
-              total += summary["num_statements"] + summary["excluded_lines"]
-          print(f"executed={executed} excluded={excluded} unexecuted={unexecuted} total={total}")
-          if executed + excluded + unexecuted != total or unexecuted != 0:
-              missing = {
-                  name: info["missing_lines"]
-                  for name, info in report["files"].items()
-                  if info["summary"]["missing_lines"]
-              }
-              raise SystemExit(f"coverage gap: {missing}")
+              sex += summary["covered_lines"]
+              sexc += summary["excluded_lines"]
+              sun += summary["missing_lines"]
+              stot += summary["num_statements"] + summary["excluded_lines"]
+              covered_branches = summary.get("covered_branches", summary["num_branches"] - summary["missing_branches"])
+              bex += covered_branches
+              bexc += summary.get("excluded_branches", 0)
+              bun += summary["missing_branches"]
+              btot += summary["num_branches"] + summary.get("excluded_branches", 0)
+          check("statements", sex, sexc, sun, stot)
+          check("branches", bex, bexc, bun, btot)
           PY
