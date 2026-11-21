@@ -25,12 +25,12 @@ jobs:
           path: ONTO
           persist-credentials: false
           fetch-depth: 1
-      # TaxOntOy main, first-parent merge (Merge pull request #3).
-      # Parents: 5c1383524da4f0f705017aed361037e2e06b2061 2e7002f8932e8d438dafab3f48ca709520f5ef0d
+      # TaxOntOy main, first-parent merge (Merge pull request #4).
+      # Parents: 30c5ed689cb931bce3787e37056082ce8cb52b3d 8cfb0cab3a917ffe9b945fc0c6d4ee0e8edc7f04
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/TaxOntOy
-          ref: 30c5ed689cb931bce3787e37056082ce8cb52b3d
+          ref: 8621f2261d694af0de35e103ad2387872ca10b99
           path: TOO
           persist-credentials: false
           fetch-depth: 1
