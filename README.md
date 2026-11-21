@@ -13,15 +13,15 @@
 
 ![TaxOntOy の関係分類表と OnTautoLogy のグラフを組み合わせ、分類ごとに閉路・連結成分・到達可能性などを調べ、JSON・テキスト・Mermaid 図に出力する流れ](docs/assets/topontology-overview.jpg)
 
-グラフとプロファイルを引数で渡します。分類表を省くと TaxOntOy の `otl-relations.json` を使います。ONTO はプログラムが `sys.path` の先頭に足すので、`PYTHONPATH` は要りません。Python 3.11 以降の標準ライブラリだけを使います。
+グラフとプロファイルを引数で渡します。分類表を省くと TaxOntOy の `otl-relations.json` を使います。ONTO と OnTautoLogy はプログラムが `sys.path` の先頭に足すので、`PYTHONPATH` は要りません。Python 3.11 以降の標準ライブラリだけを使います。
 
-ONTO と TaxOntOy の場所は `onto_path.py` だけが知っています。これは ONTO の `onto_path.py` を vendors した複製で、リポジトリごとの値はファイル先頭の定数だけです。解決の順は次です。
+ONTO と TaxOntOy と OnTautoLogy の場所は `onto_path.py` だけが知っています。これは ONTO の `onto_path.py` を vendors した複製で、リポジトリごとの値はファイル先頭の定数だけです。解決の順は次です。
 
-1. 明示の `--onto-root` / `--taxontoy-root`
-2. 環境変数 `ONTO_ROOT` / `TAXONTOY_ROOT`
-3. 推定。TopOntoLogy の隣の `../ONTO` と `../TaxOntOy` を先に見ます。親リポジトリの子や孫として入っているときは、アンカーから上へ辿り、マーカー（`knowledgegraph.py`、`otl-relations.json`）のある checkout を探します
+1. 明示の `--onto-root` / `--taxontoy-root` / `--otl-root`
+2. 環境変数 `ONTO_ROOT` / `TAXONTOY_ROOT` / `OTL_ROOT`
+3. 推定。TopOntoLogy の隣の `../ONTO` と `../TaxOntOy` と `../OnTautoLogy` を先に見ます。親リポジトリの子や孫として入っているときは、アンカーから上へ辿り、マーカー（`knowledgegraph.py`、`otl-relations.json`、`ontautology_graphs.py`）のある checkout を探します
 
-空の明示引数は環境変数へ落としません。マーカーが無いディレクトリは使いません。見つからないときは、設定する環境変数の名前を書いた日本語のエラーで止まります。`knowledgegraph` の出どころが解決した ONTO でなければ、黙って別のコピーは使いません。TaxOntOy を探すのは、分類表を省略して既定の `otl-relations.json` を使うときだけです。分類表を位置引数か `--classification` で渡したとき、および `impact`、`deps`、`--help` では探しません。
+空の明示引数は環境変数へ落としません。マーカーが無いディレクトリは使いません。見つからないときは、設定する環境変数の名前を書いた日本語の一行で終わり、終了コードは 1 です。`knowledgegraph` の出どころが解決した ONTO でなければ、黙って別のコピーは使いません。OnTautoLogy は ONTO と同じく起動時に必要です。`ontautology_graphs.py` が無いときは `--help` でもその一行で止まり、`OTL_ROOT=` を渡すよう知らせます。`ontautology_graphs` の出どころが解決した checkout でなければ使いません。TaxOntOy を探すのは、分類表を省略して既定の `otl-relations.json` を使うときだけです。分類表を位置引数か `--classification` で渡したとき、および `impact`、`deps`、`--help` では TaxOntOy は探しません。
 
 ```sh
 python -S topontology.py audit.json audit
