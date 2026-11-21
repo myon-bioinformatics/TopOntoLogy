@@ -1,0 +1,14 @@
+```mermaid
+%% topontology 0.1.0
+%% graph tests/fixtures/graph.json sha256:3a5ae2d704ef9a7091335642c11dfc531a4e1aac718441304af4ab261335814f
+%% classification tests/fixtures/classes.json sha256:ac1b00f7e337609258b8e3e8e467c3cf48f64040a9bd59cb9c5901a0c5a5909d
+%% profile demo
+%% class hierarchy
+flowchart TD
+  n0["A"]
+  n1["B"]
+  n2["C"]
+  n0 -->|"narrower"| n1
+  n0 -->|"narrower"| n2
+  n1 -->|"narrower"| n2
+```
