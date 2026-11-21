@@ -10,6 +10,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
+import onto_path
 import topontology
 import topology
 
@@ -585,17 +586,28 @@ class CliErrorAndCoverageTests(unittest.TestCase):
             self.assertIn("source", err)
             self.assertNotIn("Traceback", err)
 
-    def test_env_var_paths_match_positional_output(self):
+    def test_short_form_ignores_dropped_env_vars(self):
         expected = (ROOT / "tests/expected/summary.json").read_text(encoding="utf-8")
-        env = {
+        code, out, err = run_cli(
+            "tests/fixtures/graph.json", "demo",
+            "--classification", "tests/fixtures/classes.json",
+        )
+        self.assertEqual(code, 0, err)
+        self.assertEqual(out, expected)
+        # Dropped variables are not a second way to pass the graph, table, or profile.
+        code, out, err = run_cli(env={
             "TOPONTOLOGY_GRAPH": "tests/fixtures/graph.json",
             "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/classes.json",
             "TOPONTOLOGY_PROFILE": "demo",
-        }
-        code, out, err = run_cli(env=env)
-        self.assertEqual(code, 0, err)
-        self.assertEqual(out, expected)
-        # Positionals override a wrong environment.
+        })
+        self.assertEqual(code, 1)
+        self.assertIn("pass the graph path", err)
+        self.assertNotIn("TOPONTOLOGY_GRAPH", err)
+        self.assertNotIn("Traceback", err)
+        code, out, err = run_cli("tests/fixtures/graph.json")
+        self.assertEqual(code, 1)
+        self.assertIn("pass the profile", err)
+        self.assertNotIn("Traceback", err)
         code, out, err = run_cli(
             "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
             env={
@@ -604,43 +616,6 @@ class CliErrorAndCoverageTests(unittest.TestCase):
                 "TOPONTOLOGY_PROFILE": "missing",
             },
         )
-        self.assertEqual(code, 0, err)
-        self.assertEqual(out, expected)
-        code, out, err = run_cli(env={
-            "TOPONTOLOGY_GRAPH": None,
-            "TOPONTOLOGY_CLASSIFICATION": None,
-            "TOPONTOLOGY_PROFILE": None,
-        })
-        self.assertEqual(code, 1)
-        self.assertIn("TOPONTOLOGY_GRAPH", err)
-        self.assertNotIn("Traceback", err)
-        code, out, err = run_cli(env={
-            "TOPONTOLOGY_GRAPH": "tests/fixtures/graph.json",
-            "TOPONTOLOGY_CLASSIFICATION": None,
-            "TOPONTOLOGY_PROFILE": "demo",
-        })
-        self.assertEqual(code, 1)
-        self.assertIn("TOPONTOLOGY_CLASSIFICATION", err)
-        code, out, err = run_cli(env={
-            "TOPONTOLOGY_GRAPH": "tests/fixtures/graph.json",
-            "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/classes.json",
-            "TOPONTOLOGY_PROFILE": None,
-        })
-        self.assertEqual(code, 1)
-        self.assertIn("TOPONTOLOGY_PROFILE", err)
-        for name in ("TOPONTOLOGY_GRAPH", "TOPONTOLOGY_CLASSIFICATION", "TOPONTOLOGY_PROFILE"):
-            padded = dict(env)
-            padded[name] = "  "
-            code, out, err = run_cli(env=padded)
-            self.assertEqual(code, 1, err)
-            self.assertIn(name, err)
-            self.assertNotIn("Traceback", err)
-            self.assertNotIn("No such file", err)
-        code, out, err = run_cli(env={
-            "TOPONTOLOGY_GRAPH": "  tests/fixtures/graph.json  ",
-            "TOPONTOLOGY_CLASSIFICATION": "\ttests/fixtures/classes.json\n",
-            "TOPONTOLOGY_PROFILE": "  demo  ",
-        })
         self.assertEqual(code, 0, err)
         self.assertEqual(out, expected)
 

@@ -26,6 +26,7 @@ def load_mutant(old, new):
         raise AssertionError(f"mutant anchor count {source.count(old)} for {old!r}")
     spec = importlib.util.spec_from_loader("topontology_mutant", loader=None)
     module = importlib.util.module_from_spec(spec)
+    module.__dict__["__file__"] = topontology.__file__
     exec(compile(source.replace(old, new, 1), topontology.__file__, "exec"), module.__dict__)
     return module
 
@@ -213,7 +214,7 @@ class SeriesCliTests(unittest.TestCase):
         expected = (ROOT / "tests/expected/series.json").read_text(encoding="utf-8")
         self.assertEqual(out, expected)
         body = json.loads(out)
-        self.assertEqual(body["tool"]["version"], "0.6.0")
+        self.assertEqual(body["tool"]["version"], topontology.__version__)
         self.assertEqual([item["label"] for item in body["provenance"]["snapshots"]], ["one", "two", "three"])
         self.assertEqual(body["pairs"][0]["graph"]["delta"]["independent_cycles"], 0)
         self.assertEqual(body["pairs"][0]["graph"]["delta"]["weakly_connected_components"], 1)
@@ -232,32 +233,30 @@ class SeriesCliTests(unittest.TestCase):
 
     def test_args_override_env_and_whitespace_is_stripped(self):
         code, out, err = run_cli(
-            "series",
+            "series", "tests/fixtures/classes.json", "demo",
             "--snapshot", "  one = tests/fixtures/series-one.json  ",
             "--snapshot", "two=tests/fixtures/series-two.json",
             env={
-                "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/classes.json",
-                "TOPONTOLOGY_PROFILE": "demo",
+                "TOPONTOLOGY_CLASSIFICATION": "/missing/table.json",
+                "TOPONTOLOGY_PROFILE": "missing",
                 "TOPONTOLOGY_SNAPSHOTS": "ignored=tests/fixtures/series-three.json,also=tests/fixtures/series-one.json",
             },
         )
         self.assertEqual(code, 0, err)
         body = json.loads(out)
         self.assertEqual([item["label"] for item in body["provenance"]["snapshots"]], ["one", "two"])
+        self.assertEqual(body["provenance"]["profile"], "demo")
         code, out, err = run_cli(
             "series",
-            env={
-                "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/classes.json",
-                "TOPONTOLOGY_PROFILE": "  demo  ",
-                "TOPONTOLOGY_SNAPSHOTS": "one=tests/fixtures/series-one.json\ntwo=tests/fixtures/series-two.json",
-            },
+            "--snapshot", "one=tests/fixtures/series-one.json",
+            "--snapshot", "two=tests/fixtures/series-two.json",
+            env={"TOPONTOLOGY_PROFILE": "demo", "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/classes.json"},
         )
-        self.assertEqual(code, 0, err)
-        self.assertEqual(json.loads(out)["provenance"]["profile"], "demo")
-        code, out, err = run_cli("series", env={
-            "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/classes.json",
-            "TOPONTOLOGY_PROFILE": "demo",
-            "TOPONTOLOGY_SNAPSHOTS": "   \n  ",
+        self.assertEqual(code, 1)
+        self.assertIn("pass the profile", err)
+        self.assertNotIn("Traceback", err)
+        code, out, err = run_cli("series", "tests/fixtures/classes.json", "demo", env={
+            "TOPONTOLOGY_SNAPSHOTS": "one=tests/fixtures/series-one.json\ntwo=tests/fixtures/series-two.json",
         })
         self.assertEqual(code, 1)
         self.assertEqual(err, "series needs at least 2 snapshots\n")
@@ -340,13 +339,16 @@ class SeriesCliTests(unittest.TestCase):
             self.assertEqual(code, 0, err)
             self.assertEqual(out, "")
             self.assertIn('"pairs"', dest.read_text(encoding="utf-8"))
-        code, out, err = run_cli("series", env={
-            "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/classes.json",
-            "TOPONTOLOGY_PROFILE": "demo",
-            "TOPONTOLOGY_SNAPSHOTS": "one=tests/fixtures/series-one.json, ,\ntwo=tests/fixtures/series-two.json",
-        })
+        code, out, err = run_cli(
+            "series", "demo",
+            "--classification", "tests/fixtures/classes.json",
+            "--snapshot", "one=tests/fixtures/series-one.json",
+            "--snapshot", "two=tests/fixtures/series-two.json",
+            env={"TOPONTOLOGY_CLASSIFICATION": "/missing/table.json"},
+        )
         self.assertEqual(code, 0, err)
         self.assertEqual([item["label"] for item in json.loads(out)["provenance"]["snapshots"]], ["one", "two"])
+        self.assertTrue(json.loads(out)["provenance"]["classification"]["path"].endswith("classes.json"))
         with self.assertRaises(ValueError):
             topontology._load_graph(ROOT / "tests/fixtures/graph.json", "nope")
 
@@ -497,7 +499,7 @@ class ChurnTests(unittest.TestCase):
         empty = topontology.node_churn([_snap("one", []), _snap("two", [])], CLASSES)
         self.assertEqual(empty, {"nodes": [], "repeated_churn": []})
         text = topontology._series_text({
-            "tool": {"name": "topontology", "version": "0.6.0"},
+            "tool": {"name": "topontology", "version": topontology.__version__},
             "provenance": {"classification": {"path": "c", "sha256": "0"}, "profile": "demo", "snapshots": []},
             "pairs": [],
             "nodes": [],

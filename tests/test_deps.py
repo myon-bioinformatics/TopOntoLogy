@@ -134,7 +134,7 @@ class RealSiblingTests(unittest.TestCase):
         self.assertIn(["pythdragoras", "pythdragoras"], row["sample_cycles"])
         self.assertEqual(body["classes"]["actual"]["edges"], 0)
         self.assertEqual(body["unclassified_edges"], 0)
-        self.assertEqual(body["tool"]["version"], "0.6.0")
+        self.assertEqual(body["tool"]["version"], topontology.__version__)
 
     def test_py_imports_graph_keeps_unmapped_edges(self):
         code, out, err = run_cli(
@@ -444,7 +444,7 @@ class DepsCliTests(unittest.TestCase):
         self.assertEqual(out, (ROOT / "tests/expected/siblings-deps.json").read_text(encoding="utf-8"))
         code, text, err = run_cli(*self._args("--format", "text"))
         self.assertEqual(code, 0, err)
-        self.assertIn("tool: topontology 0.6.0", text)
+        self.assertIn(f"tool: topontology {topontology.__version__}", text)
         self.assertIn("declared: tests/fixtures/siblings/aoi.py", text)
         self.assertIn("import_map:", text)
         self.assertIn("not_scanned: blueprobe, nagoyaction, pythdragoras, sakanalytics", text)
@@ -485,9 +485,9 @@ class DepsCliTests(unittest.TestCase):
                 "TOPONTOLOGY_SOURCES": f"dragowing={DRAGOWING},queryu={QUERYU}",
             },
         )
-        self.assertEqual(code, 0, err)
-        body = json.loads(out)
-        self.assertEqual(body["repos"]["dragowing"]["matching"][0]["target"], "pythdragoras/core")
+        self.assertEqual(code, 1)
+        self.assertIn("pass the declared file", err)
+        self.assertNotIn("TOPONTOLOGY_DECLARED", err)
         code, forced, err = run_cli(
             "deps", "--declared", str(DECLARED), "--format", "json",
             "--source", f"queryu={QUERYU}",
@@ -527,11 +527,11 @@ class DepsCliTests(unittest.TestCase):
     def test_env_sources_and_series_of_declared_graphs(self):
         code, out, err = run_cli(
             "deps", "--format", "text",
-            env={
-                "TOPONTOLOGY_DECLARED": f"  {DECLARED} ",
-                "TOPONTOLOGY_SOURCES": f"\nqueryu={QUERYU}\n,\ndragowing={DRAGOWING}\n",
-                "TOPONTOLOGY_IMPORT_MAP": str(IMPORT_MAP),
-            },
+            "--declared", str(DECLARED),
+            "--import-map", str(IMPORT_MAP),
+            "--source", f"queryu={QUERYU}",
+            "--source", f"dragowing={DRAGOWING}",
+            env={"TOPONTOLOGY_DECLARED": "missing.py", "TOPONTOLOGY_SOURCES": "nope=missing"},
         )
         self.assertEqual(code, 0, err)
         self.assertIn("repo dragowing:", out)

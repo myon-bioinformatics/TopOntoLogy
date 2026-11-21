@@ -284,7 +284,7 @@ class ImpactCliTests(unittest.TestCase):
         self.assertEqual(json_out, expected)
         code, text, err = run_cli(*_aoi_cli_args(), "--format", "text")
         self.assertEqual(code, 0, err)
-        self.assertIn("tool: topontology 0.6.0", text)
+        self.assertIn(f"tool: topontology {topontology.__version__}", text)
         self.assertIn(
             "source myon-bioinformatics/myon-bioinformatics:fleet_check.py "
             "downstream_repos=6 relays=(none)",
@@ -329,11 +329,10 @@ class ImpactCliTests(unittest.TestCase):
                 "myon-bioinformatics/Aoi=tests/fixtures/aoi-locks/aoi.json"
             ),
         })
-        self.assertEqual(code, 0, err)
-        self.assertEqual(
-            [item["repository"] for item in json.loads(out)["provenance"]["locks"]],
-            ["myon-bioinformatics/Aoi", "myon-bioinformatics/BlueProbe"],
-        )
+        self.assertEqual(code, 1)
+        self.assertIn("at least 1 lock", err)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(out, "")
         code, out, err = run_cli("impact", env={"TOPONTOLOGY_LOCKS": "   \n  "})
         self.assertEqual(code, 1)
         self.assertEqual(err, "impact needs at least 1 lock\n")
