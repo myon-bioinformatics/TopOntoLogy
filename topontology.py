@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -17,14 +18,85 @@ _DEGREE_KEYS = ("max_in", "max_out", "max_total", "sources", "sinks")
 
 
 def edge_relation(edge):
-    return edge["kind"] if "kind" in edge else edge["relation"]
+    if "kind" in edge:
+        return edge["kind"]
+    if "relation" in edge:
+        return edge["relation"]
+    raise ValueError("edge is missing both 'kind' and 'relation'")
+
+
+def node_sort_key(node):
+    """Comparable key for mixed JSON ID types.
+
+    Summaries and JSON keep original ID types, so ``1`` and ``"1"`` stay
+    distinct vertices. Component seeds and other sorts use this key. Text and
+    Mermaid convert IDs only for display, via ``node_text``.
+    """
+    return (type(node).__name__, str(node))
+
+
+def node_text(node):
+    """Display form of a node ID. ``1`` and ``"1"`` both become ``'1'``."""
+    return node if isinstance(node, str) else str(node)
+
+
+def _ends(edge):
+    try:
+        return edge["source"], edge["target"]
+    except KeyError as error:
+        raise ValueError(f"edge is missing {error.args[0]!r}") from error
+
+
+def _tag(node):
+    """Always-comparable stand-in so ONTO can sort mixed ID types."""
+    return (type(node).__name__, node)
+
+
+def _untag(token):
+    return token[1]
+
+
+def _tagged_edges(edges):
+    tagged = []
+    for edge in edges:
+        item = dict(edge)
+        item["source"], item["target"] = _tag(edge["source"]), _tag(edge["target"])
+        tagged.append(item)
+    return tagged
+
+
+def _untag_path(path):
+    if not path:
+        return path
+    return [_untag(node) for node in path]
+
+
+def _mermaid_terms(nodes):
+    """Unique string IDs for ONTO ``graph_mermaid``.
+
+    String IDs are kept as-is so existing diagrams do not change. When two
+    original IDs would share the same ``str()`` form, non-string IDs are
+    written as ``{type}:{text}``.
+    """
+    counts = {}
+    for node in nodes:
+        text = node_text(node)
+        counts[text] = counts.get(text, 0) + 1
+    terms = {}
+    for node in nodes:
+        text = node_text(node)
+        if counts[text] == 1 or isinstance(node, str):
+            terms[node] = text
+        else:
+            terms[node] = f"{type(node).__name__}:{text}"
+    return terms
 
 
 def _degrees(edges):
     nodes = set()
     inbound, outbound = defaultdict(int), defaultdict(int)
     for edge in edges:
-        source, target = edge["source"], edge["target"]
+        source, target = _ends(edge)
         nodes.update((source, target))
         outbound[source] += 1
         inbound[target] += 1
@@ -42,12 +114,13 @@ def _degrees(edges):
 def _weakly_connected_components(edges):
     adjacent = defaultdict(set)
     for edge in edges:
-        adjacent[edge["source"]].add(edge["target"])
-        adjacent[edge["target"]].add(edge["source"])
+        source, target = _ends(edge)
+        adjacent[source].add(target)
+        adjacent[target].add(source)
     remaining = set(adjacent)
     sizes = []
     while remaining:
-        start = min(remaining)
+        start = min(remaining, key=node_sort_key)
         stack, seen = [start], {start}
         remaining.remove(start)
         while stack:
@@ -68,10 +141,8 @@ def _canonical_cycle(cycle):
         return cycle
     closed = cycle[0] == cycle[-1] and len(cycle) > 1
     body = list(cycle[:-1] if closed else cycle)
-    if not body:
-        return list(cycle)
     rotations = [body[i:] + body[:i] for i in range(len(body))]
-    best = min(rotations)
+    best = min(rotations, key=lambda rot: [node_sort_key(node) for node in rot])
     return best + [best[0]] if closed else best
 
 
@@ -83,17 +154,19 @@ def _depth(edges):
     """
     if not edges:
         return {"depth": 0, "cycle": None}
-    found = topological_order(edges)
+    found = topological_order(_tagged_edges(edges))
     if found["cycle"]:
-        return {"depth": None, "cycle": _canonical_cycle(found["cycle"])}
+        return {"depth": None, "cycle": _canonical_cycle(_untag_path(found["cycle"]))}
     outgoing = defaultdict(list)
     for edge in edges:
-        outgoing[edge["source"]].append(edge["target"])
-    dist = {node: 0 for node in found["order"]}
-    for node in found["order"]:
+        source, target = _ends(edge)
+        outgoing[source].append(target)
+    order = _untag_path(found["order"])
+    dist = {node: 0 for node in order}
+    for node in order:
         for target in outgoing[node]:
             dist[target] = max(dist[target], dist[node] + 1)
-    return {"depth": max(dist.values(), default=0), "cycle": None}
+    return {"depth": max(dist.values()), "cycle": None}
 
 
 def summarize(graph, classes, *, cycle_limit=5):
@@ -110,7 +183,7 @@ def summarize(graph, classes, *, cycle_limit=5):
         incoming = defaultdict(set)
         nodes = set()
         for edge in edges:
-            source, target = edge["source"], edge["target"]
+            source, target = _ends(edge)
             nodes.update((source, target))
             incoming[target].add(source)
         depth = _depth(edges)
@@ -120,8 +193,13 @@ def summarize(graph, classes, *, cycle_limit=5):
         results[category] = {
             "edges": edge_count,
             "incident_nodes": node_count,
-            "multiple_sources": sorted(node for node in incoming if len(incoming[node]) > 1),
-            "sample_cycles": relation_cycles(edges, limit=cycle_limit),
+            "multiple_sources": sorted(
+                (node for node in incoming if len(incoming[node]) > 1),
+                key=node_sort_key,
+            ),
+            "sample_cycles": [
+                _untag_path(cycle) for cycle in relation_cycles(_tagged_edges(edges), limit=cycle_limit)
+            ],
             "degree": _degrees(edges),
             "weakly_connected_components": components,
             "independent_cycles": edge_count - node_count + components["count"],
@@ -215,12 +293,23 @@ def _node_labels(graph):
 def render_mermaid(graph, edges, provenance, class_name):
     """Class subgraph via ONTO ``graph_mermaid``, with provenance in Mermaid comments."""
     labels = _node_labels(graph)
-    present = sorted({node for edge in edges for node in (edge["source"], edge["target"])})
+    present = sorted(
+        {node for edge in edges for node in _ends(edge)},
+        key=node_sort_key,
+    )
+    terms = _mermaid_terms(present)
     ordered = sorted(edges, key=lambda edge: (
-        edge["source"], edge_relation(edge), edge["target"], edge.get("basis") or ""))
+        node_sort_key(edge["source"]), edge_relation(edge),
+        node_sort_key(edge["target"]), edge.get("basis") or ""))
     diagram = graph_mermaid({
-        "nodes": [{"id": node, "name": labels.get(node, node)} for node in present],
-        "edges": ordered,
+        "nodes": [
+            {"id": terms[node], "name": node_text(labels.get(node, node))}
+            for node in present
+        ],
+        "edges": [
+            {**edge, "source": terms[edge["source"]], "target": terms[edge["target"]]}
+            for edge in ordered
+        ],
     })
     header = [
         f"{TOOL_NAME} {__version__}",
@@ -262,10 +351,10 @@ def _class_lines(title, row):
     lines = [f"{title}:"]
     lines.append(f"  edges: {row['edges']}")
     lines.append(f"  incident_nodes: {row['incident_nodes']}")
-    sources = ", ".join(row["multiple_sources"]) if row["multiple_sources"] else "(none)"
+    sources = ", ".join(node_text(node) for node in row["multiple_sources"]) if row["multiple_sources"] else "(none)"
     lines.append(f"  multiple_sources: {sources}")
     if row["sample_cycles"]:
-        cycles = "; ".join(" → ".join(cycle) for cycle in row["sample_cycles"])
+        cycles = "; ".join(" → ".join(node_text(node) for node in cycle) for cycle in row["sample_cycles"])
     else:
         cycles = "(none)"
     lines.append(f"  sample_cycles: {cycles}")
@@ -280,7 +369,7 @@ def _class_lines(title, row):
     lines.append(f"  weakly_connected_components: {components['count']} ({sizes})")
     lines.append(f"  independent_cycles: {row['independent_cycles']}")
     if row["depth"] is None:
-        cycle = " → ".join(row["order_cycle"]) if row["order_cycle"] else "cycle"
+        cycle = " → ".join(node_text(node) for node in row["order_cycle"]) if row["order_cycle"] else "cycle"
         lines.append(f"  depth: (undefined, {cycle})")
     else:
         lines.append(f"  depth: {row['depth']}")
@@ -352,6 +441,24 @@ def _load_classes(path, profile):
     return table[profile]
 
 
+def _resolve_input(value, env_name, what):
+    if value is not None:
+        return Path(value)
+    raw = os.environ.get(env_name)
+    if raw:
+        return Path(raw)
+    raise ValueError(f"pass the {what} or set {env_name}")
+
+
+def _resolve_profile(value):
+    if value is not None:
+        return value
+    raw = os.environ.get("TOPONTOLOGY_PROFILE")
+    if raw:
+        return raw
+    raise ValueError("pass the profile or set TOPONTOLOGY_PROFILE")
+
+
 def _require_class(report, name, flag):
     if name not in report["classes"]:
         known = ", ".join(sorted(report["classes"])) or "(none)"
@@ -366,9 +473,9 @@ def _resolve_format(args):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog=TOOL_NAME, description=__doc__)
-    parser.add_argument("graph", type=Path)
-    parser.add_argument("classification", type=Path)
-    parser.add_argument("profile")
+    parser.add_argument("graph", nargs="?", type=Path)
+    parser.add_argument("classification", nargs="?", type=Path)
+    parser.add_argument("profile", nargs="?")
     parser.add_argument("--format", choices=("text", "json", "canonical", "mermaid"),
                         help="json and canonical write the same sorted JSON document (default: json); "
                              "text is a line summary; mermaid draws one class")
@@ -384,6 +491,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         fmt = _resolve_format(args)
+        args.graph = _resolve_input(args.graph, "TOPONTOLOGY_GRAPH", "graph path")
+        args.classification = _resolve_input(
+            args.classification, "TOPONTOLOGY_CLASSIFICATION", "classification path")
+        args.profile = _resolve_profile(args.profile)
         if args.cycle_limit < 0:
             raise ValueError("--cycle-limit must be >= 0")
         if args.compare and args.compare_class:

@@ -7,13 +7,15 @@
 
 ## 関係の意味ごとに構造を調べる
 
-OTL の nodes/edges JSON と TOO の分類表は引数で渡します。ONTO の `knowledgegraph.py` は `PYTHONPATH` で渡します。プログラムは隣の checkout を探しません。Python 3.11 以降の標準ライブラリだけを使います。
+OTL の nodes/edges JSON と TOO の分類表は引数で渡します。引数を省略したときは環境変数 `TOPONTOLOGY_GRAPH`、`TOPONTOLOGY_CLASSIFICATION`、`TOPONTOLOGY_PROFILE` を使います。引数が優先です。ONTO の `knowledgegraph.py` は `PYTHONPATH` で渡します。プログラムは隣の checkout を探しません。Python 3.11 以降の標準ライブラリだけを使います。
 
 ```sh
 PYTHONPATH=../ONTO python -S topontology.py audit.json ../TaxOntOy/otl-relations.json audit
 PYTHONPATH=../ONTO python -S topontology.py audit.json ../TaxOntOy/otl-relations.json audit --format text
 PYTHONPATH=../ONTO python -S topontology.py before.json ../TaxOntOy/otl-relations.json concepts --compare after.json
 PYTHONPATH=../ONTO python -S topontology.py audit.json ../TaxOntOy/otl-relations.json concepts --format mermaid --class hierarchy
+TOPONTOLOGY_GRAPH=audit.json TOPONTOLOGY_CLASSIFICATION=../TaxOntOy/otl-relations.json TOPONTOLOGY_PROFILE=audit \
+  PYTHONPATH=../ONTO python -S topontology.py --format text
 ```
 
 導入した環境ではコマンド名は `topontology` です。読み取り専用で、ネットワークへは出ません。書き出すのは標準出力か、`-o` で指定したファイルだけです。
@@ -40,6 +42,10 @@ JSON はキー順を固定した一つの文書です。`--format canonical` と
 `--compare 別のグラフ` は、同じ分類表と同じプロファイルで二つのグラフを比べ、差分は右から左を引いた値です。`--class 左 --compare-class 右` は、一つのグラフの二つの分類を比べます。
 
 `tests/expected/` は、この決定的な出力を fixture から再生成したものです。CI が同じコマンドを実行し、差分があれば失敗します。
+
+ノード ID は JSON の型のまま集計します。数値の `1` と文字列の `"1"` は別の頂点です。弱連結成分の起点や並びは `(型名, 文字列化した値)` で決め、比較できない型が混ざっても落ちません。`--format text` と Mermaid では表示のために文字列化します。同じ表示になる ID が複数あるとき、Mermaid では文字列以外を `型名:値` と書いて区別します。JSON では元の型のまま出します。
+
+辺に `kind` も `relation` もないときは、トレースバックではなく `ValueError` を標準エラーに出して終了コード 1 で終わります。
 
 ## 互換
 
