@@ -144,6 +144,46 @@ class VendorLockTests(unittest.TestCase):
                 "files": [{"destination": "vendor/x.py"}],
             })
 
+    def test_non_string_repository_or_source_is_an_error(self):
+        valid = {"destination": "vendor/x.py", "repository": "example/repo"}
+        with self.assertRaises(ValueError) as raised:
+            topontology.graph_from_vendor_lock({
+                "schema": "vendor-lock/1",
+                "files": [{**valid, "source": 1}],
+            })
+        self.assertIn("source must be a string", str(raised.exception))
+        with self.assertRaises(ValueError) as raised:
+            topontology.graph_from_vendor_lock({
+                "schema": "vendor-lock/1",
+                "files": [{**valid, "source": ["lib.py"]}],
+            })
+        self.assertIn("source must be a string", str(raised.exception))
+        with self.assertRaises(ValueError) as raised:
+            topontology.graph_from_vendor_lock({
+                "schema": "vendor-lock/1",
+                "files": [{"destination": "vendor/x.py", "source": "lib.py", "repository": 2}],
+            })
+        self.assertIn("repository must be a string", str(raised.exception))
+        # Missing keys are still allowed; only a present non-string is rejected.
+        graph = topontology.graph_from_vendor_lock({
+            "schema": "vendor-lock/1",
+            "files": [{"destination": "vendor/x.py", "repository": "example/repo"}],
+        })
+        self.assertEqual(graph["edges"][0]["target"], "example/repo")
+        with tempfile.TemporaryDirectory() as tmp:
+            lock = Path(tmp) / "lock.json"
+            lock.write_text(json.dumps({
+                "schema": "vendor-lock/1",
+                "files": [{"destination": "vendor/x.py", "repository": "example/repo", "source": 1}],
+            }), encoding="utf-8")
+            code, out, err = run_cli(
+                str(lock), "tests/fixtures/vendor-classes.json", "demo",
+                "--graph-format", "vendor-lock")
+            self.assertEqual(code, 1)
+            self.assertIn("source must be a string", err)
+            self.assertNotIn("Traceback", err)
+            self.assertEqual(out, "")
+
 
 class SeriesCliTests(unittest.TestCase):
     def test_series_matches_committed_output(self):
@@ -250,6 +290,21 @@ class SeriesCliTests(unittest.TestCase):
         )
         self.assertEqual(code, 0, err)
         self.assertEqual([item["label"] for item in json.loads(out)["provenance"]["snapshots"]], ["one", "two"])
+        # Whitespace-only --snapshot arguments must not fall back to the env var.
+        code, out, err = run_cli(
+            "series", "tests/fixtures/classes.json", "demo",
+            "--snapshot", "   ",
+            env={
+                "TOPONTOLOGY_SNAPSHOTS": "one=tests/fixtures/series-one.json,two=tests/fixtures/series-two.json",
+            },
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("LABEL=PATH", err)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(out, "")
+        with self.assertRaises(ValueError) as raised:
+            topontology._resolve_snapshots(["   ", "\t"])
+        self.assertIn("LABEL=PATH", str(raised.exception))
         code, out, err = run_cli(
             "series", "tests/fixtures/classes.json", "demo",
             "--snapshot", "one=tests/fixtures/series-one.json",
