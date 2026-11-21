@@ -498,6 +498,48 @@ class NodeIdTests(unittest.TestCase):
         self.assertEqual(topontology._canonical_cycle(["C", "A", "B"]), ["A", "B", "C"])
         self.assertEqual(topontology._untag_path([]), [])
 
+    def test_mermaid_disambiguates_colliding_display_labels(self):
+        colliding = {
+            "nodes": [{"id": 1}, {"id": "1"}],
+            "edges": [{"source": 1, "kind": "narrower", "target": "1"}],
+        }
+        unique = {
+            "nodes": [{"id": 1, "name": "A"}, {"id": 2}, {"id": "1", "name": "str-one"}],
+            "edges": [
+                {"source": 1, "kind": "narrower", "target": 2},
+                {"source": "1", "kind": "narrower", "target": 2},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            table = Path(tmp) / "table.json"
+            table.write_text(json.dumps({"demo": CONCEPTS}), encoding="utf-8")
+            collision = Path(tmp) / "collision.json"
+            collision.write_text(json.dumps(colliding), encoding="utf-8")
+            distinct = Path(tmp) / "unique.json"
+            distinct.write_text(json.dumps(unique), encoding="utf-8")
+
+            code, mermaid = run_main(
+                [str(collision), str(table), "demo", "--format", "mermaid", "--class", "hierarchy"])
+            self.assertEqual(code, 0, mermaid)
+            boxes = [line.strip() for line in mermaid.splitlines() if '["' in line and line.strip().startswith("n")]
+            labels = []
+            for line in boxes:
+                start = line.index('["') + 2
+                end = line.index('"]', start)
+                labels.append(line[start:end])
+            self.assertEqual(len(labels), 2)
+            self.assertNotEqual(labels[0], labels[1])
+            self.assertIn("1", labels)
+            self.assertIn("int:1", labels)
+
+            code, unchanged = run_main(
+                [str(distinct), str(table), "demo", "--format", "mermaid", "--class", "hierarchy"])
+            self.assertEqual(code, 0, unchanged)
+            self.assertIn('["A"]', unchanged)
+            self.assertIn('["2"]', unchanged)
+            self.assertIn('["str-one"]', unchanged)
+            self.assertNotIn("int:1", unchanged)
+
     def test_node_labels_skip_unknown_shapes(self):
         labels = topontology._node_labels({
             "nodes": ["A", {"name": "no-id"}, 99, None, {"id": "B", "name": "Bee"}],
@@ -577,6 +619,21 @@ class CliErrorAndCoverageTests(unittest.TestCase):
         })
         self.assertEqual(code, 1)
         self.assertIn("TOPONTOLOGY_PROFILE", err)
+        for name in ("TOPONTOLOGY_GRAPH", "TOPONTOLOGY_CLASSIFICATION", "TOPONTOLOGY_PROFILE"):
+            padded = dict(env)
+            padded[name] = "  "
+            code, out, err = run_cli(env=padded)
+            self.assertEqual(code, 1, err)
+            self.assertIn(name, err)
+            self.assertNotIn("Traceback", err)
+            self.assertNotIn("No such file", err)
+        code, out, err = run_cli(env={
+            "TOPONTOLOGY_GRAPH": "  tests/fixtures/graph.json  ",
+            "TOPONTOLOGY_CLASSIFICATION": "\ttests/fixtures/classes.json\n",
+            "TOPONTOLOGY_PROFILE": "  demo  ",
+        })
+        self.assertEqual(code, 0, err)
+        self.assertEqual(out, expected)
 
     def test_error_branches_and_remaining_cli_paths(self):
         with tempfile.TemporaryDirectory() as tmp:
