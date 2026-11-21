@@ -41,11 +41,31 @@ def run_main(argv):
     return code, buf.getvalue()
 
 
-def run_cli(*args):
+def run_cli(*args, env=None):
+    merged = os.environ.copy()
+    if env:
+        for key, value in env.items():
+            if value is None:
+                merged.pop(key, None)
+            else:
+                merged[key] = value
+    # Tests use python -S, so sitecustomize is not imported in the child.
+    # When coverage is measuring this process, start it explicitly in the child.
+    if merged.get("COVERAGE_PROCESS_START"):
+        bootstrap = (
+            "import runpy, sys\n"
+            "import coverage\n"
+            "coverage.process_startup()\n"
+            "sys.argv = sys.argv[1:]\n"
+            "runpy.run_path(sys.argv[0], run_name='__main__')\n"
+        )
+        command = [sys.executable, "-S", "-c", bootstrap, str(SCRIPT), *args]
+    else:
+        command = [sys.executable, "-S", str(SCRIPT), *args]
     completed = subprocess.run(
-        [sys.executable, "-S", str(SCRIPT), *args],
+        command,
         cwd=ROOT,
-        env=os.environ.copy(),
+        env=merged,
         capture_output=True,
         text=True,
         check=False,
@@ -318,3 +338,379 @@ class CliTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 2)
         self.assertIn("topontology.py", completed.stderr)
+
+
+NUMERIC_GRAPH = {
+    "nodes": [{"id": 1, "name": "A"}, {"id": 2}, {"id": 3}, {"id": 4}],
+    "edges": [
+        {"source": 1, "kind": "narrower", "target": 2},
+        {"source": 2, "kind": "narrower", "target": 3},
+        {"source": 1, "kind": "narrower", "target": 3},
+        {"source": 2, "kind": "similarTo", "target": 3},
+        {"source": 3, "kind": "similarTo", "target": 2},
+        {"source": 4, "relation": "hasName", "target": 1},
+    ],
+}
+
+NUMERIC_EXTENDED = {
+    "nodes": [{"id": 1, "name": "A"}, {"id": 2}, {"id": 3}, {"id": 4}, {"id": 5, "name": "E"}],
+    "edges": [
+        {"source": 1, "kind": "narrower", "target": 2},
+        {"source": 2, "kind": "narrower", "target": 3},
+        {"source": 1, "kind": "narrower", "target": 3},
+        {"source": 3, "kind": "narrower", "target": 5},
+        {"source": 2, "kind": "similarTo", "target": 3},
+        {"source": 3, "kind": "similarTo", "target": 2},
+        {"source": 4, "relation": "hasName", "target": 1},
+    ],
+}
+
+MIXED_GRAPH = {
+    "nodes": [{"id": 1, "name": "int-one"}, {"id": "1", "name": "str-one"}, {"id": "A"}],
+    "edges": [
+        {"source": 1, "kind": "narrower", "target": "1"},
+        {"source": "1", "kind": "narrower", "target": 1},
+        {"source": "A", "kind": "narrower", "target": "B"},
+        {"source": 2, "kind": "similarTo", "target": "2"},
+    ],
+}
+
+
+def _write_pair(tmp, graph, classes=None, profile="demo"):
+    root = Path(tmp)
+    graph_path = root / "graph.json"
+    table_path = root / "table.json"
+    graph_path.write_text(json.dumps(graph), encoding="utf-8")
+    table_path.write_text(json.dumps({profile: classes or CONCEPTS}), encoding="utf-8")
+    return graph_path, table_path
+
+
+class NodeIdTests(unittest.TestCase):
+    def test_numeric_ids_match_the_string_graph_metrics(self):
+        report = topontology.summarize(NUMERIC_GRAPH, CONCEPTS)
+        hierarchy = report["classes"]["hierarchy"]
+        self.assertEqual(hierarchy["edges"], 3)
+        self.assertEqual(hierarchy["incident_nodes"], 3)
+        self.assertEqual(hierarchy["multiple_sources"], [3])
+        self.assertEqual(hierarchy["weakly_connected_components"], {"count": 1, "sizes": [3]})
+        self.assertEqual(hierarchy["independent_cycles"], 1)
+        self.assertEqual(hierarchy["depth"], 2)
+        self.assertIsNone(hierarchy["order_cycle"])
+        similarity = report["classes"]["similarity"]
+        self.assertEqual(similarity["sample_cycles"], [[2, 3, 2]])
+        self.assertEqual(similarity["order_cycle"], [2, 3, 2])
+        self.assertIsNone(similarity["depth"])
+        self.assertEqual(similarity["independent_cycles"], 1)
+
+    def test_mixed_ids_stay_distinct_in_summarize(self):
+        report = topontology.summarize(MIXED_GRAPH, CONCEPTS)
+        hierarchy = report["classes"]["hierarchy"]
+        self.assertEqual(hierarchy["edges"], 3)
+        self.assertEqual(hierarchy["incident_nodes"], 4)
+        self.assertEqual(hierarchy["weakly_connected_components"]["count"], 2)
+        self.assertEqual(hierarchy["weakly_connected_components"]["sizes"], [2, 2])
+        self.assertEqual(hierarchy["independent_cycles"], 1)
+        self.assertIsNone(hierarchy["depth"])
+        cycle = hierarchy["order_cycle"]
+        self.assertEqual(set(map(topontology.node_sort_key, cycle[:-1])), {
+            topontology.node_sort_key(1), topontology.node_sort_key("1"),
+        })
+        self.assertEqual(cycle[0], cycle[-1])
+        self.assertIsInstance(cycle[0], type(cycle[-1]))
+        # 1 and "1" remain distinct in the reported cycle.
+        self.assertTrue(any(node == 1 and not isinstance(node, bool) and not isinstance(node, str) for node in cycle))
+        self.assertTrue(any(node == "1" for node in cycle))
+        similarity = report["classes"]["similarity"]
+        self.assertEqual(similarity["edges"], 1)
+        self.assertEqual(similarity["incident_nodes"], 2)
+        self.assertEqual(similarity["weakly_connected_components"], {"count": 1, "sizes": [2]})
+        self.assertEqual(similarity["depth"], 1)
+
+    def test_numeric_and_mixed_cli_formats(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            numeric, table = _write_pair(tmp, NUMERIC_GRAPH)
+            extended = Path(tmp) / "extended.json"
+            extended.write_text(json.dumps(NUMERIC_EXTENDED), encoding="utf-8")
+            mixed = Path(tmp) / "mixed.json"
+            mixed.write_text(json.dumps(MIXED_GRAPH), encoding="utf-8")
+
+            code, out = run_main([str(numeric), str(table), "demo"])
+            self.assertEqual(code, 0)
+            body = json.loads(out)
+            self.assertEqual(body["classes"]["hierarchy"]["multiple_sources"], [3])
+            self.assertEqual(body["classes"]["similarity"]["sample_cycles"], [[2, 3, 2]])
+
+            code, text = run_main([str(numeric), str(table), "demo", "--format", "text"])
+            self.assertEqual(code, 0)
+            self.assertIn("multiple_sources: 3", text)
+            self.assertIn("2 → 3 → 2", text)
+
+            code, mermaid = run_main(
+                [str(numeric), str(table), "demo", "--format", "mermaid", "--class", "hierarchy"])
+            self.assertEqual(code, 0)
+            self.assertIn('["A"]', mermaid)
+            self.assertIn('["2"]', mermaid)
+            self.assertIn('["3"]', mermaid)
+            self.assertIn('-->|"narrower"|', mermaid)
+
+            code, compared = run_main([
+                str(numeric), str(table), "demo", "--compare", str(extended), "--format", "json",
+            ])
+            self.assertEqual(code, 0)
+            delta = json.loads(compared)["classes"]["hierarchy"]["delta"]
+            self.assertEqual(delta["edges"], 1)
+            self.assertEqual(delta["incident_nodes"], 1)
+            self.assertEqual(delta["depth"], 1)
+
+            code, mixed_json = run_main([str(mixed), str(table), "demo"])
+            self.assertEqual(code, 0)
+            mixed_body = json.loads(mixed_json)
+            cycle = mixed_body["classes"]["hierarchy"]["order_cycle"]
+            self.assertTrue(any(node == 1 and not isinstance(node, str) for node in cycle))
+            self.assertTrue(any(node == "1" for node in cycle))
+
+            code, mixed_text = run_main([str(mixed), str(table), "demo", "--format", "text"])
+            self.assertEqual(code, 0)
+            self.assertIn("1 → 1 → 1", mixed_text)
+            self.assertIn("independent_cycles: 1", mixed_text)
+
+            code, mixed_mermaid = run_main(
+                [str(mixed), str(table), "demo", "--format", "mermaid", "--class", "hierarchy"])
+            self.assertEqual(code, 0, mixed_mermaid)
+            # Display names stay distinct; ONTO remaps IDs to n0, n1, ...
+            self.assertIn('["int-one"]', mixed_mermaid)
+            self.assertIn('["str-one"]', mixed_mermaid)
+            self.assertIn('["A"]', mixed_mermaid)
+            self.assertIn('["B"]', mixed_mermaid)
+            self.assertEqual(mixed_mermaid.count("narrower"), 3)
+
+            code, mixed_compare = run_main([
+                str(mixed), str(table), "demo", "--class", "hierarchy",
+                "--compare-class", "similarity", "--format", "json",
+            ])
+            self.assertEqual(code, 0)
+            comparison = json.loads(mixed_compare)["comparison"]
+            self.assertEqual(comparison["left"]["metrics"]["incident_nodes"], 4)
+            self.assertEqual(comparison["right"]["metrics"]["incident_nodes"], 2)
+
+    def test_canonical_cycle_helpers(self):
+        self.assertEqual(topontology._canonical_cycle([]), [])
+        self.assertEqual(topontology._canonical_cycle(["C", "A", "B"]), ["A", "B", "C"])
+        self.assertEqual(topontology._untag_path([]), [])
+
+    def test_node_labels_skip_unknown_shapes(self):
+        labels = topontology._node_labels({
+            "nodes": ["A", {"name": "no-id"}, 99, None, {"id": "B", "name": "Bee"}],
+        })
+        self.assertEqual(labels, {"A": "A", "B": "Bee"})
+        self.assertEqual(topontology._node_labels({}), {})
+
+
+class CliErrorAndCoverageTests(unittest.TestCase):
+    def test_missing_kind_and_relation_is_a_clean_value_error(self):
+        with self.assertRaises(ValueError) as raised:
+            topontology.edge_relation({"source": "A", "target": "B"})
+        self.assertIn("kind", str(raised.exception))
+        self.assertIn("relation", str(raised.exception))
+        with tempfile.TemporaryDirectory() as tmp:
+            graph, table = _write_pair(tmp, {"edges": [{"source": "A", "target": "B"}]})
+            code, out, err = run_cli(str(graph), str(table), "demo")
+            self.assertEqual(code, 1)
+            self.assertEqual(out, "")
+            self.assertIn("missing both 'kind' and 'relation'", err)
+            self.assertNotIn("Traceback", err)
+
+    def test_missing_endpoint_is_a_clean_value_error(self):
+        with self.assertRaises(ValueError) as raised:
+            topontology.summarize(
+                {"edges": [{"kind": "narrower", "target": "B"}]},
+                {"narrower": "hierarchy"},
+            )
+        self.assertIn("source", str(raised.exception))
+        with tempfile.TemporaryDirectory() as tmp:
+            graph, table = _write_pair(tmp, {"edges": [{"kind": "narrower", "target": "B"}]})
+            code, out, err = run_cli(str(graph), str(table), "demo")
+            self.assertEqual(code, 1)
+            self.assertIn("source", err)
+            self.assertNotIn("Traceback", err)
+
+    def test_env_var_paths_match_positional_output(self):
+        expected = (ROOT / "tests/expected/summary.json").read_text(encoding="utf-8")
+        env = {
+            "TOPONTOLOGY_GRAPH": "tests/fixtures/graph.json",
+            "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/classes.json",
+            "TOPONTOLOGY_PROFILE": "demo",
+        }
+        code, out, err = run_cli(env=env)
+        self.assertEqual(code, 0, err)
+        self.assertEqual(out, expected)
+        # Positionals override a wrong environment.
+        code, out, err = run_cli(
+            "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+            env={
+                "TOPONTOLOGY_GRAPH": "/missing/graph.json",
+                "TOPONTOLOGY_CLASSIFICATION": "/missing/table.json",
+                "TOPONTOLOGY_PROFILE": "missing",
+            },
+        )
+        self.assertEqual(code, 0, err)
+        self.assertEqual(out, expected)
+        code, out, err = run_cli(env={
+            "TOPONTOLOGY_GRAPH": None,
+            "TOPONTOLOGY_CLASSIFICATION": None,
+            "TOPONTOLOGY_PROFILE": None,
+        })
+        self.assertEqual(code, 1)
+        self.assertIn("TOPONTOLOGY_GRAPH", err)
+        self.assertNotIn("Traceback", err)
+        code, out, err = run_cli(env={
+            "TOPONTOLOGY_GRAPH": "tests/fixtures/graph.json",
+            "TOPONTOLOGY_CLASSIFICATION": None,
+            "TOPONTOLOGY_PROFILE": "demo",
+        })
+        self.assertEqual(code, 1)
+        self.assertIn("TOPONTOLOGY_CLASSIFICATION", err)
+        code, out, err = run_cli(env={
+            "TOPONTOLOGY_GRAPH": "tests/fixtures/graph.json",
+            "TOPONTOLOGY_CLASSIFICATION": "tests/fixtures/classes.json",
+            "TOPONTOLOGY_PROFILE": None,
+        })
+        self.assertEqual(code, 1)
+        self.assertIn("TOPONTOLOGY_PROFILE", err)
+
+    def test_error_branches_and_remaining_cli_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            graph, table = _write_pair(tmp, GRAPH)
+            missing = str(Path(tmp) / "nope.json")
+            bad_json = Path(tmp) / "bad.json"
+            bad_json.write_text("{", encoding="utf-8")
+            not_graph = Path(tmp) / "not-graph.json"
+            not_graph.write_text("[]", encoding="utf-8")
+            empty_profile = Path(tmp) / "empty-profile.json"
+            empty_profile.write_text(json.dumps({"demo": {}}), encoding="utf-8")
+            no_nodes = Path(tmp) / "no-nodes.json"
+            no_nodes.write_text(json.dumps({"edges": [{"source": "A", "kind": "narrower", "target": "B"}]}),
+                                encoding="utf-8")
+            dest = Path(tmp) / "class.txt"
+
+            code, out, err = run_cli(missing, str(table), "demo")
+            self.assertEqual(code, 1)
+            self.assertTrue(err)
+            self.assertNotIn("Traceback", err)
+
+            code, out, err = run_cli(str(bad_json), str(table), "demo")
+            self.assertEqual(code, 1)
+            self.assertNotIn("Traceback", err)
+
+            code, out, err = run_cli(str(not_graph), str(table), "demo")
+            self.assertEqual(code, 1)
+            self.assertIn("edges array", err)
+
+            code, out, err = run_cli(
+                "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+                "--format", "mermaid", "--compare", "tests/fixtures/graph-extended.json",
+                "--class", "hierarchy")
+            self.assertEqual(code, 1)
+            self.assertIn("mermaid", err)
+
+            code, out, err = run_cli(
+                "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+                "--format", "mermaid", "--class", "hierarchy", "--compare-class", "similarity")
+            self.assertEqual(code, 1)
+            self.assertIn("mermaid", err)
+
+            code, out, err = run_cli(
+                "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+                "--compare-class", "similarity")
+            self.assertEqual(code, 1)
+            self.assertIn("--compare-class requires --class", err)
+
+            code, out, err = run_cli(
+                "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+                "--class", "missing")
+            self.assertEqual(code, 1)
+            self.assertIn("unknown class for --class", err)
+
+            code, out, err = run_cli(
+                "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+                "--class", "hierarchy", "--compare-class", "missing")
+            self.assertEqual(code, 1)
+            self.assertIn("unknown class for --compare-class", err)
+
+            code, out, err = run_cli(str(graph), str(empty_profile), "demo", "--class", "hierarchy")
+            self.assertEqual(code, 1)
+            self.assertIn("(none)", err)
+
+            code, out, err = run_cli(
+                "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+                "--class", "hierarchy", "--format", "text", "-o", str(dest))
+            self.assertEqual(code, 0, err)
+            self.assertEqual(out, "")
+            self.assertIn("hierarchy:", dest.read_text(encoding="utf-8"))
+            self.assertIn("unclassified_edges: 1", dest.read_text(encoding="utf-8"))
+
+            code, out, err = run_cli(
+                "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+                "--class", "hierarchy", "--compare-class", "similarity", "--format", "text")
+            self.assertEqual(code, 0, err)
+            self.assertIn("left_class: hierarchy", out)
+            self.assertIn("right_class: similarity", out)
+            self.assertIn("hierarchy vs similarity:", out)
+
+            code, out, err = run_cli(
+                str(no_nodes), str(table), "demo", "--format", "mermaid", "--class", "hierarchy")
+            self.assertEqual(code, 0, err)
+            self.assertIn("flowchart TD", out)
+
+            code, out, err = run_cli(
+                "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+                "--cycle-limit", "0")
+            self.assertEqual(code, 0, err)
+            self.assertEqual(json.loads(out)["classes"]["similarity"]["sample_cycles"], [])
+
+            # table that is not an object
+            not_table = Path(tmp) / "not-table.json"
+            not_table.write_text("[]", encoding="utf-8")
+            code, out, err = run_cli(str(graph), str(not_table), "demo")
+            self.assertEqual(code, 1)
+            self.assertIn("unknown profile", err)
+
+            bad_profile = Path(tmp) / "bad-profile.json"
+            bad_profile.write_text(json.dumps({"demo": []}), encoding="utf-8")
+            code, out, err = run_cli(str(graph), str(bad_profile), "demo")
+            self.assertEqual(code, 1)
+            self.assertIn("unknown profile", err)
+
+            # empty weakly-connected sizes render as (none)
+            empty_text = topontology._class_lines("empty", {
+                "edges": 0,
+                "incident_nodes": 0,
+                "multiple_sources": [],
+                "sample_cycles": [],
+                "degree": {"max_in": 0, "max_out": 0, "max_total": 0, "sources": 0, "sinks": 0},
+                "weakly_connected_components": {"count": 0, "sizes": []},
+                "independent_cycles": 0,
+                "depth": None,
+                "order_cycle": None,
+            })
+            self.assertIn("multiple_sources: (none)", "\n".join(empty_text))
+            self.assertIn("sample_cycles: (none)", "\n".join(empty_text))
+            self.assertIn("weakly_connected_components: 0 ((none))", "\n".join(empty_text))
+            self.assertIn("depth: (undefined, cycle)", "\n".join(empty_text))
+
+            # unhashable endpoint surfaces as TypeError to the CLI without a traceback
+            unhashable = Path(tmp) / "unhashable.json"
+            unhashable.write_text(json.dumps({
+                "edges": [{"source": {"x": 1}, "kind": "narrower", "target": "B"}],
+            }), encoding="utf-8")
+            code, out, err = run_cli(str(unhashable), str(table), "demo")
+            self.assertEqual(code, 1)
+            self.assertNotIn("Traceback", err)
+
+    def test_json_flag_with_canonical_format(self):
+        code, out, err = run_cli(
+            "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+            "--json", "--format", "canonical")
+        self.assertEqual(code, 0, err)
+        expected = (ROOT / "tests/expected/summary.json").read_text(encoding="utf-8")
+        self.assertEqual(out, expected)
