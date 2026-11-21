@@ -10,9 +10,11 @@
           "sources": 0
         },
         "depth": 1,
+        "directed_cycle": 0,
         "edges": 1,
         "incident_nodes": 1,
         "independent_cycles": 0,
+        "sample_cycles": 0,
         "weakly_connected_components": 0
       },
       "left": {
@@ -74,9 +76,11 @@
           "sources": 0
         },
         "depth": null,
+        "directed_cycle": 0,
         "edges": 0,
         "incident_nodes": 0,
         "independent_cycles": 0,
+        "sample_cycles": 0,
         "weakly_connected_components": 0
       },
       "left": {
@@ -171,7 +175,7 @@
   },
   "tool": {
     "name": "topontology",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "unclassified_edges": {
     "delta": 0,

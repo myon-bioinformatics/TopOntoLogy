@@ -1,0 +1,27 @@
+{
+  "edges": [
+    {"source": "L0", "kind": "to", "target": "C"},
+    {"source": "L1", "kind": "to", "target": "C"},
+    {"source": "L2", "kind": "to", "target": "C"},
+    {"source": "L3", "kind": "to", "target": "C"},
+    {"source": "L4", "kind": "to", "target": "C"},
+    {"source": "L5", "kind": "to", "target": "C"},
+    {"source": "L6", "kind": "to", "target": "C"},
+    {"source": "L7", "kind": "to", "target": "C"},
+    {"source": "L8", "kind": "to", "target": "C"},
+    {"source": "L9", "kind": "to", "target": "C"}
+  ],
+  "nodes": [
+    {"id": "C", "name": "center"},
+    {"id": "L0"},
+    {"id": "L1"},
+    {"id": "L2"},
+    {"id": "L3"},
+    {"id": "L4"},
+    {"id": "L5"},
+    {"id": "L6"},
+    {"id": "L7"},
+    {"id": "L8"},
+    {"id": "L9"}
+  ]
+}
