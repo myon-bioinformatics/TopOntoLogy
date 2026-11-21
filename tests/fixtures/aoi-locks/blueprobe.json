@@ -1,0 +1,10 @@
+{
+  "schema": "vendor-lock/1",
+  "files": [
+    {
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "fleet_check.py",
+      "destination": "vendor/fleet_check.py"
+    }
+  ]
+}

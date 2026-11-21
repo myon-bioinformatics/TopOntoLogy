@@ -31,6 +31,8 @@ TOPONTOLOGY_GRAPH=audit.json TOPONTOLOGY_CLASSIFICATION=../TaxOntOy/otl-relation
 
 分類表にない辺の数も返します。類似関係の閉路は相互リンクでも生じます。階層の循環を調べるときは hierarchy 欄を使います。
 
+分類表の `schema` が `taxontoy-relations/1` または `taxontoy-relations/2` のとき、プロファイルは `audit`、`concepts`、`cases` です。`schema`、`direction`、`excluded` はプロファイルではありません。`/2` で加わった `properties` もプロファイルではありません。これらをプロファイル名として渡すと、未知のプロファイルとして終了コード 1 です。`schema` の無い表は、これまでどおり各キーがプロファイルです。`/1` の `audit`、`concepts`、`cases` は今までどおり読めます。
+
 ## 出力
 
 どの出力にもツール名と版、入力したグラフと分類表のパス、それぞれの sha256 が入ります。比較では左右の両方を記録します。Mermaid では図の先頭コメントです。
@@ -83,4 +85,24 @@ PYTHONPATH=../ONTO python -S topontology.py series ../TaxOntOy/otl-relations.jso
 - 各要素の `destination`（空でなければこちら）または `path`。ローカル側のノード ID
 - 各要素の `repository` と `source`。上流のノード ID。両方あるときは `repository:source`、`repository` だけならその文字列、`source` だけならその文字列
 
-辺はローカルから上流へ向き、relation は `vendorsFrom` です。`commit`、`ref`、`sha256`、`blob_sha` は読みません。出力のノードと辺は ID で並べます。実在の lock ファイルは同梱せず、`tests/fixtures/vendor-lock.json` は合成した例です。
+辺はローカルから上流へ向き、relation は `vendorsFrom` です。`commit`、`ref`、`sha256`、`blob_sha` は読みません。出力のノードと辺は ID で並べます。`tests/fixtures/vendor-lock.json` は合成した例です。
+
+## vendor-lock の影響範囲
+
+`impact` は、複数の `vendor-lock/1` をリポジトリごとに読み、`vendorsFrom` を上流から下流へ辿ります。各ロックは `--lock リポジトリ=パス` です。引数が無いときは環境変数 `TOPONTOLOGY_LOCKS` を、改行またはカンマで区切った `リポジトリ=パス` として読みます。前後の空白は除き、空なら未設定です。引数があるときは環境変数を使いません。
+
+ロックを持つリポジトリのコピーは `リポジトリ:destination` です。別のロックが `repository:source` でそのファイルを指すと、ホップがつながります。上流の各 `リポジトリ:ファイル` について、到達する下流リポジトリの数、そこまでの最短ホップ、その先へファイルを渡している子リポジトリ（中継）を返します。数の多い順、同じなら ID の順です。同じ入力は同じバイト列です。
+
+一つのコピーが辿れる根がちょうど一つで、閉路が無いとき、`policy` の `single-canonical-source` は holds です。中継があっても根が一つなら holds のまま、中継は `relays` に出します。根が二つ、または閉路があるコピーは violations です。
+
+到達の距離は `collections.deque`、閉路の有無は `graphlib.TopologicalSorter` です。ONTO の `knowledgegraph.py` には、この逆向きの到達を返す関数はまだありません。
+
+```sh
+PYTHONPATH=../ONTO python -S topontology.py impact \
+  --lock myon-bioinformatics/Aoi=vendor.lock.json \
+  --lock myon-bioinformatics/QueRyu=queryu/vendor.lock.json
+```
+
+出力は `--format text` または json です。`--json` は `--format json` の省略で、`--format canonical` は json と同じバイト列です。出自には各ロックのパスと sha256、ツールの版が入ります。
+
+`tests/fixtures/aoi-locks/` は、Aoi の `320126983a992e30730350c5e9b0e4051c0d33d4` にある vendor.lock.json から、グラフが使う `repository`、`source`、`destination` だけを写したものです。子リポジトリの名前は同じコミットの `child-heads.json` です。出自は `provenance.json` にあります。この写しでは `fleet_check.py` が 6 リポジトリへ届き、いちばん広く届きます。

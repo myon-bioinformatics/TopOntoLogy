@@ -1,0 +1,320 @@
+{
+  "policy": {
+    "holds": true,
+    "name": "single-canonical-source",
+    "violations": []
+  },
+  "provenance": {
+    "locks": [
+      {
+        "path": "tests/fixtures/aoi-locks/aoi.json",
+        "repository": "myon-bioinformatics/Aoi",
+        "sha256": "db7b3287d096b021642e1f2ac7f757c480343f222bda0d631fe8c652857cc776"
+      },
+      {
+        "path": "tests/fixtures/aoi-locks/blueprobe.json",
+        "repository": "myon-bioinformatics/BlueProbe",
+        "sha256": "bfa8cf9f21806df279f1b0f22c6027e1d21c1e35abf17f79be6abcf669787eee"
+      },
+      {
+        "path": "tests/fixtures/aoi-locks/dragowing.json",
+        "repository": "myon-bioinformatics/DRAgoWing",
+        "sha256": "a36b6cb7bb6c868ab9e5ba56b931f44f34e218327aa70abab47becd5f04e0a2b"
+      },
+      {
+        "path": "tests/fixtures/aoi-locks/nagoyaction.json",
+        "repository": "myon-bioinformatics/NagoyAction",
+        "sha256": "aa10dce483837b2549c5c15ad98602e505c4a489d4196804da77ca8b87dbc9b9"
+      },
+      {
+        "path": "tests/fixtures/aoi-locks/pythdragoras.json",
+        "repository": "myon-bioinformatics/PythDRagoras",
+        "sha256": "728ac28455ccf701852b2242b241fa17748fe612909dcc219bac17c2380ff76f"
+      },
+      {
+        "path": "tests/fixtures/aoi-locks/queryu.json",
+        "repository": "myon-bioinformatics/QueRyu",
+        "sha256": "04690bc7fb877d80fb3d7443e2a5e8f32a7b097fbbe3f2223608be620242cd13"
+      },
+      {
+        "path": "tests/fixtures/aoi-locks/sakanalytics.json",
+        "repository": "myon-bioinformatics/SakAnalytics",
+        "sha256": "728ac28455ccf701852b2242b241fa17748fe612909dcc219bac17c2380ff76f"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "downstream_repos": 6,
+      "id": "myon-bioinformatics/myon-bioinformatics:fleet_check.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/BlueProbe"
+        },
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/DRAgoWing"
+        },
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/NagoyAction"
+        },
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/PythDRagoras"
+        },
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/QueRyu"
+        },
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/SakAnalytics"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "fleet_check.py"
+    },
+    {
+      "downstream_repos": 4,
+      "id": "myon-bioinformatics/myon-bioinformatics:py_launch.cjs",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        },
+        {
+          "depth": 2,
+          "repository": "myon-bioinformatics/NagoyAction"
+        },
+        {
+          "depth": 2,
+          "repository": "myon-bioinformatics/PythDRagoras"
+        },
+        {
+          "depth": 2,
+          "repository": "myon-bioinformatics/SakAnalytics"
+        }
+      ],
+      "relays": [
+        "myon-bioinformatics/Aoi"
+      ],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "py_launch.cjs"
+    },
+    {
+      "downstream_repos": 3,
+      "id": "myon-bioinformatics/Aoi:vendor/py_launch.cjs",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/NagoyAction"
+        },
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/PythDRagoras"
+        },
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/SakAnalytics"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/Aoi",
+      "source": "vendor/py_launch.cjs"
+    },
+    {
+      "downstream_repos": 3,
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/numpy_min.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        },
+        {
+          "depth": 2,
+          "repository": "myon-bioinformatics/DRAgoWing"
+        },
+        {
+          "depth": 2,
+          "repository": "myon-bioinformatics/QueRyu"
+        }
+      ],
+      "relays": [
+        "myon-bioinformatics/Aoi"
+      ],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/stdlib_min/numpy_min.py"
+    },
+    {
+      "downstream_repos": 2,
+      "id": "myon-bioinformatics/Aoi:shrink/numpy_min.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/DRAgoWing"
+        },
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/QueRyu"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/Aoi",
+      "source": "shrink/numpy_min.py"
+    },
+    {
+      "downstream_repos": 2,
+      "id": "myon-bioinformatics/markdown:markdown.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        },
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/DRAgoWing"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/markdown",
+      "source": "markdown.py"
+    },
+    {
+      "downstream_repos": 1,
+      "id": "myon-bioinformatics/Aoi:LICENSE",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/NagoyAction"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/Aoi",
+      "source": "LICENSE"
+    },
+    {
+      "downstream_repos": 1,
+      "id": "myon-bioinformatics/markdown:LICENSE",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/markdown",
+      "source": "LICENSE"
+    },
+    {
+      "downstream_repos": 1,
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/biopython_min.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/stdlib_min/biopython_min.py"
+    },
+    {
+      "downstream_repos": 1,
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/httpx_min.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/stdlib_min/httpx_min.py"
+    },
+    {
+      "downstream_repos": 1,
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/numpy_linalg_min.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/stdlib_min/numpy_linalg_min.py"
+    },
+    {
+      "downstream_repos": 1,
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/plotly_min.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/DRAgoWing"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/stdlib_min/plotly_min.py"
+    },
+    {
+      "downstream_repos": 1,
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/polars_min.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/stdlib_min/polars_min.py"
+    },
+    {
+      "downstream_repos": 1,
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/requests_min.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/stdlib_min/requests_min.py"
+    },
+    {
+      "downstream_repos": 1,
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/stdlib_min/tqdm_min.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/stdlib_min/tqdm_min.py"
+    },
+    {
+      "downstream_repos": 1,
+      "id": "myon-bioinformatics/myon-bioinformatics:tools/uv_tool_build.py",
+      "reached": [
+        {
+          "depth": 1,
+          "repository": "myon-bioinformatics/Aoi"
+        }
+      ],
+      "relays": [],
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "tools/uv_tool_build.py"
+    }
+  ],
+  "tool": {
+    "name": "topontology",
+    "version": "0.3.0"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "vendor-lock/1",
+  "files": [
+    {
+      "repository": "myon-bioinformatics/Aoi",
+      "source": "LICENSE",
+      "destination": "vendor/aoi-LICENSE"
+    },
+    {
+      "repository": "myon-bioinformatics/Aoi",
+      "source": "vendor/py_launch.cjs",
+      "destination": "vendor/py_launch.cjs"
+    },
+    {
+      "repository": "myon-bioinformatics/myon-bioinformatics",
+      "source": "fleet_check.py",
+      "destination": "vendor/fleet_check.py"
+    }
+  ]
+}

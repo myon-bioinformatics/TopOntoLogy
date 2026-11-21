@@ -7,7 +7,8 @@ import json
 import os
 import statistics
 import sys
-from collections import defaultdict
+from collections import defaultdict, deque
+from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 
 from knowledgegraph import graph_mermaid, relation_cycles, topological_order
@@ -490,6 +491,13 @@ def anomaly_report(graph, classes, *, cycle_limit=5):
 VENDOR_LOCK_SCHEMA = "vendor-lock/1"
 _VENDOR_RELATION = "vendorsFrom"
 
+# taxontoy-relations/1 and /2 keep profiles beside table metadata.
+# `properties` is metadata added in /2. It is not a profile name.
+_NON_PROFILE_KEYS = {
+    "taxontoy-relations/1": frozenset({"schema", "direction", "excluded"}),
+    "taxontoy-relations/2": frozenset({"schema", "direction", "excluded", "properties"}),
+}
+
 
 def _optional_lock_string(entry, key, index):
     """Return a stripped string, or empty when the key is absent.
@@ -872,10 +880,23 @@ def _load_graph(path, graph_format="nodes-edges"):
 
 
 def _load_classes(path, profile):
+    """Return the relation-to-class map named ``profile``.
+
+    A table without ``schema`` is a map of profile name to that map, which is
+    how ``taxontoy-relations`` looked before it grew metadata keys. ``/1`` and
+    ``/2`` keep ``audit``, ``concepts``, and ``cases`` in that shape, and put
+    ``direction``, ``excluded``, and (in ``/2``) ``properties`` beside them.
+    Those metadata keys are dicts, so a bare ``profile in table`` check treats
+    ``properties`` as a profile. They are rejected here.
+    """
     table = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(table, dict) or profile not in table or not isinstance(table[profile], dict):
+    if not isinstance(table, dict):
         raise ValueError(f"unknown profile: {profile}")
-    return table[profile]
+    reserved = _NON_PROFILE_KEYS.get(table.get("schema"), ())
+    found = table.get(profile)
+    if profile in reserved or not isinstance(found, dict):
+        raise ValueError(f"unknown profile: {profile}")
+    return found
 
 
 def _env_text(name):
@@ -954,6 +975,42 @@ def _snapshots_from_env(text):
     return snapshots
 
 
+def _parse_lock_token(token):
+    text = token.strip()
+    if not text:
+        return None
+    repository, separator, path = text.partition("=")
+    repository, path = repository.strip(), path.strip()
+    if not separator or not repository or not path:
+        raise ValueError("lock must be REPOSITORY=PATH")
+    return repository, Path(path)
+
+
+def _locks_from_env(text):
+    locks = []
+    for piece in text.replace(",", "\n").splitlines():
+        item = _parse_lock_token(piece)
+        if item is not None:
+            locks.append(item)
+    return locks
+
+
+def _resolve_locks(raw_args):
+    if raw_args:
+        parsed = []
+        for token in raw_args:
+            item = _parse_lock_token(token)
+            if item is not None:
+                parsed.append(item)
+        if not parsed:
+            raise ValueError("lock must be REPOSITORY=PATH")
+        return parsed
+    env = _env_text("TOPONTOLOGY_LOCKS")
+    if not env:
+        return []
+    return _locks_from_env(env)
+
+
 def _resolve_snapshots(raw_args):
     if raw_args:
         parsed = []
@@ -968,6 +1025,212 @@ def _resolve_snapshots(raw_args):
     if not env:
         return []
     return _snapshots_from_env(env)
+
+
+def _vendor_copies(locks):
+    """Flatten vendor-lock documents into copy records.
+
+    Each lock is ``{"repository", "document"}``. The copy id is
+    ``owner:destination``, which is the id another lock uses when it vendors
+    that file (``repository:source`` from ``graph_from_vendor_lock``).
+    """
+    if not locks:
+        raise ValueError("impact needs at least 1 lock")
+    seen = set()
+    copies = []
+    for lock in locks:
+        repository = lock["repository"]
+        if repository in seen:
+            raise ValueError(f"duplicate lock repository: {repository}")
+        seen.add(repository)
+        for edge in graph_from_vendor_lock(lock["document"])["edges"]:
+            copies.append({
+                "repository": repository,
+                "path": edge["source"],
+                "upstream": edge["target"],
+                "id": f"{repository}:{edge['source']}",
+            })
+    return copies
+
+
+def _vendor_forward(copies):
+    """Map each node to the upstream nodes it vendors from."""
+    forward = defaultdict(set)
+    for copy in copies:
+        forward.setdefault(copy["upstream"], set())
+        forward[copy["id"]].add(copy["upstream"])
+    return forward
+
+
+def _graph_cycle(forward):
+    """The cycle ``graphlib`` reports, or None when the vendorsFrom graph is a DAG."""
+    sorter = TopologicalSorter({
+        node: sorted(preds, key=node_sort_key) for node, preds in forward.items()
+    })
+    try:
+        sorter.prepare()
+    except CycleError as error:
+        return list(error.args[1])
+    return None
+
+
+def _walk_roots(forward):
+    """Roots reachable from each node, and nodes that can reach a cycle.
+
+    A gray node is on the stack, so the edge back to it is a cycle. The roots
+    of a cyclic node omit whatever sits behind that back edge.
+    """
+    color = {}
+    memo = {}
+    cyclic = set()
+
+    def walk(node):
+        if color.get(node) == 2:
+            return memo[node]
+        if color.get(node) == 1:
+            cyclic.add(node)
+            return frozenset(), True
+        color[node] = 1
+        ups = forward[node]
+        if not ups:
+            found, saw = frozenset([node]), False
+        else:
+            acc, saw = set(), False
+            for item in ups:
+                item_roots, child_saw = walk(item)
+                acc |= item_roots
+                if child_saw:
+                    saw = True
+            found = frozenset(acc)
+        if saw:
+            cyclic.add(node)
+        color[node] = 2
+        memo[node] = (found, saw)
+        return memo[node]
+
+    for node in forward:
+        walk(node)
+    return {node: memo[node][0] for node in memo}, cyclic
+
+
+def _violations(copies, roots, cyclic):
+    seen = set()
+    violations = []
+    for copy in copies:
+        ident = copy["id"]
+        if ident in seen:
+            continue
+        seen.add(ident)
+        found = roots[ident]
+        on_cycle = ident in cyclic
+        if on_cycle or len(found) != 1:
+            violations.append({
+                "repository": copy["repository"],
+                "path": copy["path"],
+                "roots": sorted(found, key=node_sort_key),
+                "cycle": on_cycle,
+            })
+    violations.sort(key=lambda item: (item["repository"], item["path"]))
+    return {
+        "name": "single-canonical-source",
+        "holds": not violations,
+        "violations": violations,
+    }
+
+
+def _policy(copies):
+    """Each copy should trace to one acyclic root.
+
+    A relay does not by itself break the policy: the bytes can still have a
+    single root. Two roots, or a cycle, do. ``graphlib`` names one cycle;
+    the walk marks every node that can reach a cycle, including that one.
+    """
+    forward = _vendor_forward(copies)
+    cycle = _graph_cycle(forward)
+    roots, cyclic = _walk_roots(forward)
+    if cycle is not None:
+        cyclic.update(cycle)
+    return _violations(copies, roots, cyclic)
+
+
+def _downstream(source, children, copy_owner):
+    """Shortest hop from ``source`` to each repo that vendors it, and the relays.
+
+    ``children`` maps an upstream id to the copies that declare ``vendorsFrom``
+    toward it, so the walk is the reverse of the stored edge. Distances use
+    ``collections.deque``. ONTO's knowledgegraph helpers do not expose this
+    reverse reachability; ``graphlib`` is used separately to judge cycles.
+    """
+    depth = {}
+    dist = {source: 0}
+    seen = {source}
+    queue = deque([source])
+    while queue:
+        node = queue.popleft()
+        for copy in children.get(node, ()):
+            hop = dist[node] + 1
+            repo = copy["repository"]
+            if repo not in depth:
+                depth[repo] = hop
+            child = copy["id"]
+            if child in seen:
+                continue
+            seen.add(child)
+            dist[child] = hop
+            queue.append(child)
+    relays = set()
+    for node in seen:
+        owner = copy_owner.get(node)
+        if owner is None or owner not in depth:
+            continue
+        for copy in children.get(node, ()):
+            if copy["repository"] != owner:
+                relays.add(owner)
+                break
+    return depth, relays
+
+
+def _source_record(ident, depth, relays):
+    repository, separator, source = ident.partition(":")
+    if not separator:
+        repository, source = ident, ""
+    reached = [
+        {"repository": repo, "depth": depth[repo]}
+        for repo in sorted(depth, key=lambda repo: (depth[repo], repo))
+    ]
+    return {
+        "id": ident,
+        "repository": repository,
+        "source": source,
+        "downstream_repos": len(reached),
+        "reached": reached,
+        "relays": sorted(relays),
+    }
+
+
+def _sources(copies):
+    children = defaultdict(list)
+    for copy in copies:
+        children[copy["upstream"]].append(copy)
+    copy_owner = {copy["id"]: copy["repository"] for copy in copies}
+    rows = [
+        _source_record(source, *_downstream(source, children, copy_owner))
+        for source in children
+    ]
+    rows.sort(key=lambda row: (-row["downstream_repos"], node_sort_key(row["id"])))
+    return rows
+
+
+def impact_report(locks):
+    """Reverse walk of a fleet of vendor-lock/1 documents.
+
+    ``locks`` is a list of ``{"repository", "document"}``. For each upstream
+    ``repository:source``, report how many downstream repositories a change
+    reaches, the shortest hop to each, and which of those repositories also
+    pass the file onward (relays).
+    """
+    copies = _vendor_copies(locks)
+    return {"sources": _sources(copies), "policy": _policy(copies)}
 
 
 def _series_text(body):
@@ -1047,6 +1310,78 @@ def series_main(argv):
     return 0
 
 
+def _impact_text(body):
+    lines = [f"tool: {body['tool']['name']} {body['tool']['version']}"]
+    for lock in body["provenance"]["locks"]:
+        lines.append(f"lock {lock['repository']}: {lock['path']} sha256:{lock['sha256']}")
+    if not body["sources"]:
+        lines.append("sources: (none)")
+    for source in body["sources"]:
+        relays = ", ".join(source["relays"]) if source["relays"] else "(none)"
+        lines.append(
+            f"source {source['id']} downstream_repos={source['downstream_repos']} relays={relays}"
+        )
+        by_depth = defaultdict(list)
+        for item in source["reached"]:
+            by_depth[item["depth"]].append(item["repository"])
+        for depth in sorted(by_depth):
+            lines.append(f"  depth {depth}: {', '.join(by_depth[depth])}")
+    policy = body["policy"]
+    if policy["holds"]:
+        lines.append("policy: single-canonical-source holds")
+    else:
+        lines.append(f"policy: single-canonical-source violations={len(policy['violations'])}")
+        for item in policy["violations"]:
+            roots = ", ".join(item["roots"]) if item["roots"] else "(none)"
+            cycle = "yes" if item["cycle"] else "no"
+            lines.append(
+                f"  violation {item['repository']} {item['path']} roots={roots} cycle={cycle}"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def impact_main(argv):
+    parser = argparse.ArgumentParser(
+        prog=f"{TOOL_NAME} impact",
+        description="Report how far each vendored file reaches downstream.",
+    )
+    parser.add_argument("--lock", action="append", default=[], metavar="REPOSITORY=PATH",
+                        help="vendor-lock/1 owned by REPOSITORY. Overrides TOPONTOLOGY_LOCKS")
+    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
+    parser.add_argument("--json", action="store_true", help="shorthand for --format json")
+    parser.add_argument("-o", "--output", type=Path)
+    args = parser.parse_args(argv)
+    fmt = _resolve_format(args)
+    loaded = []
+    for repository, path in _resolve_locks(args.lock):
+        loaded.append({
+            "repository": repository,
+            "path": path,
+            "document": json.loads(path.read_text(encoding="utf-8")),
+        })
+    body = impact_report(loaded)
+    provenance = {
+        "locks": sorted(
+            (
+                {
+                    "repository": item["repository"],
+                    "path": item["path"].as_posix(),
+                    "sha256": file_record(item["path"])["sha256"],
+                }
+                for item in loaded
+            ),
+            key=lambda item: (item["repository"], item["path"]),
+        ),
+    }
+    document_body = document(body, provenance)
+    text = _impact_text(document_body) if fmt == "text" else dump_json(document_body)
+    if args.output is None:
+        sys.stdout.write(text)
+    else:
+        args.output.write_text(text, encoding="utf-8")
+    return 0
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -1055,6 +1390,12 @@ def main(argv=None):
     if argv[:1] == ["series"]:
         try:
             return series_main(argv[1:])
+        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as error:
+            print(error, file=sys.stderr)
+            return 1
+    if argv[:1] == ["impact"]:
+        try:
+            return impact_main(argv[1:])
         except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as error:
             print(error, file=sys.stderr)
             return 1
