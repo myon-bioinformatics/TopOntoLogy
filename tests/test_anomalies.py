@@ -269,6 +269,42 @@ class AnomalyCliTests(unittest.TestCase):
         self.assertIn("reason: zero variance", text)
         self.assertIn("reason: fewer than 3 data points", text)
 
+    def test_anomalies_ignore_unclassified_relations(self):
+        # tests/fixtures/graph.json has a hasName edge that is not in classes.json.
+        code, out, err = run_cli(
+            "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+            "--anomalies", "--format", "json")
+        self.assertEqual(code, 0, err)
+        body = json.loads(out)
+        self.assertEqual(body["unclassified_edges"], 1)
+        self.assertEqual(set(body["anomalies"]["relations"]), {"narrower", "similarTo"})
+        self.assertNotIn("hasName", body["anomalies"]["relations"])
+        self.assertEqual(set(body["anomalies"]["classes"]), {"hierarchy", "similarity"})
+        with tempfile.TemporaryDirectory() as tmp:
+            classified = Path(tmp) / "classified.json"
+            graph = json.loads((ROOT / "tests/fixtures/graph.json").read_text(encoding="utf-8"))
+            graph["edges"] = [
+                edge for edge in graph["edges"]
+                if edge.get("kind", edge.get("relation")) in {"narrower", "similarTo"}
+            ]
+            classified.write_text(json.dumps(graph), encoding="utf-8")
+            code, only, err = run_cli(
+                str(classified), "tests/fixtures/classes.json", "demo",
+                "--anomalies", "--format", "json")
+            self.assertEqual(code, 0, err)
+            only_body = json.loads(only)
+            self.assertEqual(only_body["unclassified_edges"], 0)
+            self.assertEqual(body["anomalies"], only_body["anomalies"])
+        code, text, err = run_cli(
+            "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
+            "--anomalies", "--format", "text")
+        self.assertEqual(code, 0, err)
+        self.assertIn("unclassified_edges: 1", text)
+        self.assertIn("  relations:", text)
+        self.assertIn("    narrower:", text)
+        self.assertIn("    similarTo:", text)
+        self.assertNotIn("hasName", text)
+
     def test_merge_output_names_both_inputs(self):
         code, out, err = run_cli(
             "tests/fixtures/graph.json", "tests/fixtures/classes.json", "demo",
