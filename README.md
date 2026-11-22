@@ -105,7 +105,7 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `onto_path.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99`、OnTautoLogy は main の first-parent マージ `86821d7bd0406b07678803c2d8a61f826133f304` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` と `OTL_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.8.0 です。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `onto_path.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99`、OnTautoLogy は main の first-parent マージ `86821d7bd0406b07678803c2d8a61f826133f304` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` と `OTL_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.9.0 です。
 
 ## 時点の並び
 

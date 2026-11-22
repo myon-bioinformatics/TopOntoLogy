@@ -10,6 +10,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
+import _clear_roots
 import onto_path
 import topontology
 import topology

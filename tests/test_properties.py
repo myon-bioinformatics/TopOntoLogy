@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import _clear_roots
 import topontology
 from test_series import load_mutant
 from test_topontology import run_cli
@@ -313,6 +314,33 @@ class RegressionTests(unittest.TestCase):
         )
         self.assertEqual(mutant._regression_status({"regression": {"regressed": [{}]}}, True), 0)
 
+    def test_an_empty_baseline_report_is_killed(self):
+        mutant = load_mutant(
+            '    return document["properties"]\n',
+            "    return []\n",
+        )
+        document = {"properties": [{
+            "scope": "class",
+            "name": "hierarchy",
+            "property": "acyclic",
+            "holds": True,
+        }]}
+        current = [{
+            "scope": "class",
+            "name": "hierarchy",
+            "property": "acyclic",
+            "holds": False,
+            "witness": {"nodes": ["A", "A"], "edges": []},
+        }]
+        read = topontology._properties_from_report(document)
+        self.assertTrue(read[0]["holds"])
+        self.assertEqual(
+            topontology.property_regression(current, read)["regressed"][0]["name"],
+            "hierarchy",
+        )
+        self.assertEqual(mutant._properties_from_report(document), [])
+        self.assertEqual(mutant.property_regression(current, mutant._properties_from_report(document))["regressed"], [])
+
 
 class PropertiesCliTests(unittest.TestCase):
     def _files(self, tmp, graph, table):
@@ -440,6 +468,20 @@ class PropertiesCliTests(unittest.TestCase):
                 "--baseline-report", str(report), "--fail-on-regression")
             self.assertEqual(code, 0, err)
             self.assertEqual(json.loads(out)["regression"]["regressed"], [])
+            held = _write(root, "held.json", {"properties": [{
+                "scope": "class",
+                "name": "hierarchy",
+                "property": "acyclic",
+                "holds": True,
+                "status": "holds",
+                "witness": None,
+            }]})
+            code, out, err = run_cli(
+                "properties", str(after), str(table), "concepts",
+                "--baseline-report", str(held), "--fail-on-regression", "--json")
+            self.assertEqual(code, 1, err)
+            self.assertEqual(err, "")
+            self.assertEqual(json.loads(out)["regression"]["regressed"][0]["name"], "hierarchy")
             code, out, err = run_cli(
                 "properties", str(after), str(table), "concepts", "--fail-on-regression")
             self.assertEqual(code, 1)

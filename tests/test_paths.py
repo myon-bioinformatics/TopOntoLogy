@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
+import _clear_roots
 import onto_path
 import topontology
 from test_topontology import ROOT, _traced_command, run_cli
@@ -402,6 +403,38 @@ class CliResolutionTests(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertIn("ONTO_ROOT", err)
             self.assertNotIn("Traceback", err)
+
+    def test_a_wrong_root_env_does_not_block_import(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = str(Path(tmp) / "bad")
+            Path(bad).mkdir()
+            env = os.environ.copy()
+            env.pop("COVERAGE_PROCESS_START", None)
+            env.update({
+                onto_path.ONTO_ENV: bad,
+                onto_path.TAXONTOY_ENV: bad,
+                onto_path.OTL_ENV: bad,
+            })
+            completed = subprocess.run(
+                [sys.executable, "-S", "-c",
+                 "import os, sys\n"
+                 "os.environ['ONTO_ROOT'] = sys.argv[1]\n"
+                 "os.environ['TAXONTOY_ROOT'] = sys.argv[1]\n"
+                 "os.environ['OTL_ROOT'] = sys.argv[1]\n"
+                 "sys.path.insert(0, sys.argv[2])\n"
+                 "import _clear_roots\n"
+                 "import topontology\n"
+                 "print(topontology.__version__)\n",
+                 bad, str(ROOT / "tests")],
+                cwd=ROOT,
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn(topontology.__version__, completed.stdout)
+        self.assertNotIn("Traceback", completed.stderr)
 
     def test_classification_option_beats_the_middle_positional(self):
         code, out, err = run_cli(

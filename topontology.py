@@ -90,7 +90,7 @@ def _load_otl_api():
     transitivity_witness,
 ) = _load_otl_api()
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 TOOL_NAME = "topontology"
 
 _GRAPH_FORMATS = ("nodes-edges", "vendor-lock", "aoi-siblings", "py-imports")
