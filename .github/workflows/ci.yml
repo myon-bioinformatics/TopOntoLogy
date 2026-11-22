@@ -36,12 +36,12 @@ jobs:
           path: TaxOntOy
           persist-credentials: false
           fetch-depth: 1
-      # OnTautoLogy main, first-parent merge (Merge pull request #41).
-      # Parents: 1909829db345870361ad5c6368bdf2adc199459c 941ee6f7c9bcff32d4808f493497ae048b74a01d
+      # OnTautoLogy main, first-parent merge (Merge pull request #43).
+      # Parents: 90be7f5bafa7deff0c84388ca8404345fe33ae2e e77454ce5db58e1ea6bdf3ca342e851cc5018d04
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/OnTautoLogy
-          ref: 59edb8f13e4f0d2a12f89b9d912cbe4fdd1abd83
+          ref: 86821d7bd0406b07678803c2d8a61f826133f304
           path: OnTautoLogy
           persist-credentials: false
           fetch-depth: 1
