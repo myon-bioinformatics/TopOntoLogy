@@ -3,11 +3,16 @@
 単独の checkout でも、親リポジトリの子や孫として埋め込まれていても、
 ONTO と TaxOntOy と OnTautoLogy の場所は onto_path が決める。出どころが違えば黙って続けない。
 """
+import os
 from pathlib import Path
 
 import pytest
 
 import onto_path
+
+# 誤った ONTO_ROOT などが、隣の checkout より先に import を止めないようにする。
+for _name in (onto_path.ONTO_ENV, onto_path.TAXONTOY_ENV, onto_path.OTL_ENV):
+    os.environ.pop(_name, None)
 
 # 裸の pytest が、隣の checkout や build をこのリポジトリの検査として集めない。
 collect_ignore = ["ONTO", "TaxOntOy", "OnTautoLogy", "otl", "build"]

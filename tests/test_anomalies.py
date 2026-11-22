@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import _clear_roots
 import topontology
 from test_topontology import ROOT, run_cli
 

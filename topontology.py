@@ -58,9 +58,11 @@ def _load_otl_api():
         from ontautology_graphs import (
             collapse_reciprocal,
             cycle_basis,
+            directed_cycle_witness,
             first_parent_lag,
             set_cover_min,
             single_points_of_failure,
+            transitivity_witness,
         )
     except ImportError as error:
         if __name__ == "__main__":
@@ -70,21 +72,25 @@ def _load_otl_api():
     return (
         collapse_reciprocal,
         cycle_basis,
+        directed_cycle_witness,
         first_parent_lag,
         set_cover_min,
         single_points_of_failure,
+        transitivity_witness,
     )
 
 
 (
     collapse_reciprocal,
     cycle_basis,
+    directed_cycle_witness,
     first_parent_lag,
     set_cover_min,
     single_points_of_failure,
+    transitivity_witness,
 ) = _load_otl_api()
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 TOOL_NAME = "topontology"
 
 _GRAPH_FORMATS = ("nodes-edges", "vendor-lock", "aoi-siblings", "py-imports")
@@ -2273,6 +2279,361 @@ def _class_declares_acyclic(table, category):
     return isinstance(body.get("acyclic"), dict)
 
 
+_CLASS_PROPERTIES = ("acyclic", "symmetric", "transitive")
+_RELATION_PROPERTIES = ("acyclic", "disjoint_with", "inverse_of", "symmetric", "transitive")
+_NOT_APPLICABLE = "endpoints and relations must be non-empty strings"
+
+
+def _declaration_rows(table, classes):
+    """Declared properties for this profile.
+
+    A string-valued ``properties`` object is a profile, not declarations.
+    Only classes and relations in ``classes`` are included. ``acyclic``,
+    ``symmetric``, and ``transitive`` count when the value is an object.
+    ``inverse_of`` is one partner. ``disjoint_with`` is one row per partner.
+    """
+    props = table.get("properties") if isinstance(table, dict) else None
+    if not isinstance(props, dict) or _properties_role(props) == "profile":
+        return []
+    class_names = set(classes.values())
+    relation_names = set(classes)
+    rows = []
+    bodies = props.get("classes")
+    if isinstance(bodies, dict):
+        for name in sorted(bodies):
+            body = bodies[name]
+            if name not in class_names or not isinstance(body, dict):
+                continue
+            for prop in _CLASS_PROPERTIES:
+                if isinstance(body.get(prop), dict):
+                    rows.append({"scope": "class", "name": name, "property": prop})
+    relations = props.get("relations")
+    if isinstance(relations, dict):
+        for name in sorted(relations):
+            body = relations[name]
+            if name not in relation_names or not isinstance(body, dict):
+                continue
+            for prop in _RELATION_PROPERTIES:
+                value = body.get(prop)
+                if prop == "disjoint_with":
+                    rows.extend(_disjoint_rows(name, value))
+                elif prop == "inverse_of":
+                    if value is None:
+                        continue
+                    rows.append({
+                        "scope": "relation",
+                        "name": name,
+                        "property": prop,
+                        "partner": _partner_name(value, f"{name} inverse_of"),
+                    })
+                elif isinstance(value, dict):
+                    rows.append({"scope": "relation", "name": name, "property": prop})
+    return rows
+
+
+def _partner_name(value, label):
+    if not isinstance(value, dict):
+        raise ValueError(f"{label} must be an object")
+    name = value.get("relation")
+    if not isinstance(name, str) or not name or name != name.strip():
+        raise ValueError(f"{label} needs a relation name")
+    return name
+
+
+def _disjoint_rows(name, value):
+    if value is None:
+        return []
+    if not isinstance(value, list) or not value:
+        raise ValueError(f"{name} disjoint_with must be a non-empty array")
+    rows = []
+    for item in value:
+        partner = _partner_name(item, f"{name} disjoint_with")
+        rows.append({
+            "scope": "relation",
+            "name": name,
+            "property": "disjoint_with",
+            "partner": partner,
+        })
+    return rows
+
+
+def _edges_of_class(graph, classes, category):
+    chosen = []
+    for edge in graph["edges"]:
+        relation = edge_relation(edge)
+        if relation in classes and classes[relation] == category:
+            chosen.append(edge)
+    return chosen
+
+
+def _edges_of_relation(graph, name):
+    return [edge for edge in graph["edges"] if edge_relation(edge) == name]
+
+
+def _prepared_edges(edges):
+    prepared = []
+    for edge in edges:
+        otl = _otl_edge(edge)
+        if otl is None:
+            return None
+        prepared.append(otl)
+    return prepared
+
+
+def _projected_edge(edge):
+    return {"source": edge["source"], "relation": edge_relation(edge), "target": edge["target"]}
+
+
+def _witness_edge(edge):
+    source, target = _ends(edge)
+    return {
+        "nodes": [source, target],
+        "edges": [_projected_edge(edge)],
+    }
+
+
+def _edge_order(edge):
+    source, target = _ends(edge)
+    return (str(edge_relation(edge)), node_sort_key(source), node_sort_key(target))
+
+
+def _pair_map(edges):
+    found = {}
+    for edge in edges:
+        source, target = _ends(edge)
+        found.setdefault((source, target), edge)
+    return found
+
+
+def _symmetry_witness(edges):
+    """One edge whose reverse is absent. A self-loop is its own reverse."""
+    pairs = _pair_map(edges)
+    missing = []
+    for (source, target), edge in pairs.items():
+        if source != target and (target, source) not in pairs:
+            missing.append(edge)
+    if not missing:
+        return None
+    missing.sort(key=_edge_order)
+    return _witness_edge(missing[0])
+
+
+def _inverse_witness(subject_edges, partner_edges):
+    """One edge that has no reverse in the other relation."""
+    subject_pairs = _pair_map(subject_edges)
+    partner_pairs = _pair_map(partner_edges)
+    missing = []
+    for (source, target), edge in subject_pairs.items():
+        if (target, source) not in partner_pairs:
+            missing.append(edge)
+    for (source, target), edge in partner_pairs.items():
+        if (target, source) not in subject_pairs:
+            missing.append(edge)
+    if not missing:
+        return None
+    missing.sort(key=_edge_order)
+    return _witness_edge(missing[0])
+
+
+def _nodes_of(edges):
+    found = set()
+    for edge in edges:
+        source, target = _ends(edge)
+        found.add(source)
+        found.add(target)
+    return found
+
+
+def _disjoint_witness(subject_edges, partner_edges):
+    """One shared endpoint and one incident edge from each relation."""
+    left = _nodes_of(subject_edges)
+    right = _nodes_of(partner_edges)
+    shared = set(left) & set(right)
+    if not shared:
+        return None
+    node = min(shared, key=node_sort_key)
+    left_edges = [edge for edge in subject_edges if node in _ends(edge)]
+    right_edges = [edge for edge in partner_edges if node in _ends(edge)]
+    left_edges.sort(key=_edge_order)
+    right_edges.sort(key=_edge_order)
+    return {
+        "nodes": [node],
+        "edges": [_projected_edge(left_edges[0]), _projected_edge(right_edges[0])],
+    }
+
+
+def _cycle_witness(edges):
+    prepared = _prepared_edges(edges)
+    if prepared is None:
+        return _NOT_APPLICABLE
+    found = directed_cycle_witness({"edges": prepared})
+    if found is None:
+        return None
+    return {
+        "nodes": list(found["nodes"]),
+        "edges": [_projected_edge(edge) for edge in found["edges"]],
+    }
+
+
+def _transitive_witness(edges):
+    prepared = _prepared_edges(edges)
+    if prepared is None:
+        return _NOT_APPLICABLE
+    found = transitivity_witness(prepared)
+    if found is None:
+        return None
+    return {
+        "nodes": list(found["nodes"]),
+        "edges": [_projected_edge(edge) for edge in found["edges"]],
+        "missing": {"source": found["missing"]["source"], "target": found["missing"]["target"]},
+    }
+
+
+def _property_result(spec, witness):
+    row = {"scope": spec["scope"], "name": spec["name"], "property": spec["property"]}
+    if "partner" in spec:
+        row["partner"] = spec["partner"]
+    if witness == _NOT_APPLICABLE:
+        row["holds"] = None
+        row["status"] = "not applicable"
+        row["witness"] = None
+        row["reason"] = _NOT_APPLICABLE
+        return row
+    row["holds"] = witness is None
+    row["status"] = "holds" if witness is None else "fails"
+    row["witness"] = witness
+    return row
+
+
+def _subject_edges(graph, classes, spec):
+    if spec["scope"] == "class":
+        return _edges_of_class(graph, classes, spec["name"])
+    return _edges_of_relation(graph, spec["name"])
+
+
+def evaluate_properties(graph, classes, table):
+    """Hold or fail each declared property, with a witness subgraph on failure.
+
+    ``acyclic`` uses ``directed_cycle_witness`` and ``transitive`` uses
+    ``transitivity_witness``. Symmetric, inverse, and disjoint failures are one
+    counterexample edge, or one shared endpoint for disjoint relations. The
+    stored edges are used, not the folded reciprocal pairs.
+    """
+    rows = []
+    for spec in _declaration_rows(table, classes):
+        subject = _subject_edges(graph, classes, spec)
+        prop = spec["property"]
+        if prop == "acyclic":
+            witness = _cycle_witness(subject)
+        elif prop == "transitive":
+            witness = _transitive_witness(subject)
+        elif prop == "symmetric":
+            witness = _symmetry_witness(subject)
+        elif prop == "inverse_of":
+            partner = _edges_of_relation(graph, spec["partner"])
+            witness = _inverse_witness(subject, partner)
+        else:
+            partner = _edges_of_relation(graph, spec["partner"])
+            witness = _disjoint_witness(subject, partner)
+        rows.append(_property_result(spec, witness))
+    return rows
+
+
+def _property_key(row):
+    return (row["scope"], row["name"], row["property"], row.get("partner") or "")
+
+
+def property_regression(current, baseline):
+    """Properties that started holding and now fail, and the reverse."""
+    before = {_property_key(row): row for row in baseline}
+    regressed, recovered = [], []
+    for row in current:
+        prior = before.get(_property_key(row))
+        if prior is None or prior.get("holds") is None or row["holds"] is None:
+            continue
+        identity = {
+            "scope": row["scope"],
+            "name": row["name"],
+            "property": row["property"],
+        }
+        if "partner" in row:
+            identity["partner"] = row["partner"]
+        if prior["holds"] and not row["holds"]:
+            regressed.append({**identity, "before": True, "after": False, "witness": row["witness"]})
+        elif not prior["holds"] and row["holds"]:
+            recovered.append({**identity, "before": False, "after": True, "witness": prior.get("witness")})
+    return {"recovered": recovered, "regressed": regressed}
+
+
+def _properties_from_report(document):
+    if not isinstance(document, dict) or not isinstance(document.get("properties"), list):
+        raise ValueError("baseline report needs a properties array")
+    return document["properties"]
+
+
+def _property_text(row):
+    label = f"{row['scope']} {row['name']} {row['property']}"
+    if row.get("partner"):
+        label += f" {row['partner']}"
+    if row["status"] == "not applicable":
+        return [f"property {label}: not applicable ({row['reason']})"]
+    if row["holds"]:
+        return [f"property {label}: holds"]
+    lines = [f"property {label}: fails"]
+    witness = row["witness"]
+    lines.append("  nodes: " + " → ".join(node_text(node) for node in witness["nodes"]))
+    rendered = "; ".join(
+        f"{node_text(edge['source'])} {edge['relation']} {node_text(edge['target'])}"
+        for edge in witness["edges"]
+    )
+    lines.append(f"  edges: {rendered}")
+    if "missing" in witness:
+        missing = witness["missing"]
+        lines.append(f"  missing: {node_text(missing['source'])} → {node_text(missing['target'])}")
+    return lines
+
+
+def _properties_text(body):
+    lines = [f"tool: {body['tool']['name']} {body['tool']['version']}"]
+    lines.extend(_provenance_lines("", body["provenance"]))
+    baseline = body["provenance"].get("baseline")
+    if baseline:
+        lines.append(f"baseline: {baseline['path']}")
+        lines.append(f"baseline_sha256: {baseline['sha256']}")
+    if not body["properties"]:
+        lines.append("properties: (none)")
+    for row in body["properties"]:
+        lines.extend(_property_text(row))
+    if "regression" in body:
+        regressed = body["regression"]["regressed"]
+        recovered = body["regression"]["recovered"]
+        if regressed:
+            rendered = ", ".join(
+                f"{row['scope']} {row['name']} {row['property']}"
+                + (f" {row['partner']}" if row.get("partner") else "")
+                for row in regressed
+            )
+        else:
+            rendered = "(none)"
+        lines.append(f"regressed: {rendered}")
+        if recovered:
+            rendered = ", ".join(
+                f"{row['scope']} {row['name']} {row['property']}"
+                + (f" {row['partner']}" if row.get("partner") else "")
+                for row in recovered
+            )
+        else:
+            rendered = "(none)"
+        lines.append(f"recovered: {rendered}")
+    return "\n".join(lines) + "\n"
+
+
+def _regression_status(report, fail):
+    if fail and report["regression"]["regressed"]:
+        return 1
+    return 0
+
+
 def _exclusion_view(with_metrics, without_metrics, delta, *, acyclic_declared):
     """Flags for a with-excluded versus without-excluded comparison.
 
@@ -2720,11 +3081,103 @@ def excluded_main(argv):
     return 0
 
 
+def _select_property(rows, *, class_name, relation, prop, partner):
+    if bool(class_name) == bool(relation):
+        raise ValueError("name either --class or --relation")
+    scope = "class" if class_name else "relation"
+    name = class_name or relation
+    matched = [
+        row for row in rows
+        if row["scope"] == scope and row["name"] == name and row["property"] == prop
+        and (partner is None or row.get("partner") == partner)
+    ]
+    if not matched:
+        raise ValueError(f"unknown property: {scope} {name} {prop}")
+    if len(matched) > 1:
+        raise ValueError(f"{prop} needs --partner")
+    return matched[0]
+
+
+def properties_main(argv):
+    parser = argparse.ArgumentParser(
+        prog=f"{TOOL_NAME} properties",
+        description="Report declared property violations, and regressions against a baseline.",
+    )
+    parser.add_argument("graph", nargs="?", type=Path)
+    parser.add_argument("classification", nargs="?", type=Path)
+    parser.add_argument("profile", nargs="?")
+    _add_classification_option(parser)
+    _add_root_options(parser)
+    parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges")
+    parser.add_argument("--format", choices=("text", "json", "canonical", "mermaid"), default=None)
+    parser.add_argument("--json", action="store_true", help="shorthand for --format json")
+    parser.add_argument("--baseline", type=Path, metavar="GRAPH", help="earlier graph under the same classification")
+    parser.add_argument("--baseline-report", type=Path, metavar="REPORT", help="earlier properties JSON")
+    parser.add_argument("--fail-on-regression", action="store_true",
+                        help="exit 1 when a property that held now fails")
+    parser.add_argument("--class", dest="class_name", help="class whose witness to draw")
+    parser.add_argument("--relation", help="relation whose witness to draw")
+    parser.add_argument("--property", dest="prop", help="property to draw")
+    parser.add_argument("--partner", help="inverse or disjoint partner to draw")
+    parser.add_argument("-o", "--output", type=Path)
+    args = parser.parse_args(argv)
+    fmt = _resolve_format(args)
+    if args.fail_on_regression and args.baseline is None and args.baseline_report is None:
+        raise ValueError("--fail-on-regression requires --baseline or --baseline-report")
+    if args.baseline is not None and args.baseline_report is not None:
+        raise ValueError("use only one of --baseline and --baseline-report")
+    graph_path, positional, profile = _graph_positionals(args.graph, args.classification, args.profile)
+    graph_path = _require_path(graph_path, "graph path")
+    profile = _require_profile(profile)
+    classification = _resolve_classification(positional, args.classification_option, args.taxontoy_root)
+    classes = _load_classes(classification, profile)
+    table = json.loads(classification.read_text(encoding="utf-8"))
+    graph = _load_graph(graph_path, args.graph_format)
+    rows = evaluate_properties(graph, classes, table)
+    provenance = input_provenance(graph_path, classification, profile)
+    body = {"properties": rows}
+    if args.baseline is not None or args.baseline_report is not None:
+        if args.baseline is not None:
+            other = _load_graph(args.baseline, args.graph_format)
+            baseline_rows = evaluate_properties(other, classes, table)
+            provenance["baseline"] = file_record(args.baseline)
+        else:
+            baseline_rows = _properties_from_report(json.loads(args.baseline_report.read_text(encoding="utf-8")))
+            provenance["baseline"] = file_record(args.baseline_report)
+        body["regression"] = property_regression(rows, baseline_rows)
+    report = document(body, provenance)
+    if fmt == "mermaid":
+        if not args.prop:
+            raise ValueError("--format mermaid requires --property")
+        chosen = _select_property(
+            rows, class_name=args.class_name, relation=args.relation, prop=args.prop, partner=args.partner)
+        witness = chosen.get("witness")
+        if not witness:
+            raise ValueError("property holds; no witness")
+        label = f"{chosen['scope']} {chosen['name']} {chosen['property']}"
+        text = render_mermaid({"nodes": [], "edges": witness["edges"]}, witness["edges"], provenance, label)
+    else:
+        text = _properties_text(report) if fmt == "text" else dump_json(report)
+    if args.output is None:
+        sys.stdout.write(text)
+    else:
+        args.output.write_text(text, encoding="utf-8")
+    if "regression" not in body:
+        return 0
+    return _regression_status(body, args.fail_on_regression)
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     else:
         argv = list(argv)
+    if argv[:1] == ["properties"]:
+        try:
+            return properties_main(argv[1:])
+        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as error:
+            print(error, file=sys.stderr)
+            return 1
     if argv[:1] == ["excluded"]:
         try:
             return excluded_main(argv[1:])

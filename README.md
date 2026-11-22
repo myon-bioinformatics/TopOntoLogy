@@ -84,6 +84,17 @@ JSON はキー順を固定した一つの文書です。`--format canonical` と
 
 `--format text` と `--format json`（`--json`）のどちらにも、これらの欄が出ます。
 
+`properties` は、分類表が宣言した性質が成り立つかを、畳む前の辺で調べます。`acyclic` は OnTautoLogy の `directed_cycle_witness`（最短の有向閉路、なければ成り立つ）、`transitive` は `transitivity_witness`（弦 `a→c` が欠けた `a→b→c`）です。`symmetric` と `inverse_of` は、逆向きが無い辺を一つ出します。`disjoint_with` は、両方の関係に現れる端点を一つと、それぞれの関係からその端点に触れる辺を一本ずつ出します。端点や関係名が空でない文字列でないときは、`acyclic` と `transitive` は `not applicable` で、`1` と `"1"` はまとめません。
+
+```sh
+python -S topontology.py properties audit.json concepts
+python -S topontology.py properties audit.json concepts --baseline before.json
+python -S topontology.py properties audit.json concepts --baseline-report earlier.json --fail-on-regression
+python -S topontology.py properties audit.json concepts --format mermaid --class hierarchy --property acyclic
+```
+
+`--baseline` は同じ分類表の別グラフ、`--baseline-report` は以前の `properties` の JSON です。成り立っていた性質が崩れたものは `regressed`、崩れていたものが成り立つようになったものは `recovered` です。`--fail-on-regression` は `regressed` が空でないとき終了コード 1 で、文書は標準出力に残します。回復だけでは失敗しません。`--format text`、`--format json`、`--json` は同じ内容です。証拠があるときだけ `--format mermaid` でその部分グラフを描けます。
+
 ## 互換
 
 OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize` を使います。その関数だけ残してあります。コマンドとしては `topology.py` は動きません。
@@ -94,7 +105,7 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `onto_path.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99`、OnTautoLogy は main の first-parent マージ `59edb8f13e4f0d2a12f89b9d912cbe4fdd1abd83` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` と `OTL_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.8.0 です。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `onto_path.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99`、OnTautoLogy は main の first-parent マージ `86821d7bd0406b07678803c2d8a61f826133f304` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` と `OTL_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.9.0 です。
 
 ## 時点の並び
 
