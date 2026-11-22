@@ -1,0 +1,106 @@
+{
+  "schema": "web-ui-page/1",
+  "title": "TopOntoLogy 利用ガイド",
+  "theme": "auto",
+  "description": "Topology（構造とつながり）と Ontology（意味と概念の体系）の対応を探るプロジェクト。関係の意味ごとに、グラフの構造を調べます。",
+  "icon": "./icon.png",
+  "favicon": "./favicon.png",
+  "blocks": [
+    {
+      "type": "badges",
+      "items": [
+        "🧭 構造を調べる",
+        "🔒 読み取り専用・ネットワークに出ない",
+        "🐍 Python 3.11+"
+      ]
+    },
+    {
+      "type": "section",
+      "title": "📥 取得",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "Python 3.11+ と git が必要です。ONTO・TaxOntOy・OnTautoLogy を隣のフォルダに置くと、場所を自動で見つけます。"
+        },
+        {
+          "type": "output",
+          "text": "git clone https://github.com/myon-bioinformatics/TopOntoLogy.git\ncd TopOntoLogy"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "title": "▶️ 実行",
+      "blocks": [
+        {
+          "type": "card",
+          "title": "🔎 グラフを調べる",
+          "text": "位置引数は「グラフ プロファイル」です。分類表を省くと TaxOntOy の otl-relations.json を使います。",
+          "blocks": [
+            {
+              "type": "output",
+              "text": "$ python -S topontology.py audit.json audit"
+            },
+            {
+              "type": "output",
+              "text": "$ python -S topontology.py audit.json audit --format text"
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "title": "↔️ 前後を比べる",
+          "text": "2つのグラフの差を見ます。",
+          "blocks": [
+            {
+              "type": "output",
+              "text": "$ python -S topontology.py before.json concepts --compare after.json"
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "title": "🧜 図にする",
+          "text": "分類を選んで Mermaid で出します。",
+          "blocks": [
+            {
+              "type": "output",
+              "text": "$ python -S topontology.py audit.json concepts --format mermaid --class hierarchy"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "title": "🔗 リンク",
+      "blocks": [
+        {
+          "type": "links",
+          "items": [
+            {
+              "label": "📦 リポジトリ",
+              "href": "https://github.com/myon-bioinformatics/TopOntoLogy"
+            },
+            {
+              "label": "📖 README",
+              "href": "https://github.com/myon-bioinformatics/TopOntoLogy#readme"
+            },
+            {
+              "label": "📄 topontology.py",
+              "href": "https://github.com/myon-bioinformatics/TopOntoLogy/blob/main/topontology.py"
+            },
+            {
+              "label": "🗂️ TaxOntOy",
+              "href": "https://github.com/myon-bioinformatics/TaxOntOy"
+            },
+            {
+              "label": "🧱 ONTO",
+              "href": "https://github.com/myon-bioinformatics/ONTO"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
