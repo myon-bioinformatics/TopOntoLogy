@@ -1,5 +1,7 @@
 # TopOntoLogy
 
+🌐 [GitHub Pages](https://myon-bioinformatics.github.io/TopOntoLogy/) · 🏠 [Portfolio](https://myon-bioinformatics.github.io/)
+
 <img src="docs/assets/topontology-icon.png" alt="TopOntoLogy アイコン" width="160" height="160">
 
 **TopOntoLogy** は、Topology（トポロジー）と Ontology（オントロジー）を組み合わせた造語。
