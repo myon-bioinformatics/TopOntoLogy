@@ -17,12 +17,40 @@
     "similarTo": "mutual"
   },
   "excluded": {
-    "audit": ["hasName"],
-    "concepts": ["hasName"],
+    "audit": [
+      {
+        "relation": "hasName",
+        "kind": "out_of_scope",
+        "since": "2026-11-21",
+        "reason": "名前の記録であり、依存クラスではない"
+      }
+    ],
+    "concepts": [
+      {
+        "relation": "hasName",
+        "kind": "out_of_scope",
+        "since": "2026-11-21",
+        "reason": "名前の記録であり、階層や類似の関係ではない"
+      }
+    ],
     "cases": []
   },
   "properties": {
-    "narrower": "hierarchy",
-    "similarTo": "similarity"
+    "classes": {
+      "hierarchy": {
+        "acyclic": {
+          "since": "2026-11-15",
+          "reason": "階層の循環は分類の誤りとして扱う"
+        }
+      }
+    },
+    "relations": {
+      "narrower": {
+        "transitive": {
+          "since": "2026-11-15",
+          "reason": "上位から下位への narrower は推移する"
+        }
+      }
+    }
   }
 }

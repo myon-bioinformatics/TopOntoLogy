@@ -18,30 +18,30 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # ONTO main, first-parent merge (Merge pull request #6).
-      # Parents: d94daca258fd98396111e47a30777d9aa8a13fd7 f220e31c2600e4a52f54f1477d46c0ffb9deace7
+      # ONTO main, first-parent merge (Merge pull request #15).
+      # Parents: f19c92a3b5259e341e9da61fff3e31ee4f118a27 4a96ed1acb162fe749ca010c8e17d7508cea6e7e
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/ONTO
-          ref: 8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b
+          ref: 89e23ddadb47f04bb10318a2232f2be554c6651f
           path: ONTO
           persist-credentials: false
           fetch-depth: 1
-      # TaxOntOy main, first-parent merge (Merge pull request #4).
-      # Parents: 30c5ed689cb931bce3787e37056082ce8cb52b3d 8cfb0cab3a917ffe9b945fc0c6d4ee0e8edc7f04
+      # TaxOntOy main, first-parent merge (Merge pull request #18).
+      # Parents: d272eab68dffbd24c019414abe9ee0464e07ff3d 0a5c47ba19c8ebd9253df16abbeb74b3d690c3aa
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/TaxOntOy
-          ref: 8621f2261d694af0de35e103ad2387872ca10b99
+          ref: b610500fa677ddb258be4ce0957fee0348706aa6
           path: TaxOntOy
           persist-credentials: false
           fetch-depth: 1
-      # OnTautoLogy main, first-parent merge (Merge pull request #43).
-      # Parents: 90be7f5bafa7deff0c84388ca8404345fe33ae2e e77454ce5db58e1ea6bdf3ca342e851cc5018d04
+      # OnTautoLogy main, first-parent merge (Merge pull request #47).
+      # Parents: 29f9ace4ce1ecec1d2356338c670f5e480fd05de 44d4067e3293dc83e286f86f369c26e077d78c7d
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/OnTautoLogy
-          ref: 86821d7bd0406b07678803c2d8a61f826133f304
+          ref: 79cb14722e4bfb1343718cc492a256e090cbc110
           path: OnTautoLogy
           persist-credentials: false
           fetch-depth: 1

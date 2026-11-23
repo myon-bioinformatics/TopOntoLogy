@@ -107,7 +107,7 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 uv run --no-project python -S -m unittest discover -s tests -v
 ```
 
-CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `onto_path.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b`、TaxOntOy は main の first-parent マージ `8621f2261d694af0de35e103ad2387872ca10b99`、OnTautoLogy は main の first-parent マージ `86821d7bd0406b07678803c2d8a61f826133f304` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` と `OTL_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.9.0 です。
+CI は Python 3.11 と 3.15 でこのコマンドを実行します。続けて、子プロセスの CLI も含めて `topontology.py` と `topology.py` と `onto_path.py` の文と枝を測り、実行 + 除外 + 未実行が全体と一致し、未実行が 0、除外が 0 であることを確認します。ONTO は main の first-parent マージ `89e23ddadb47f04bb10318a2232f2be554c6651f`、TaxOntOy は main の first-parent マージ `b610500fa677ddb258be4ce0957fee0348706aa6`、OnTautoLogy は main の first-parent マージ `79cb14722e4bfb1343718cc492a256e090cbc110` を checkout します。環境変数を渡さない実行でも、隣の checkout を見つけて同じように動くことを確認します。pytest は依存にしていません。直下の `conftest.py` は pytest で動かすときだけ読み、`ONTO_ROOT` と `TAXONTOY_ROOT` と `OTL_ROOT` を同じ順で入れて出どころを確かめます。ツールの版は 0.9.0 です。
 
 ## 時点の並び
 
@@ -148,7 +148,7 @@ python -S topontology.py excluded audit.json audit
 
 `exclusion_passes_acyclicity` は、クラスが `properties.classes` で `acyclic` を宣言していて、関係を戻すと有向閉路があり、除外すると無いときだけ真です。`acyclicity_flags` はその関係とクラスの組です。`_`、`-`、空白、途中の大文字を区切りとして畳むと分類済みの関係と同じになる名前は `alias_of` に残します。`depends_on` は `dependsOn` の別名候補です。別名だからといって、その関係だけを戻したときに有向閉路ができるとは限りません。
 
-TaxOntOy のピン `8621f2261d694af0de35e103ad2387872ca10b99` の `otl-relations.json` では、audit の除外が 18（`belongsTo`、`blocks`、`depends_on`、`targets` など）、concepts の除外が 6 です。同じピンの `coverage.json` では、`dependsOn` は 13 辺で非循環、`depends_on` も 13 辺で、向きも含めて同じ端点の組であり、区切りの別名でもあります。`depends_on` だけを dependency へ戻すと辺が 13 本増えて独立閉路も 13 増えますが、有向閉路は増えず、非循環の宣言は戻す前も戻したあとも通ります。`exclusion_passes_acyclicity` は `depends_on` については偽です。`blocks` も 13 辺で、`dependsOn` の逆向きの組です。dependency は `acyclic` を宣言しているので、`blocks` をそのクラスへ戻すと各組が有向の 2 閉路になり、除外したままなら非循環の検査を通ります。フラグが立つのは `blocks` と dependency の組です。`build/audit.json` 自体は公開ツリーに無いので、この帰結は公開された被覆報告と端点集合の定義から出しています。
+TaxOntOy のピン `b610500fa677ddb258be4ce0957fee0348706aa6` の `otl-relations.json`（`taxontoy-relations/3`）では、audit の除外が 18（`belongsTo`、`blocks`、`depends_on`、`targets` など）、concepts の除外が 6 です。除外の各要素は `relation`・`kind`・`since`・`reason` を持つオブジェクトです。同じピンの `coverage.json` では、`dependsOn` は 13 辺で非循環、`depends_on` も 13 辺で、向きも含めて同じ端点の組であり、区切りの別名でもあります。`depends_on` だけを dependency へ戻すと辺が 13 本増えて独立閉路も 13 増えますが、有向閉路は増えず、非循環の宣言は戻す前も戻したあとも通ります。`exclusion_passes_acyclicity` は `depends_on` については偽です。`blocks` も 13 辺で、`dependsOn` の逆向きの組です。dependency は `acyclic` を宣言しているので、`blocks` をそのクラスへ戻すと各組が有向の 2 閉路になり、除外したままなら非循環の検査を通ります。フラグが立つのは `blocks` と dependency の組です。`build/audit.json` 自体は公開ツリーに無いので、この帰結は公開された被覆報告と端点集合の定義から出しています。
 
 `--format text` と json で、`--json` は `--format json` の省略、`--format canonical` は json と同じバイト列です。出自にはグラフと分類表のパス、sha256、プロファイル、ツールの版が入ります。`schema` の無い表には除外リストが無く、差分は 0 です。
 
@@ -221,4 +221,4 @@ import のモジュール名は、次の順でパスへ対応します。
 
 この範囲では、DRAgoWing は `pythdragoras/core`（`propositions`）と `queryu/ask`（`ask`）が宣言と一致し、`pythdragoras` 自体の import は無く、`aoi` と `aoi_paths` は宣言に無い `.` です。QueRyu は `blueprobe` が一致し、`blueprobe/npb` はこのファイルには無く、`ask` は QueRyu 自身の `queryu/ask` で宣言には入っていません。`blueprobe`・`nagoyaction`・`pythdragoras`・`sakanalytics` はソースを渡していないので `not_scanned` です。
 
-ONTO `8ca1ee5dc8c2714ddcdea6db6774f7168c0e617b` の `knowledgegraph.py` は、閉路とトポロジカル順と Mermaid だけで、辺集合の差は返しません。そのあとの main も文書の更新なので、ピンはこのコミットのままです。差の計算はこのツールの中に置いてあります。
+ONTO `89e23ddadb47f04bb10318a2232f2be554c6651f` の `knowledgegraph.py` は、閉路とトポロジカル順と Mermaid だけで、辺集合の差は返しません。差の計算はこのツールの中に置いてあります。

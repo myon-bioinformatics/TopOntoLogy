@@ -108,17 +108,20 @@ _MUTATING_ATTRS = frozenset({
 })
 
 # Profiles are audit, concepts, and cases. schema, direction, and excluded are
-# reserved on /1 and /2. properties is reserved when it holds class or relation
-# declarations, and is a profile when it is a relation-to-class map.
+# reserved on /1, /2, and /3. properties is reserved when it holds class or
+# relation declarations, and is a profile when it is a relation-to-class map.
+# /3 may also carry an optional repos profile (not reserved).
 VENDOR_LOCK_SCHEMA = "vendor-lock/1"
 _VENDOR_RELATION = "vendorsFrom"
 _RELATION_SCHEMA_PREFIX = "taxontoy-relations/"
+_RELATION_SCHEMA_V3 = "taxontoy-relations/3"
 PROFILE_NAMES = ("audit", "concepts", "cases")
 DEFAULT_CYCLE_LIMIT = 5
 DEFAULT_FORMAT = "json"
 _KNOWN_RELATION_SCHEMAS = {
     "taxontoy-relations/1": frozenset({"schema", "direction", "excluded", "properties"}),
     "taxontoy-relations/2": frozenset({"schema", "direction", "excluded", "properties"}),
+    _RELATION_SCHEMA_V3: frozenset({"schema", "direction", "excluded", "properties"}),
 }
 
 
@@ -1758,7 +1761,7 @@ def _properties_role(value):
 
 
 def _direction_map(table):
-    """Relation directions from a ``/1`` or ``/2`` table, else an empty map."""
+    """Relation directions from a ``/1``, ``/2``, or ``/3`` table, else an empty map."""
     if not isinstance(table, dict) or table.get("schema") not in _KNOWN_RELATION_SCHEMAS:
         return {}
     raw = table.get("direction")
@@ -1777,10 +1780,11 @@ def _direction_map(table):
 def _load_classes(path, profile):
     """Return the relation-to-class map named ``profile``.
 
-    A table without ``schema`` is a map of profile name to that map. ``/1`` and
-    ``/2`` keep ``audit``, ``concepts``, and ``cases`` in that shape, and put
-    ``direction`` and ``excluded`` beside them. ``properties`` is metadata when
-    it declares classes or relations, and a profile when it is itself a
+    A table without ``schema`` is a map of profile name to that map. ``/1``,
+    ``/2``, and ``/3`` keep ``audit``, ``concepts``, and ``cases`` in that
+    shape, and put ``direction`` and ``excluded`` beside them. ``/3`` may also
+    name an optional ``repos`` profile. ``properties`` is metadata when it
+    declares classes or relations, and a profile when it is itself a
     relation-to-class map. Mixing the two is an error. Any other
     ``taxontoy-relations/N`` schema is rejected.
     """
@@ -2230,9 +2234,11 @@ def _alias_of(name, classes):
 def _excluded_names(table, profile, classes):
     """Sorted excluded relation names for ``profile``.
 
-    A ``taxontoy-relations/1`` or ``/2`` table stores them under ``excluded``.
-    An unversioned table has no excluded list. A name that is also classified
-    is an error, matching the TaxOntOy rule that the two sets are disjoint.
+    A ``taxontoy-relations/1`` or ``/2`` table stores string names under
+    ``excluded``. ``/3`` stores objects with a ``relation`` field; only the
+    name is used here. An unversioned table has no excluded list. A name that
+    is also classified is an error, matching the TaxOntOy rule that the two
+    sets are disjoint.
     """
     schema = table.get("schema")
     if schema in _KNOWN_RELATION_SCHEMAS:
@@ -2249,9 +2255,17 @@ def _excluded_names(table, profile, classes):
     if not isinstance(names, list):
         raise ValueError(f"excluded.{profile} must be an array")
     seen = set()
-    for name in names:
-        if not isinstance(name, str) or not name or name != name.strip():
-            raise ValueError(f"excluded.{profile} names must be non-empty strings")
+    for item in names:
+        if schema == _RELATION_SCHEMA_V3:
+            if not isinstance(item, dict):
+                raise ValueError(f"excluded.{profile} entries must be objects")
+            name = item.get("relation")
+            if not isinstance(name, str) or not name or name != name.strip():
+                raise ValueError(f"excluded.{profile} relation must be a non-empty string")
+        else:
+            name = item
+            if not isinstance(name, str) or not name or name != name.strip():
+                raise ValueError(f"excluded.{profile} names must be non-empty strings")
         if name in seen:
             raise ValueError(f"excluded.{profile} has a duplicate name: {name}")
         if name in classes:
