@@ -194,8 +194,58 @@ class ExcludedImpactTests(unittest.TestCase):
             topontology._excluded_names({**base, "excluded": {"audit": ["dependsOn"]}}, "audit", classes)
         self.assertIn("both classified and excluded", str(raised.exception))
         with self.assertRaises(ValueError) as raised:
-            topontology._excluded_names({"schema": "taxontoy-relations/3", "audit": classes}, "audit", classes)
-        self.assertIn("taxontoy-relations/3", str(raised.exception))
+            topontology._excluded_names(
+                {"schema": "taxontoy-relations/9", "audit": classes}, "audit", classes)
+        self.assertIn("taxontoy-relations/9", str(raised.exception))
+        self.assertEqual(
+            topontology._excluded_names(
+                {
+                    "schema": "taxontoy-relations/3",
+                    "audit": classes,
+                    "excluded": {
+                        "audit": [
+                            {
+                                "relation": "belongsTo",
+                                "kind": "out_of_scope",
+                                "since": "2026-11-21",
+                                "reason": "所属",
+                            },
+                            {
+                                "relation": "depends_on",
+                                "kind": "alias",
+                                "alias_of": "dependsOn",
+                                "since": "2026-11-21",
+                                "reason": "区切りの別名",
+                            },
+                        ],
+                    },
+                },
+                "audit",
+                classes,
+            ),
+            ["belongsTo", "depends_on"],
+        )
+        with self.assertRaises(ValueError):
+            topontology._excluded_names(
+                {
+                    "schema": "taxontoy-relations/3",
+                    "audit": classes,
+                    "excluded": {"audit": ["belongsTo"]},
+                },
+                "audit",
+                classes,
+            )
+        for bad in ({}, {"relation": ""}, {"relation": " x"}, {"relation": 1}):
+            with self.assertRaises(ValueError):
+                topontology._excluded_names(
+                    {
+                        "schema": "taxontoy-relations/3",
+                        "audit": classes,
+                        "excluded": {"audit": [bad]},
+                    },
+                    "audit",
+                    classes,
+                )
         self.assertEqual(topontology._excluded_names({"demo": classes}, "demo", classes), [])
         empty = topontology.excluded_impact(
             {"edges": [_edge("A", "belongsTo", "B")]},
@@ -338,9 +388,22 @@ class ExcludedCliTests(unittest.TestCase):
         self.assertEqual(body["classes"]["dependency"]["delta"]["edges"], 0)
         code, out, err = run_cli(
             "excluded", "tests/fixtures/excluded-graph.json", "tests/fixtures/relations-v3.json", "audit")
-        self.assertEqual(code, 1)
-        self.assertIn("unknown relation schema", err)
-        self.assertNotIn("Traceback", err)
+        self.assertEqual(code, 0, err)
+        body = json.loads(out)
+        self.assertEqual(body["excluded"], ["hasName"])
+        self.assertEqual(body["relations"][0]["relation"], "hasName")
+        with tempfile.TemporaryDirectory() as tmp:
+            unknown = Path(tmp) / "unknown.json"
+            unknown.write_text(json.dumps({
+                "schema": "taxontoy-relations/9",
+                "audit": {"dependsOn": "dependency"},
+                "excluded": {"audit": []},
+            }), encoding="utf-8")
+            code, out, err = run_cli(
+                "excluded", "tests/fixtures/excluded-graph.json", str(unknown), "audit")
+            self.assertEqual(code, 1)
+            self.assertIn("unknown relation schema", err)
+            self.assertNotIn("Traceback", err)
         code, out, err = run_cli("excluded", env={"TOPONTOLOGY_PROFILE": "audit"})
         self.assertEqual(code, 1)
         self.assertIn("pass the graph path", err)

@@ -1,4 +1,4 @@
-"""taxontoy-relations/1 and /2 profiles, including the properties-key regression."""
+"""taxontoy-relations/1, /2, and /3 profiles, including the properties-key regression."""
 import json
 import tempfile
 import unittest
@@ -14,6 +14,7 @@ V1_PROPERTIES = ROOT / "tests/fixtures/relations-v1-properties.json"
 V2 = ROOT / "tests/fixtures/relations-v2.json"
 V3 = ROOT / "tests/fixtures/relations-v3.json"
 CONCEPTS = {"narrower": "hierarchy", "similarTo": "similarity"}
+UNKNOWN_SCHEMA = "taxontoy-relations/9"
 
 
 class RelationTableTests(unittest.TestCase):
@@ -26,6 +27,15 @@ class RelationTableTests(unittest.TestCase):
         for name in ("properties", "direction", "excluded", "schema"):
             with self.assertRaises(ValueError) as raised:
                 topontology._load_classes(V2, name)
+            self.assertEqual(str(raised.exception), f"unknown profile: {name}")
+
+    def test_version_3_profiles_load(self):
+        self.assertEqual(topontology._load_classes(V3, "concepts"), CONCEPTS)
+        self.assertEqual(topontology._load_classes(V3, "audit"), {"dependsOn": "dependency"})
+        self.assertEqual(topontology._load_classes(V3, "cases"), {"candidate": "hypothesis"})
+        for name in ("properties", "direction", "excluded", "schema"):
+            with self.assertRaises(ValueError) as raised:
+                topontology._load_classes(V3, name)
             self.assertEqual(str(raised.exception), f"unknown profile: {name}")
 
     def test_version_1_profiles_still_load(self):
@@ -44,14 +54,19 @@ class RelationTableTests(unittest.TestCase):
         self.assertEqual(topontology._load_classes(V1_PROPERTIES, "properties"), CONCEPTS)
 
     def test_unknown_relation_schema_is_rejected(self):
-        for name in ("concepts", "properties"):
-            with self.assertRaises(ValueError) as raised:
-                topontology._load_classes(V3, name)
-            self.assertEqual(str(raised.exception), "unknown relation schema: taxontoy-relations/3")
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "other.json"
-            path.write_text(json.dumps({"schema": "other", "demo": CONCEPTS}), encoding="utf-8")
-            self.assertEqual(topontology._load_classes(path, "demo"), CONCEPTS)
+            path = Path(tmp) / "unknown.json"
+            path.write_text(json.dumps({
+                "schema": UNKNOWN_SCHEMA,
+                "concepts": CONCEPTS,
+            }), encoding="utf-8")
+            for name in ("concepts", "properties"):
+                with self.assertRaises(ValueError) as raised:
+                    topontology._load_classes(path, name)
+                self.assertEqual(str(raised.exception), f"unknown relation schema: {UNKNOWN_SCHEMA}")
+            other = Path(tmp) / "other.json"
+            other.write_text(json.dumps({"schema": "other", "demo": CONCEPTS}), encoding="utf-8")
+            self.assertEqual(topontology._load_classes(other, "demo"), CONCEPTS)
 
     def test_mixed_properties_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -128,10 +143,20 @@ class RelationTableTests(unittest.TestCase):
         self.assertEqual(json.loads(out)["classes"]["hierarchy"]["depth"], 2)
         code, out, err = run_cli(
             "tests/fixtures/graph.json", "tests/fixtures/relations-v3.json", "concepts")
-        self.assertEqual(code, 1)
-        self.assertEqual(err, "unknown relation schema: taxontoy-relations/3\n")
-        self.assertNotIn("Traceback", err)
-        self.assertEqual(out, "")
+        self.assertEqual(code, 0, err)
+        self.assertEqual(json.loads(out)["classes"]["hierarchy"]["independent_cycles"], 1)
+        self.assertEqual(json.loads(out)["classes"]["similarity"]["edges"], 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "unknown.json"
+            path.write_text(json.dumps({
+                "schema": UNKNOWN_SCHEMA,
+                "concepts": CONCEPTS,
+            }), encoding="utf-8")
+            code, out, err = run_cli("tests/fixtures/graph.json", str(path), "concepts")
+            self.assertEqual(code, 1)
+            self.assertEqual(err, f"unknown relation schema: {UNKNOWN_SCHEMA}\n")
+            self.assertNotIn("Traceback", err)
+            self.assertEqual(out, "")
 
 
 class PropertiesMutationTests(unittest.TestCase):
@@ -172,10 +197,16 @@ class PropertiesMutationTests(unittest.TestCase):
             'raise ValueError(f"unknown relation schema: {schema}")',
             "reserved = ()",
         )
-        with self.assertRaises(ValueError) as raised:
-            topontology._load_classes(V3, "concepts")
-        self.assertIn("taxontoy-relations/3", str(raised.exception))
-        self.assertEqual(mutant._load_classes(V3, "concepts"), CONCEPTS)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "unknown.json"
+            path.write_text(json.dumps({
+                "schema": UNKNOWN_SCHEMA,
+                "concepts": CONCEPTS,
+            }), encoding="utf-8")
+            with self.assertRaises(ValueError) as raised:
+                topontology._load_classes(path, "concepts")
+            self.assertIn(UNKNOWN_SCHEMA, str(raised.exception))
+            self.assertEqual(mutant._load_classes(path, "concepts"), CONCEPTS)
 
     def test_treating_a_string_acyclic_as_a_declaration_is_killed(self):
         mutant = load_mutant(
