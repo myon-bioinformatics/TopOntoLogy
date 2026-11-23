@@ -2739,17 +2739,17 @@ def excluded_impact(graph, classes, table, profile, *, cycle_limit=DEFAULT_CYCLE
 
 def series_main(argv):
     parser = argparse.ArgumentParser(prog=f"{TOOL_NAME} series", description="Compare an ordered list of graph snapshots.")
-    parser.add_argument("classification", nargs="?", type=Path)
-    parser.add_argument("profile", nargs="?")
+    parser.add_argument("classification", nargs="?", type=Path,help="classification table; a single positional is the profile")
+    parser.add_argument("profile", nargs="?",help="profile: audit, concepts or cases")
     _add_classification_option(parser)
     _add_root_options(parser)
     parser.add_argument("--snapshot", action="append", default=[], metavar="LABEL=PATH",
                         help="one snapshot; repeat in time order")
-    parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges")
-    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
+    parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges",help="how each --snapshot is read (default: %(default)s)")
+    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None,help="text summary, or one sorted JSON document for json and canonical (default: json)")
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
-    parser.add_argument("--cycle-limit", type=int, default=DEFAULT_CYCLE_LIMIT, metavar="N")
-    parser.add_argument("-o", "--output", type=Path)
+    parser.add_argument("--cycle-limit", type=int, default=DEFAULT_CYCLE_LIMIT, metavar="N",help="cycles listed per class, 0 or more (default: %(default)s)")
+    parser.add_argument("-o", "--output", type=Path,help="write here instead of stdout")
     args = parser.parse_args(argv)
     fmt = _resolve_format(args)
     if args.cycle_limit < 0:
@@ -2822,9 +2822,9 @@ def impact_main(argv):
     parser.add_argument("--lock", action="append", default=[], metavar="REPOSITORY=PATH",
                         help="vendor-lock/1 owned by REPOSITORY")
     _add_root_options(parser)
-    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
+    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None,help="text summary, or one sorted JSON document for json and canonical (default: json)")
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
-    parser.add_argument("-o", "--output", type=Path)
+    parser.add_argument("-o", "--output", type=Path,help="write here instead of stdout")
     args = parser.parse_args(argv)
     fmt = _resolve_format(args)
     loaded = []
@@ -2954,9 +2954,9 @@ def deps_main(argv):
     parser.add_argument("--source", action="append", default=[], metavar="REPO=PATH",
                         help="local source directory for one repo")
     _add_root_options(parser)
-    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
+    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None,help="text summary, or one sorted JSON document for json and canonical (default: json)")
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
-    parser.add_argument("-o", "--output", type=Path)
+    parser.add_argument("-o", "--output", type=Path,help="write here instead of stdout")
     args = parser.parse_args(argv)
     fmt = _resolve_format(args)
     declared = _require_path(args.declared, "declared file")
@@ -3051,16 +3051,16 @@ def excluded_main(argv):
         prog=f"{TOOL_NAME} excluded",
         description="Compare each class with and without the table's excluded relations.",
     )
-    parser.add_argument("graph", nargs="?", type=Path)
-    parser.add_argument("classification", nargs="?", type=Path)
-    parser.add_argument("profile", nargs="?")
+    parser.add_argument("graph", nargs="?", type=Path,help="graph JSON")
+    parser.add_argument("classification", nargs="?", type=Path,help="classification table; with two positionals the second is the profile")
+    parser.add_argument("profile", nargs="?",help="profile: audit, concepts or cases")
     _add_classification_option(parser)
     _add_root_options(parser)
-    parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges")
-    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None)
+    parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges",help="how GRAPH is read (default: %(default)s)")
+    parser.add_argument("--format", choices=("text", "json", "canonical"), default=None,help="text summary, or one sorted JSON document for json and canonical (default: json)")
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
-    parser.add_argument("--cycle-limit", type=int, default=DEFAULT_CYCLE_LIMIT, metavar="N")
-    parser.add_argument("-o", "--output", type=Path)
+    parser.add_argument("--cycle-limit", type=int, default=DEFAULT_CYCLE_LIMIT, metavar="N",help="cycles listed per class, 0 or more (default: %(default)s)")
+    parser.add_argument("-o", "--output", type=Path,help="write here instead of stdout")
     args = parser.parse_args(argv)
     fmt = _resolve_format(args)
     if args.cycle_limit < 0:
@@ -3104,13 +3104,13 @@ def properties_main(argv):
         prog=f"{TOOL_NAME} properties",
         description="Report declared property violations, and regressions against a baseline.",
     )
-    parser.add_argument("graph", nargs="?", type=Path)
-    parser.add_argument("classification", nargs="?", type=Path)
-    parser.add_argument("profile", nargs="?")
+    parser.add_argument("graph", nargs="?", type=Path,help="graph JSON")
+    parser.add_argument("classification", nargs="?", type=Path,help="classification table; with two positionals the second is the profile")
+    parser.add_argument("profile", nargs="?",help="profile: audit, concepts or cases")
     _add_classification_option(parser)
     _add_root_options(parser)
-    parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges")
-    parser.add_argument("--format", choices=("text", "json", "canonical", "mermaid"), default=None)
+    parser.add_argument("--graph-format", choices=_GRAPH_FORMATS, default="nodes-edges",help="how GRAPH is read (default: %(default)s)")
+    parser.add_argument("--format", choices=("text", "json", "canonical", "mermaid"), default=None,help="text summary, sorted JSON (json and canonical are the same; default: json), or mermaid for the witness picked by --class/--relation/--property")
     parser.add_argument("--json", action="store_true", help="shorthand for --format json")
     parser.add_argument("--baseline", type=Path, metavar="GRAPH", help="earlier graph under the same classification")
     parser.add_argument("--baseline-report", type=Path, metavar="REPORT", help="earlier properties JSON")
@@ -3120,7 +3120,7 @@ def properties_main(argv):
     parser.add_argument("--relation", help="relation whose witness to draw")
     parser.add_argument("--property", dest="prop", help="property to draw")
     parser.add_argument("--partner", help="inverse or disjoint partner to draw")
-    parser.add_argument("-o", "--output", type=Path)
+    parser.add_argument("-o", "--output", type=Path,help="write here instead of stdout")
     args = parser.parse_args(argv)
     fmt = _resolve_format(args)
     if args.fail_on_regression and args.baseline is None and args.baseline_report is None:
@@ -3204,9 +3204,9 @@ def main(argv=None):
             print(error, file=sys.stderr)
             return 1
     parser = argparse.ArgumentParser(prog=TOOL_NAME, description=__doc__)
-    parser.add_argument("graph", nargs="?", type=Path)
-    parser.add_argument("classification", nargs="?", type=Path)
-    parser.add_argument("profile", nargs="?")
+    parser.add_argument("graph", nargs="?", type=Path,help="graph JSON")
+    parser.add_argument("classification", nargs="?", type=Path,help="classification table; with two positionals the second is the profile")
+    parser.add_argument("profile", nargs="?",help="profile: audit, concepts or cases")
     _add_classification_option(parser)
     _add_root_options(parser)
     parser.add_argument("--format", choices=("text", "json", "canonical", "mermaid"),
