@@ -15,57 +15,78 @@
       ]
     },
     {
-      "type": "section",
-      "title": "📥 取得",
-      "blocks": [
+      "type": "tabs",
+      "id": "guide",
+      "tabs": [
         {
-          "type": "text",
-          "text": "Python 3.11+ と git が必要です。ONTO・TaxOntOy・OnTautoLogy を隣のフォルダに置くと、場所を自動で見つけます。"
-        },
-        {
-          "type": "output",
-          "text": "git clone https://github.com/myon-bioinformatics/TopOntoLogy.git\ncd TopOntoLogy"
-        }
-      ]
-    },
-    {
-      "type": "section",
-      "title": "▶️ 実行",
-      "blocks": [
-        {
-          "type": "card",
-          "title": "🔎 グラフを調べる",
-          "text": "位置引数は「グラフ プロファイル」です。分類表を省くと TaxOntOy の otl-relations.json を使います。",
+          "label": "🧩 機能一覧",
           "blocks": [
             {
-              "type": "output",
-              "text": "$ python -S topontology.py audit.json audit"
+              "type": "section",
+              "title": "📥 取得",
+              "blocks": [
+                {
+                  "type": "text",
+                  "text": "Python 3.11+ と git が必要です。ONTO・TaxOntOy・OnTautoLogy を隣のフォルダに置くと、場所を自動で見つけます。"
+                },
+                {
+                  "type": "output",
+                  "text": "git clone https://github.com/myon-bioinformatics/TopOntoLogy.git\ncd TopOntoLogy"
+                }
+              ]
             },
             {
-              "type": "output",
-              "text": "$ python -S topontology.py audit.json audit --format text"
+              "type": "section",
+              "title": "▶️ 実行",
+              "blocks": [
+                {
+                  "type": "card",
+                  "title": "🔎 グラフを調べる",
+                  "text": "位置引数は「グラフ プロファイル」です。分類表を省くと TaxOntOy の otl-relations.json を使います。",
+                  "blocks": [
+                    {
+                      "type": "output",
+                      "text": "$ python -S topontology.py audit.json audit"
+                    },
+                    {
+                      "type": "output",
+                      "text": "$ python -S topontology.py audit.json audit --format text"
+                    }
+                  ]
+                },
+                {
+                  "type": "card",
+                  "title": "↔️ 前後を比べる",
+                  "text": "2つのグラフの差を見ます。",
+                  "blocks": [
+                    {
+                      "type": "output",
+                      "text": "$ python -S topontology.py before.json concepts --compare after.json"
+                    }
+                  ]
+                },
+                {
+                  "type": "card",
+                  "title": "🧜 図にする",
+                  "text": "分類を選んで Mermaid で出します。",
+                  "blocks": [
+                    {
+                      "type": "output",
+                      "text": "$ python -S topontology.py audit.json concepts --format mermaid --class hierarchy"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
         {
-          "type": "card",
-          "title": "↔️ 前後を比べる",
-          "text": "2つのグラフの差を見ます。",
+          "label": "🎞 GIF デモ",
           "blocks": [
             {
-              "type": "output",
-              "text": "$ python -S topontology.py before.json concepts --compare after.json"
-            }
-          ]
-        },
-        {
-          "type": "card",
-          "title": "🧜 図にする",
-          "text": "分類を選んで Mermaid で出します。",
-          "blocks": [
-            {
-              "type": "output",
-              "text": "$ python -S topontology.py audit.json concepts --format mermaid --class hierarchy"
+              "type": "text",
+              "text": "🎞 まだ GIF はありません。ブラウザテストや実行の様子を GIF にしたら、ここに並びます。",
+              "muted": true
             }
           ]
         }
