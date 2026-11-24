@@ -13,7 +13,7 @@
 
 ## 関係の意味ごとに構造を調べる
 
-![TaxOntOy の関係分類表と OnTautoLogy のグラフを組み合わせ、分類ごとに閉路・連結成分・到達可能性などを調べ、JSON・テキスト・Mermaid 図に出力する流れ](docs/assets/topontology-overview.jpg)
+![TaxOntOy の関係分類表と OnTautoLogy のグラフを組み合わせ、分類ごとに閉路・連結成分・到達可能性などを調べ、JSON・テキスト・Mermaid 図に出力する流れ](docs/assets/repository-concept.jpg)
 
 グラフとプロファイルを引数で渡します。分類表を省くと TaxOntOy の `otl-relations.json` を使います。ONTO と OnTautoLogy はプログラムが `sys.path` の先頭に足すので、`PYTHONPATH` は要りません。Python 3.11 以降の標準ライブラリだけを使います。
 
