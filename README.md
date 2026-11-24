@@ -2,14 +2,14 @@
 
 🌐 [GitHub Pages](https://myon-bioinformatics.github.io/TopOntoLogy/) · 🏠 [Portfolio](https://myon-bioinformatics.github.io/)
 
-<img src="docs/assets/topontology-icon.png" alt="TopOntoLogy アイコン" width="160" height="160">
+<img src="https://myon-bioinformatics.github.io/TopOntoLogy/icon.png" alt="TopOntoLogy アイコン" width="160" height="160">
 
 **TopOntoLogy** は、Topology（トポロジー）と Ontology（オントロジー）を組み合わせた造語。
 
 トポロジーが扱う「構造とつながり」と、オントロジーが扱う「意味と概念の体系」。
 その対応関係を探るためのプロジェクトです。
 
-<img src="docs/assets/favicon.png" alt="" width="32" height="32"> [ファビコン（32 × 32）](docs/assets/favicon.png)
+<img src="https://myon-bioinformatics.github.io/TopOntoLogy/favicon.png" alt="" width="32" height="32"> [ファビコン（32 × 32）](https://myon-bioinformatics.github.io/TopOntoLogy/favicon.png)
 
 ## 関係の意味ごとに構造を調べる
 
