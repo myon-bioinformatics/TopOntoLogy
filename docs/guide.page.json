@@ -1,7 +1,7 @@
 {
   "schema": "web-ui-page/1",
   "title": "TopOntoLogy 利用ガイド",
-  "theme": "auto",
+  "theme": "modern",
   "description": "Topology（構造とつながり）と Ontology（意味と概念の体系）の対応を探るプロジェクト。関係の意味ごとに、グラフの構造を調べます。",
   "icon": "./icon.png",
   "favicon": "./favicon.png",
