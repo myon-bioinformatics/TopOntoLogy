@@ -81,6 +81,79 @@
           ]
         },
         {
+          "label": "🔬 検証ガイド",
+          "blocks": [
+            {
+              "type": "runbook",
+              "id": "verify",
+              "books": [
+                {
+                  "label": "🐍 python",
+                  "intro": "🤖 のついた手順は CI で実際に動かし、出た結果をそのまま載せています。",
+                  "runbook": {
+                    "key": "topontology/python",
+                    "steps": [
+                      {
+                        "id": "get",
+                        "title": "📥 ファイルを置く",
+                        "command": "curl -fsSLO https://raw.githubusercontent.com/myon-bioinformatics/TopOntoLogy/main/topontology.py",
+                        "needs": "🌐 ネットワーク"
+                      },
+                      {
+                        "id": "deps",
+                        "title": "📥 ONTO と OnTautoLogy を隣に置く",
+                        "command": "[ -d ../ONTO ] || git clone -q --depth 1 https://github.com/myon-bioinformatics/ONTO ../ONTO\n[ -d ../OnTautoLogy ] || git clone -q --depth 1 https://github.com/myon-bioinformatics/OnTautoLogy ../OnTautoLogy",
+                        "needs": "🌐 ネットワーク",
+                        "run": true
+                      },
+                      {
+                        "id": "help",
+                        "title": "❓ ヘルプ",
+                        "command": "ONTO_ROOT=../ONTO OTL_ROOT=../OnTautoLogy python -S topontology.py --help",
+                        "run": true
+                      },
+                      {
+                        "id": "audit",
+                        "title": "🔎 グラフを調べる",
+                        "command": "ONTO_ROOT=../ONTO OTL_ROOT=../OnTautoLogy python -S topontology.py audit.json audit --format text",
+                        "needs": "📝 入力ファイル"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "label": "⚡ uv",
+                  "intro": "uv があれば Python の版を気にせず動きます。",
+                  "runbook": {
+                    "key": "topontology/uv",
+                    "steps": [
+                      {
+                        "id": "get",
+                        "title": "📥 ファイルを置く",
+                        "command": "curl -fsSLO https://raw.githubusercontent.com/myon-bioinformatics/TopOntoLogy/main/topontology.py",
+                        "needs": "🌐 ネットワーク"
+                      },
+                      {
+                        "id": "deps",
+                        "title": "📥 ONTO と OnTautoLogy を隣に置く",
+                        "command": "[ -d ../ONTO ] || git clone -q --depth 1 https://github.com/myon-bioinformatics/ONTO ../ONTO\n[ -d ../OnTautoLogy ] || git clone -q --depth 1 https://github.com/myon-bioinformatics/OnTautoLogy ../OnTautoLogy",
+                        "needs": "🌐 ネットワーク",
+                        "run": true
+                      },
+                      {
+                        "id": "help",
+                        "title": "❓ ヘルプ",
+                        "command": "ONTO_ROOT=../ONTO OTL_ROOT=../OnTautoLogy uv run --no-project python -S topontology.py --help",
+                        "run": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
           "label": "🎞 GIF デモ",
           "blocks": [
             {
