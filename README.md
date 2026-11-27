@@ -103,6 +103,10 @@ OnTautoLogy の `examples/wave_relations.py` は `from topology import summarize
 
 ## テスト
 
+[関係の性質と反例の形式検証](docs/formal-verification.md)では、対称性・逆関係・
+端点集合の非交差と、実装が採用する推移性の条件を Lean で記述します。
+実際の判定と反例は、独立した有限関係の演算と照合します。
+
 ```sh
 uv run --no-project python -S -m unittest discover -s tests -v
 ```
