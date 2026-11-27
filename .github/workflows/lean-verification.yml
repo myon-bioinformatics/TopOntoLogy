@@ -1,0 +1,41 @@
+name: Lean verification
+
+on:
+  pull_request:
+    paths:
+      - "formal/**"
+      - "topontology.py"
+      - "topology.py"
+      - "tests/test_formal_bridge.py"
+      - ".github/workflows/lean-verification.yml"
+  push:
+    branches: [main]
+    paths:
+      - "formal/**"
+      - "topontology.py"
+      - "topology.py"
+      - "tests/test_formal_bridge.py"
+      - ".github/workflows/lean-verification.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lean-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  property-witnesses:
+    uses: myon-bioinformatics/myon-bioinformatics/.github/workflows/reusable-lean-verify.yml@6c2558c4251698c50bc07bad86fb49f902b2738f
+    with:
+      project-directory: formal
+      proof: PropertyWitnesses.lean
+      theorems: |
+        TopOntoLogy.symmetry_witness_refutes
+        TopOntoLogy.chord_witness_refutes
+        TopOntoLogy.chord_closed_iff_reflexive_closure_transitive
+        TopOntoLogy.chord_witness_refutes_closure
+        TopOntoLogy.inverse_witness_refutes
+        TopOntoLogy.endpoint_witness_refutes
+        TopOntoLogy.class_union_symmetric
