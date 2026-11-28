@@ -3,7 +3,7 @@
   "files": [
     {
       "repository": "myon-bioinformatics/myon-bioinformatics",
-      "ref": "eee8c096fc753465a5d5a26264e64c12e555638f",
+      "ref": "main",
       "commit": "eee8c096fc753465a5d5a26264e64c12e555638f",
       "source": "fleet_check.py",
       "destination": "vendor/fleet_check.py",

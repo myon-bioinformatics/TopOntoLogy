@@ -1,5 +1,8 @@
 name: CI
 on:
+  schedule:
+    - cron: "51 20 * * *"  # 🔁 follow-main
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -28,7 +31,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/ONTO
-          ref: 89e23ddadb47f04bb10318a2232f2be554c6651f
+          ref: main
           path: ONTO
           persist-credentials: false
           fetch-depth: 1
@@ -37,7 +40,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/TaxOntOy
-          ref: b610500fa677ddb258be4ce0957fee0348706aa6
+          ref: main
           path: TaxOntOy
           persist-credentials: false
           fetch-depth: 1
@@ -46,7 +49,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: myon-bioinformatics/OnTautoLogy
-          ref: 79cb14722e4bfb1343718cc492a256e090cbc110
+          ref: main
           path: OnTautoLogy
           persist-credentials: false
           fetch-depth: 1
@@ -184,3 +187,17 @@ jobs:
           check("statements", sex, sexc, sun, stot)
           check("branches", bex, bexc, bun, btot)
           PY
+
+  # 🔁 own sources follow main: on schedule / manual run, take main of own repositories and push to main
+  follow-main:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    uses: myon-bioinformatics/myon-bioinformatics/.github/workflows/reusable-follow-main.yml@main
+    permissions:
+      contents: write
+    with:
+      node-version: "26"
+      check: |
+        git clone -q --depth 1 https://github.com/myon-bioinformatics/ONTO ONTO
+        git clone -q --depth 1 https://github.com/myon-bioinformatics/TaxOntOy TaxOntOy
+        git clone -q --depth 1 https://github.com/myon-bioinformatics/OnTautoLogy OnTautoLogy
+        ONTO_ROOT="$PWD/ONTO" TAXONTOY_ROOT="$PWD/TaxOntOy" OTL_ROOT="$PWD/OnTautoLogy" uv run --no-project python -S -m unittest discover -s tests -q
