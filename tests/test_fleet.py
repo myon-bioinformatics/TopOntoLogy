@@ -34,4 +34,5 @@ class ScriptsDescribeThemselves(unittest.TestCase):
 
     def test_no_top_level_vendor_package_imports(self):
         # 📦 vendored modules load by path under a repo-unique name (cli_args README: Loading a vendored copy)
-        self.assertEqual(fleet.check_no_vendor_package_imports(ROOT), [])
+        # CI checks out ONTO / TaxOntOy / OnTautoLogy under the workspace (ci.yml); they are not this repo's sources
+        self.assertEqual(fleet.check_no_vendor_package_imports(ROOT, skip=('ONTO', 'TaxOntOy', 'OnTautoLogy')), [])
